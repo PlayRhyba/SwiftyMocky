@@ -418,9 +418,9 @@ class MethodWrapper {
         let generics = genericsArray.isEmpty ? "" : "<\(genericsArray.joined(separator: ", "))>"
 
         if filteredParameters.isEmpty {
-            return "\(annotation)public static func \(method.callName)\(generics)(willThrow: Error...) -> \(prefix)MethodStub" + clauseConstraints
+            return "\(annotation)public static func \(method.callName)\(generics)(willThrow: any Error...) -> \(prefix)MethodStub" + clauseConstraints
         } else {
-            return "\(annotation)public static func \(method.callName)\(generics)(\(parametersForProxySignature()), willThrow: Error...) -> \(prefix)MethodStub" + clauseConstraints
+            return "\(annotation)public static func \(method.callName)\(generics)(\(parametersForProxySignature()), willThrow: any Error...) -> \(prefix)MethodStub" + clauseConstraints
         }
     }
 
@@ -481,7 +481,7 @@ class MethodWrapper {
     func givenProduceConstructorThrows(prefix: String = "") -> String {
         let returnTypeString = givenReturnTypeString()
         return """
-        let willThrow: [Error] = []
+        let willThrow: [any Error] = []
         \t\t\tlet given: \(prefix)Given = { \(givenConstructorThrows(prefix: prefix)) }()
         \t\t\tlet stubber = given.stubThrows(for: (\(returnTypeString)).self)
         \t\t\twillProduce(stubber)

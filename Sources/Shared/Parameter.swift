@@ -41,7 +41,7 @@ public enum Parameter<ValueType> {
     public var shortDescription: String {
         switch self {
         case ._: return ".any"
-        case .value(let value as TypeErasedValue): return value.shortDescription
+        case .value(let value as any TypeErasedValue): return value.shortDescription
         case .value(let value): return String(describing: value)
         case .matching: return ".matching(\(String(describing: ValueType.self)) -> Bool)"
         }

@@ -87,3 +87,11 @@ let package = Package(
     ],
     swiftLanguageModes: [.v6]
 )
+
+// Require `any` for existential types. Generated mocks are compiled with it too,
+// so templates emitting a bare protocol type are caught by our own build.
+for target in package.targets {
+    target.swiftSettings = (target.swiftSettings ?? []) + [
+        .enableUpcomingFeature("ExistentialAny"),
+    ]
+}

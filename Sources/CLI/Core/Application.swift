@@ -8,7 +8,7 @@ public class Application {
 
     public let version = "4.2.0"
     public var pwd = Path(ProcessInfo.processInfo.environment["PWD"] ?? "")
-    public var handle: (Error) -> Void = { error in
+    public var handle: (any Error) -> Void = { error in
         switch error {
         case let error as MockyError:
             Message.failure(Messages.message(for: error))

@@ -22,10 +22,10 @@ import SwiftyMocky
 
 /// Deliberately accesses the mock from a concurrent queue, to verify mocks are thread-safe.
 class CombinedFetcher: @unchecked Sendable {
-    let fetcher: Fetcher
+    let fetcher: any Fetcher
     var count = 0
 
-    init(fetcher: Fetcher) {
+    init(fetcher: any Fetcher) {
         self.fetcher = fetcher
     }
 

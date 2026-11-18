@@ -169,41 +169,41 @@ open class GenerationCommandMock: GenerationCommand, Mock {
         }
 
 
-        public static func generate(disableCache: Parameter<Bool>, verbose: Parameter<Bool>, willThrow: Error...) -> MethodStub {
+        public static func generate(disableCache: Parameter<Bool>, verbose: Parameter<Bool>, willThrow: any Error...) -> MethodStub {
             return Given(method: .m_generate__disableCache_disableCacheverbose_verbose(`disableCache`, `verbose`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func generate(disableCache: Parameter<Bool>, verbose: Parameter<Bool>, willProduce: (StubberThrows<Void>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_generate__disableCache_disableCacheverbose_verbose(`disableCache`, `verbose`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Void).self)
 			willProduce(stubber)
 			return given
         }
-        public static func generate(mockName: Parameter<String>, disableCache: Parameter<Bool>, verbose: Parameter<Bool>, watch: Parameter<Bool>, willThrow: Error...) -> MethodStub {
+        public static func generate(mockName: Parameter<String>, disableCache: Parameter<Bool>, verbose: Parameter<Bool>, watch: Parameter<Bool>, willThrow: any Error...) -> MethodStub {
             return Given(method: .m_generate__mockName_mockNamedisableCache_disableCacheverbose_verbosewatch_watch(`mockName`, `disableCache`, `verbose`, `watch`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func generate(mockName: Parameter<String>, disableCache: Parameter<Bool>, verbose: Parameter<Bool>, watch: Parameter<Bool>, willProduce: (StubberThrows<Void>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_generate__mockName_mockNamedisableCache_disableCacheverbose_verbosewatch_watch(`mockName`, `disableCache`, `verbose`, `watch`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Void).self)
 			willProduce(stubber)
 			return given
         }
-        public static func updateAllImports(willThrow: Error...) -> MethodStub {
+        public static func updateAllImports(willThrow: any Error...) -> MethodStub {
             return Given(method: .m_updateAllImports, products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func updateAllImports(willProduce: (StubberThrows<Void>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_updateAllImports, products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Void).self)
 			willProduce(stubber)
 			return given
         }
-        public static func updateImports(forMockNamed name: Parameter<String>, willThrow: Error...) -> MethodStub {
+        public static func updateImports(forMockNamed name: Parameter<String>, willThrow: any Error...) -> MethodStub {
             return Given(method: .m_updateImports__forMockNamed_name(`name`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func updateImports(forMockNamed name: Parameter<String>, willProduce: (StubberThrows<Void>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_updateImports__forMockNamed_name(`name`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Void).self)
 			willProduce(stubber)
@@ -355,11 +355,11 @@ open class InstanceFactoryMock: InstanceFactory, Mock {
 
 
 
-    open func resolveGenerationCommand(root: Path) throws -> GenerationCommand {
+    open func resolveGenerationCommand(root: Path) throws -> any GenerationCommand {
         addInvocation(.m_resolveGenerationCommand__root_root(Parameter<Path>.value(`root`)))
 		let perform = methodPerformValue(.m_resolveGenerationCommand__root_root(Parameter<Path>.value(`root`))) as? (Path) -> Void
 		perform?(`root`)
-		var __value: GenerationCommand
+		var __value: any GenerationCommand
 		do {
 		    __value = try methodReturnValue(.m_resolveGenerationCommand__root_root(Parameter<Path>.value(`root`))).casted()
 		} catch MockError.notStubed {
@@ -371,11 +371,11 @@ open class InstanceFactoryMock: InstanceFactory, Mock {
 		return __value
     }
 
-    open func resolveGenerationCommand(root: Path, mockfile: Mockfile) -> GenerationCommand {
+    open func resolveGenerationCommand(root: Path, mockfile: Mockfile) -> any GenerationCommand {
         addInvocation(.m_resolveGenerationCommand__root_rootmockfile_mockfile(Parameter<Path>.value(`root`), Parameter<Mockfile>.value(`mockfile`)))
 		let perform = methodPerformValue(.m_resolveGenerationCommand__root_rootmockfile_mockfile(Parameter<Path>.value(`root`), Parameter<Mockfile>.value(`mockfile`))) as? (Path, Mockfile) -> Void
 		perform?(`root`, `mockfile`)
-		var __value: GenerationCommand
+		var __value: any GenerationCommand
 		do {
 		    __value = try methodReturnValue(.m_resolveGenerationCommand__root_rootmockfile_mockfile(Parameter<Path>.value(`root`), Parameter<Mockfile>.value(`mockfile`))).casted()
 		} catch {
@@ -429,26 +429,26 @@ open class InstanceFactoryMock: InstanceFactory, Mock {
         }
 
 
-        public static func resolveGenerationCommand(root: Parameter<Path>, willReturn: GenerationCommand...) -> MethodStub {
+        public static func resolveGenerationCommand(root: Parameter<Path>, willReturn: any GenerationCommand...) -> MethodStub {
             return Given(method: .m_resolveGenerationCommand__root_root(`root`), products: willReturn.map({ StubProduct.return($0 as Any) }))
         }
-        public static func resolveGenerationCommand(root: Parameter<Path>, mockfile: Parameter<Mockfile>, willReturn: GenerationCommand...) -> MethodStub {
+        public static func resolveGenerationCommand(root: Parameter<Path>, mockfile: Parameter<Mockfile>, willReturn: any GenerationCommand...) -> MethodStub {
             return Given(method: .m_resolveGenerationCommand__root_rootmockfile_mockfile(`root`, `mockfile`), products: willReturn.map({ StubProduct.return($0 as Any) }))
         }
-        public static func resolveGenerationCommand(root: Parameter<Path>, mockfile: Parameter<Mockfile>, willProduce: (Stubber<GenerationCommand>) -> Void) -> MethodStub {
-            let willReturn: [GenerationCommand] = []
+        public static func resolveGenerationCommand(root: Parameter<Path>, mockfile: Parameter<Mockfile>, willProduce: (Stubber<any GenerationCommand>) -> Void) -> MethodStub {
+            let willReturn: [any GenerationCommand] = []
 			let given: Given = { return Given(method: .m_resolveGenerationCommand__root_rootmockfile_mockfile(`root`, `mockfile`), products: willReturn.map({ StubProduct.return($0 as Any) })) }()
-			let stubber = given.stub(for: (GenerationCommand).self)
+			let stubber = given.stub(for: (any GenerationCommand).self)
 			willProduce(stubber)
 			return given
         }
-        public static func resolveGenerationCommand(root: Parameter<Path>, willThrow: Error...) -> MethodStub {
+        public static func resolveGenerationCommand(root: Parameter<Path>, willThrow: any Error...) -> MethodStub {
             return Given(method: .m_resolveGenerationCommand__root_root(`root`), products: willThrow.map({ StubProduct.throw($0) }))
         }
-        public static func resolveGenerationCommand(root: Parameter<Path>, willProduce: (StubberThrows<GenerationCommand>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+        public static func resolveGenerationCommand(root: Parameter<Path>, willProduce: (StubberThrows<any GenerationCommand>) -> Void) -> MethodStub {
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_resolveGenerationCommand__root_root(`root`), products: willThrow.map({ StubProduct.throw($0) })) }()
-			let stubber = given.stubThrows(for: (GenerationCommand).self)
+			let stubber = given.stubThrows(for: (any GenerationCommand).self)
 			willProduce(stubber)
 			return given
         }

@@ -31,7 +31,7 @@ extension MockConfiguration: Codable {
         case template
     }
 
-    public init(from decoder: Decoder) throws {
+    public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         sources = try container.decode(.sources)
@@ -44,7 +44,7 @@ extension MockConfiguration: Codable {
         template = try? container.decode(.template)
     }
 
-    public func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         // Required

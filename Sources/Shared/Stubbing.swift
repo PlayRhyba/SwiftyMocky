@@ -13,7 +13,7 @@ public enum MockError: Error {
 /// - `throw`: Thrown error value
 public enum StubProduct {
     case `return`(Any)
-    case `throw`(Error)
+    case `throw`(any Error)
 
     /// [Internal] If self is returns, and nested value can be casted to T, returns value. Can fail (fatalError)
     ///
@@ -149,14 +149,14 @@ public struct StubberThrows<ReturnedValue> {
     /// Record thrown error
     ///
     /// - Parameter error: Error to throw
-    public func `throw`(_ error: Error) {
+    public func `throw`(_ error: any Error) {
         method.append(.throw(error))
     }
 
     /// Record subsequent thrown errors, in given order (comma separated)
     ///
     /// - Parameter errors: Errors to throw
-    public func `throw`(_ errors: Error...) {
+    public func `throw`(_ errors: any Error...) {
         errors.forEach(self.throw)
     }
 }

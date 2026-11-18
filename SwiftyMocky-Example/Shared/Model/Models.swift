@@ -17,11 +17,11 @@ struct NetworkConfig {
 }
 
 class UsersViewModel {
-    var usersStorage: UserStorageType!
-    var userNetwork: UserNetworkType!
+    var usersStorage: (any UserStorageType)!
+    var userNetwork: (any UserNetworkType)!
 
     var id: String = "someid"
-    var error: Error?
+    var error: (any Error)?
     var user: User?
 
     func saveUser(name: String, surname: String) {

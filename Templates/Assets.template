@@ -4,9 +4,9 @@ import PathKit
 public enum Assets {
 
     public enum swifttemplate {
-        public static let allTypes: AssetFile = Files.allTypes
-        public static let mock: AssetFile = Files.mock
-        public static let prototype: AssetFile = Files.prototype
+        public static let allTypes: any AssetFile = Files.allTypes
+        public static let mock: any AssetFile = Files.mock
+        public static let prototype: any AssetFile = Files.prototype
     }
 
     public static var mockfileTemplate: String { return """

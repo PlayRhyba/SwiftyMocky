@@ -189,6 +189,6 @@ private extension StubbingPolicy {
     /// - Parameter method: Method
     /// - Returns: With new policy
     func apply<T>(to method: T) -> T {
-        return ((method as? WithStubbingPolicy)?.with(self) as? T) ?? method
+        return ((method as? any WithStubbingPolicy)?.with(self) as? T) ?? method
     }
 }

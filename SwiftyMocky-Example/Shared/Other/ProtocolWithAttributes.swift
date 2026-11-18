@@ -8,10 +8,10 @@ protocol ProtocolWithAttributes: AutoMockable {
 //sourcery: AutoMockable
 protocol ProtocolWithAttributesB {
     @available(iOS 14, *)
-    func funcB(_ dependency: ProtocolWithAttributes)
+    func funcB(_ dependency: any ProtocolWithAttributes)
 
     @available(iOS 14, *)
-    func funcC(_ dependency: ProtocolWithAttributes) -> Bool
+    func funcC(_ dependency: any ProtocolWithAttributes) -> Bool
 
     @available(iOS 12, macOS 10.14, *)
     subscript (x: Int, y: Int) -> String { get set }

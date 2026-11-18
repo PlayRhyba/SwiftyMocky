@@ -203,6 +203,16 @@ func propertyRegister(_ variable: SourceryRuntime.Variable) {
     MethodWrapper.register(wrapper.propertyCaseSetName,wrapper.propertyCaseSetName,wrapper.propertyCaseGetName)
 }
 class Helpers {
+    /// Sourcery normalizes `(any P)?` to `any P?` (also `!`, and inside closure types).
+    /// Compilers before Swift 6.4 reject `any P?`, so restore the parenthesized form
+    /// for every optional existential in the generated code.
+    static func parenthesizeOptionalExistentials(_ code: String) -> String {
+        let identifier = #"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*(?:<[^<>]*>)?"#
+        let pattern = #"\bany ("# + identifier + #"(?: ?& ?"# + identifier + #")*)([?!])"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return code }
+        let range = NSRange(code.startIndex..<code.endIndex, in: code)
+        return regex.stringByReplacingMatches(in: code, range: range, withTemplate: "(any $1)$2")
+    }
     static func split(_ string: String, byFirstOccurenceOf word: String) -> (String, String) {
         guard let wordRange = string.range(of: word) else { return (string, "") }
         let selfRange = string.range(of: string)!
@@ -922,9 +932,9 @@ class MethodWrapper {
         let generics = genericsArray.isEmpty ? "" : "<\(genericsArray.joined(separator: ", "))>"
 
         if filteredParameters.isEmpty {
-            return "\(annotation)public static func \(method.callName)\(generics)(willThrow: Error...) -> \(prefix)MethodStub" + clauseConstraints
+            return "\(annotation)public static func \(method.callName)\(generics)(willThrow: any Error...) -> \(prefix)MethodStub" + clauseConstraints
         } else {
-            return "\(annotation)public static func \(method.callName)\(generics)(\(parametersForProxySignature()), willThrow: Error...) -> \(prefix)MethodStub" + clauseConstraints
+            return "\(annotation)public static func \(method.callName)\(generics)(\(parametersForProxySignature()), willThrow: any Error...) -> \(prefix)MethodStub" + clauseConstraints
         }
     }
 
@@ -985,7 +995,7 @@ class MethodWrapper {
     func givenProduceConstructorThrows(prefix: String = "") -> String {
         let returnTypeString = givenReturnTypeString()
         return """
-        let willThrow: [Error] = []
+        let willThrow: [any Error] = []
         \t\t\tlet given: \(prefix)Given = { \(givenConstructorThrows(prefix: prefix)) }()
         \t\t\tlet stubber = given.stubThrows(for: (\(returnTypeString)).self)
         \t\t\twillProduce(stubber)
@@ -2130,3 +2140,4 @@ _%>
 // SwiftyMocky: no AutoMockable found.
 // Please define and inherit from AutoMockable, or annotate protocols to be mocked
 <%_ } -%>
+<%_ sourceryBuffer = Helpers.parenthesizeOptionalExistentials(sourceryBuffer) -%>

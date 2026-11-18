@@ -12,5 +12,5 @@ import Foundation
 protocol ProtocolWithClosures {
     func methodThatTakes(closure: (Int) -> Int)
     func methodThatTakesEscaping(closure: @escaping (Int) -> Int)
-    func methodThatTakesCompletionBlock(completion: (Bool,Error?) -> Void)
+    func methodThatTakesCompletionBlock(completion: (Bool,(any Error)?) -> Void)
 }

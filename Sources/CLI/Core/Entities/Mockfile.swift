@@ -27,7 +27,7 @@ public struct Mockfile: Codable {
         self = try YAMLDecoder().decode(from: yaml)
     }
 
-    public init(from decoder: Decoder) throws {
+    public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         sourceryCommand = try? container.decode(.sourceryCommand)
@@ -59,7 +59,7 @@ public struct Mockfile: Codable {
 
     // MARK: - Coding
 
-    public func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         try container.encode(sourceryCommand, forKey: .sourceryCommand)

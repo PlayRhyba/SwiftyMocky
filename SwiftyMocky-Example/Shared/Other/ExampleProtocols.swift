@@ -20,7 +20,7 @@ protocol UserNetworkType {
     init(baseUrl: String)
 
     func getUser(for id: String, completion: (User?) -> Void)
-    func getUserEscaping(for id: String, completion: @escaping (User?,Error?) -> Void)
+    func getUserEscaping(for id: String, completion: @escaping (User?,(any Error)?) -> Void)
     func doSomething(prop: @autoclosure () -> String)
     func testDefaultValues(value: String)
 }
@@ -55,4 +55,43 @@ protocol AMassiveTestProtocol {
 
     init()
     init(_ sth: Int)
+}
+
+// MARK: - Existential types (`any P`)
+
+protocol ExistentialService {
+    var identifier: String { get }
+}
+protocol ExistentialOther {}
+
+/// Uses `any` in every supported position, so generated mocks are verified to compile
+/// with the `ExistentialAny` upcoming feature enabled.
+//sourcery: AutoMockable
+protocol ExistentialAnyProtocol {
+    var service: any ExistentialService { get set }
+    var optionalService: (any ExistentialService)? { get set }
+    var services: [any ExistentialService] { get }
+    var servicesById: [String: any ExistentialService] { get }
+    var composed: any ExistentialService & ExistentialOther { get }
+    var optionalComposed: (any ExistentialService & ExistentialOther)? { get }
+    var numbers: (any Collection<Int>)? { get }
+    static var shared: any ExistentialService { get set }
+
+    func take(_ service: any ExistentialService)
+    func takeOptional(_ service: (any ExistentialService)?)
+    func takeMany(_ services: [any ExistentialService])
+    func takeVariadic(_ services: any ExistentialService...)
+    func takeInout(_ service: inout any ExistentialService)
+    func takeCompletion(_ completion: @escaping ((any Error)?) -> Void)
+    func takeResult(_ completion: @escaping (Result<Int, any Error>) -> Void)
+    func makeService() -> any ExistentialService
+    func makeOptionalService() -> (any ExistentialService)?
+    func makeThrowing() throws -> any ExistentialService
+    func makeAsync() async throws -> any ExistentialService
+    func takeGeneric<T: ExistentialService>(_ value: T, other: any ExistentialOther) -> T
+    func convert(_ error: any Error) -> any Error
+    static func makeShared() -> any ExistentialService
+
+    subscript(index: Int) -> any ExistentialService { get set }
+    subscript(key: String) -> (any ExistentialService)? { get }
 }

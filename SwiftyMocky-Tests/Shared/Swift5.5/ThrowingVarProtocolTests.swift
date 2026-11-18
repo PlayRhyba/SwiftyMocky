@@ -24,7 +24,7 @@ class ThrowingVarProtocolTests: XCTestCase {
         Given(mock, .testVariableThatThrow(getter: true))
 
         // // Async keyword is not yet supported by sourcery, but casting to protocol silences warning about missing async.
-        let result = try (mock as ThrowingVarProtocol).testVariableThatThrow
+        let result = try (mock as any ThrowingVarProtocol).testVariableThatThrow
         XCTAssertTrue(result)
     }
 }

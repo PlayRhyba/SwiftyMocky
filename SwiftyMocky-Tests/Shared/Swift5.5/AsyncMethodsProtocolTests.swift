@@ -23,7 +23,7 @@ class AsyncMethodsProtocolTests: XCTestCase {
         Given(mock, .loadListOfItems(willReturn: ["aaa", "bbb"]))
 
         // Async keyword is not yet supported by sourcery, but casting to protocol silences warning about missing async.
-        let result = await (mock as AsyncMethodsProtocol).loadListOfItems()
+        let result = await (mock as any AsyncMethodsProtocol).loadListOfItems()
         XCTAssertEqual(result, ["aaa", "bbb"])
     }
 }

@@ -18,6 +18,11 @@ All changes to SwiftyMocky project will be documented in this file.
 * `Matcher.default`, `Matcher.fatalErrorHandler`, `MockyAssertion.handler` and internal fatal-error/test-observer state are now lock-protected (same public API)
 * Generated mocks: static stubbing state is `nonisolated(unsafe)`; getter helpers no longer shadow a generic mock's `T`
 
+#### ExistentialAny:
+* Generated mocks compile cleanly with the `ExistentialAny` upcoming feature (`willThrow: any Error...`)
+* Optional existentials are generated as `(any P)?` / `(any P)!`. Sourcery 2.x normalizes them to `any P?`, which compilers before Swift 6.4 reject
+* The project itself builds with `ExistentialAny` enabled, and the example project covers `any P` in every supported position
+
 #### Changed:
 * Updated dependencies: XcodeProj 9.17.8, Yams 6.2.2
 * Example project consumes SwiftyMocky as a local Swift package

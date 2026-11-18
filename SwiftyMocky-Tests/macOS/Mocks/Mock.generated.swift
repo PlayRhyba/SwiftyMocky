@@ -249,31 +249,31 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
         public static func methodThatRethrows(param: Parameter<(String) throws -> Int>, willReturn: Int...) -> StaticMethodStub {
             return StaticGiven(method: .sm_methodThatRethrows__param_param(`param`), products: willReturn.map({ StubProduct.return($0 as Any) }))
         }
-        public static func methodThatThrows(willThrow: Error...) -> StaticMethodStub {
+        public static func methodThatThrows(willThrow: any Error...) -> StaticMethodStub {
             return StaticGiven(method: .sm_methodThatThrows, products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func methodThatThrows(willProduce: (StubberThrows<Void>) -> Void) -> StaticMethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: StaticGiven = { return StaticGiven(method: .sm_methodThatThrows, products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Void).self)
 			willProduce(stubber)
 			return given
         }
-        public static func methodThatReturnsAndThrows(param: Parameter<String>, willThrow: Error...) -> StaticMethodStub {
+        public static func methodThatReturnsAndThrows(param: Parameter<String>, willThrow: any Error...) -> StaticMethodStub {
             return StaticGiven(method: .sm_methodThatReturnsAndThrows__param_param(`param`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func methodThatReturnsAndThrows(param: Parameter<String>, willProduce: (StubberThrows<Int>) -> Void) -> StaticMethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: StaticGiven = { return StaticGiven(method: .sm_methodThatReturnsAndThrows__param_param(`param`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Int).self)
 			willProduce(stubber)
 			return given
         }
-        public static func methodThatRethrows(param: Parameter<(String) throws -> Int>, willThrow: Error...) -> StaticMethodStub {
+        public static func methodThatRethrows(param: Parameter<(String) throws -> Int>, willThrow: any Error...) -> StaticMethodStub {
             return StaticGiven(method: .sm_methodThatRethrows__param_param(`param`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func methodThatRethrows(param: Parameter<(String) throws -> Int>, willProduce: (StubberThrows<Int>) -> Void) -> StaticMethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: StaticGiven = { return StaticGiven(method: .sm_methodThatRethrows__param_param(`param`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Int).self)
 			willProduce(stubber)
@@ -393,31 +393,31 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
         public static func methodThatRethrows(param: Parameter<(String) throws -> Int>, willReturn: Int...) -> MethodStub {
             return Given(method: .m_methodThatRethrows__param_param(`param`), products: willReturn.map({ StubProduct.return($0 as Any) }))
         }
-        public static func methodThatThrows(willThrow: Error...) -> MethodStub {
+        public static func methodThatThrows(willThrow: any Error...) -> MethodStub {
             return Given(method: .m_methodThatThrows, products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func methodThatThrows(willProduce: (StubberThrows<Void>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_methodThatThrows, products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Void).self)
 			willProduce(stubber)
 			return given
         }
-        public static func methodThatReturnsAndThrows(param: Parameter<String>, willThrow: Error...) -> MethodStub {
+        public static func methodThatReturnsAndThrows(param: Parameter<String>, willThrow: any Error...) -> MethodStub {
             return Given(method: .m_methodThatReturnsAndThrows__param_param(`param`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func methodThatReturnsAndThrows(param: Parameter<String>, willProduce: (StubberThrows<Int>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_methodThatReturnsAndThrows__param_param(`param`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Int).self)
 			willProduce(stubber)
 			return given
         }
-        public static func methodThatRethrows(param: Parameter<(String) throws -> Int>, willThrow: Error...) -> MethodStub {
+        public static func methodThatRethrows(param: Parameter<(String) throws -> Int>, willThrow: any Error...) -> MethodStub {
             return Given(method: .m_methodThatRethrows__param_param(`param`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func methodThatRethrows(param: Parameter<(String) throws -> Int>, willProduce: (StubberThrows<Int>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_methodThatRethrows__param_param(`param`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Int).self)
 			willProduce(stubber)
@@ -3018,6 +3018,833 @@ open class EmptyProtocolMock: EmptyProtocol, Mock {
     }
 }
 
+// MARK: - ExistentialAnyProtocol
+
+open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
+        SwiftyMockyTestObserver.setup()
+        self.sequencingPolicy = sequencingPolicy
+        self.stubbingPolicy = stubbingPolicy
+        self.file = file
+        self.line = line
+    }
+
+    var matcher: Matcher = Matcher.default
+    var stubbingPolicy: StubbingPolicy = .wrap
+    var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+
+    private var queue = DispatchQueue(label: "com.swiftymocky.invocations", qos: .userInteractive)
+    private var invocations: [MethodType] = []
+    private var methodReturnValues: [Given] = []
+    private var methodPerformValues: [Perform] = []
+    private var file: StaticString?
+    private var line: UInt?
+
+    public typealias PropertyStub = Given
+    public typealias MethodStub = Given
+    public typealias SubscriptStub = Given
+
+    /// Convenience method - call setupMock() to extend debug information when failure occurs
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
+        self.file = file
+        self.line = line
+    }
+
+    /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
+    public func resetMock(_ scopes: MockScope...) {
+        let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
+        if scopes.contains(.invocation) { invocations = [] }
+        if scopes.contains(.given) { methodReturnValues = [] }
+        if scopes.contains(.perform) { methodPerformValues = [] }
+    }
+    nonisolated(unsafe) static var matcher: Matcher = Matcher.default
+    nonisolated(unsafe) static var stubbingPolicy: StubbingPolicy = .wrap
+    nonisolated(unsafe) static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    static private let queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
+    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
+    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
+    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
+    public typealias StaticPropertyStub = StaticGiven
+    public typealias StaticMethodStub = StaticGiven
+
+    /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
+    public static func resetMock(_ scopes: MockScope...) {
+        let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
+        if scopes.contains(.invocation) { invocations = [] }
+        if scopes.contains(.given) { methodReturnValues = [] }
+        if scopes.contains(.perform) { methodPerformValues = [] }
+    }
+
+    public var service: any ExistentialService {
+		get {	invocations.append(.p_service_get); return __p_service ?? givenGetterValue(.p_service_get, "ExistentialAnyProtocolMock - stub value for service was not defined") }
+		set {	invocations.append(.p_service_set(.value(newValue))); __p_service = newValue }
+	}
+	private var __p_service: (any ExistentialService)?
+
+    public var optionalService: (any ExistentialService)? {
+		get {	invocations.append(.p_optionalService_get); return __p_optionalService ?? optionalGivenGetterValue(.p_optionalService_get, "ExistentialAnyProtocolMock - stub value for optionalService was not defined") }
+		set {	invocations.append(.p_optionalService_set(.value(newValue))); __p_optionalService = newValue }
+	}
+	private var __p_optionalService: (any ExistentialService)?
+
+    public var services: [any ExistentialService] {
+		get {	invocations.append(.p_services_get); return __p_services ?? givenGetterValue(.p_services_get, "ExistentialAnyProtocolMock - stub value for services was not defined") }
+	}
+	private var __p_services: ([any ExistentialService])?
+
+    public var servicesById: [String: any ExistentialService] {
+		get {	invocations.append(.p_servicesById_get); return __p_servicesById ?? givenGetterValue(.p_servicesById_get, "ExistentialAnyProtocolMock - stub value for servicesById was not defined") }
+	}
+	private var __p_servicesById: ([String: any ExistentialService])?
+
+    public var composed: any ExistentialService & ExistentialOther {
+		get {	invocations.append(.p_composed_get); return __p_composed ?? givenGetterValue(.p_composed_get, "ExistentialAnyProtocolMock - stub value for composed was not defined") }
+	}
+	private var __p_composed: (any ExistentialService & ExistentialOther)?
+
+    public var optionalComposed: (any ExistentialService & ExistentialOther)? {
+		get {	invocations.append(.p_optionalComposed_get); return __p_optionalComposed ?? optionalGivenGetterValue(.p_optionalComposed_get, "ExistentialAnyProtocolMock - stub value for optionalComposed was not defined") }
+	}
+	private var __p_optionalComposed: (any ExistentialService & ExistentialOther)?
+
+    public var numbers: (any Collection<Int>)? {
+		get {	invocations.append(.p_numbers_get); return __p_numbers ?? optionalGivenGetterValue(.p_numbers_get, "ExistentialAnyProtocolMock - stub value for numbers was not defined") }
+	}
+	private var __p_numbers: (any Collection<Int>)?
+
+
+    public static var shared: any ExistentialService {
+		get {	ExistentialAnyProtocolMock.invocations.append(.p_shared_get); return ExistentialAnyProtocolMock.__p_shared ?? givenGetterValue(.p_shared_get, "ExistentialAnyProtocolMock - stub value for shared was not defined") }
+		set {	ExistentialAnyProtocolMock.invocations.append(.p_shared_set(.value(newValue))); ExistentialAnyProtocolMock.__p_shared = newValue }
+	}
+	private nonisolated(unsafe) static var __p_shared: (any ExistentialService)?
+
+
+
+
+    public static func makeShared() -> any ExistentialService {
+        addInvocation(.sm_makeShared)
+		let perform = methodPerformValue(.sm_makeShared) as? () -> Void
+		perform?()
+		var __value: any ExistentialService
+		do {
+		    __value = try methodReturnValue(.sm_makeShared).casted()
+		} catch {
+			Failure("Stub return value not specified for makeShared(). Use given")
+		}
+		return __value
+    }
+
+    open func take(_ service: any ExistentialService) {
+        addInvocation(.m_take__service(Parameter<any ExistentialService>.value(`service`)))
+		let perform = methodPerformValue(.m_take__service(Parameter<any ExistentialService>.value(`service`))) as? (any ExistentialService) -> Void
+		perform?(`service`)
+    }
+
+    open func takeOptional(_ service: (any ExistentialService)?) {
+        addInvocation(.m_takeOptional__service(Parameter<(any ExistentialService)?>.value(`service`)))
+		let perform = methodPerformValue(.m_takeOptional__service(Parameter<(any ExistentialService)?>.value(`service`))) as? ((any ExistentialService)?) -> Void
+		perform?(`service`)
+    }
+
+    open func takeMany(_ services: [any ExistentialService]) {
+        addInvocation(.m_takeMany__services(Parameter<[any ExistentialService]>.value(`services`)))
+		let perform = methodPerformValue(.m_takeMany__services(Parameter<[any ExistentialService]>.value(`services`))) as? ([any ExistentialService]) -> Void
+		perform?(`services`)
+    }
+
+    open func takeVariadic(_ services: any ExistentialService...) {
+        addInvocation(.m_takeVariadic__services(Parameter<[any ExistentialService]>.value(`services`)))
+		let perform = methodPerformValue(.m_takeVariadic__services(Parameter<[any ExistentialService]>.value(`services`))) as? ([any ExistentialService]) -> Void
+		perform?(`services`)
+    }
+
+    open func takeInout(_ service: inout any ExistentialService) {
+        addInvocation(.m_takeInout__service(Parameter<any ExistentialService>.value(`service`)))
+		let perform = methodPerformValue(.m_takeInout__service(Parameter<any ExistentialService>.value(`service`))) as? (inout any ExistentialService) -> Void
+		perform?(&`service`)
+    }
+
+    open func takeCompletion(_ completion: @escaping ((any Error)?) -> Void) {
+        addInvocation(.m_takeCompletion__completion(Parameter<((any Error)?) -> Void>.value(`completion`)))
+		let perform = methodPerformValue(.m_takeCompletion__completion(Parameter<((any Error)?) -> Void>.value(`completion`))) as? (@escaping ((any Error)?) -> Void) -> Void
+		perform?(`completion`)
+    }
+
+    open func takeResult(_ completion: @escaping (Result<Int, any Error>) -> Void) {
+        addInvocation(.m_takeResult__completion(Parameter<(Result<Int, any Error>) -> Void>.value(`completion`)))
+		let perform = methodPerformValue(.m_takeResult__completion(Parameter<(Result<Int, any Error>) -> Void>.value(`completion`))) as? (@escaping (Result<Int, any Error>) -> Void) -> Void
+		perform?(`completion`)
+    }
+
+    open func makeService() -> any ExistentialService {
+        addInvocation(.m_makeService)
+		let perform = methodPerformValue(.m_makeService) as? () -> Void
+		perform?()
+		var __value: any ExistentialService
+		do {
+		    __value = try methodReturnValue(.m_makeService).casted()
+		} catch {
+			onFatalFailure("Stub return value not specified for makeService(). Use given")
+			Failure("Stub return value not specified for makeService(). Use given")
+		}
+		return __value
+    }
+
+    open func makeOptionalService() -> (any ExistentialService)? {
+        addInvocation(.m_makeOptionalService)
+		let perform = methodPerformValue(.m_makeOptionalService) as? () -> Void
+		perform?()
+		var __value: (any ExistentialService)? = nil
+		do {
+		    __value = try methodReturnValue(.m_makeOptionalService).casted()
+		} catch {
+			// do nothing
+		}
+		return __value
+    }
+
+    open func makeThrowing() throws -> any ExistentialService {
+        addInvocation(.m_makeThrowing)
+		let perform = methodPerformValue(.m_makeThrowing) as? () -> Void
+		perform?()
+		var __value: any ExistentialService
+		do {
+		    __value = try methodReturnValue(.m_makeThrowing).casted()
+		} catch MockError.notStubed {
+			onFatalFailure("Stub return value not specified for makeThrowing(). Use given")
+			Failure("Stub return value not specified for makeThrowing(). Use given")
+		} catch {
+		    throw error
+		}
+		return __value
+    }
+
+    open func makeAsync() throws -> any ExistentialService {
+        addInvocation(.m_makeAsync)
+		let perform = methodPerformValue(.m_makeAsync) as? () -> Void
+		perform?()
+		var __value: any ExistentialService
+		do {
+		    __value = try methodReturnValue(.m_makeAsync).casted()
+		} catch MockError.notStubed {
+			onFatalFailure("Stub return value not specified for makeAsync(). Use given")
+			Failure("Stub return value not specified for makeAsync(). Use given")
+		} catch {
+		    throw error
+		}
+		return __value
+    }
+
+    open func takeGeneric<T: ExistentialService>(_ value: T, other: any ExistentialOther) -> T {
+        addInvocation(.m_takeGeneric__valueother_other(Parameter<T>.value(`value`).wrapAsGeneric(), Parameter<any ExistentialOther>.value(`other`)))
+		let perform = methodPerformValue(.m_takeGeneric__valueother_other(Parameter<T>.value(`value`).wrapAsGeneric(), Parameter<any ExistentialOther>.value(`other`))) as? (T, any ExistentialOther) -> Void
+		perform?(`value`, `other`)
+		var __value: T
+		do {
+		    __value = try methodReturnValue(.m_takeGeneric__valueother_other(Parameter<T>.value(`value`).wrapAsGeneric(), Parameter<any ExistentialOther>.value(`other`))).casted()
+		} catch {
+			onFatalFailure("Stub return value not specified for takeGeneric<T: ExistentialService>(_ value: T, other: any ExistentialOther). Use given")
+			Failure("Stub return value not specified for takeGeneric<T: ExistentialService>(_ value: T, other: any ExistentialOther). Use given")
+		}
+		return __value
+    }
+
+    open func convert(_ error: any Error) -> any Error {
+        addInvocation(.m_convert__error(Parameter<any Error>.value(`error`)))
+		let perform = methodPerformValue(.m_convert__error(Parameter<any Error>.value(`error`))) as? (any Error) -> Void
+		perform?(`error`)
+		var __value: any Error
+		do {
+		    __value = try methodReturnValue(.m_convert__error(Parameter<any Error>.value(`error`))).casted()
+		} catch {
+			onFatalFailure("Stub return value not specified for convert(_ error: any Error). Use given")
+			Failure("Stub return value not specified for convert(_ error: any Error). Use given")
+		}
+		return __value
+    }
+
+    public subscript (index: Int) -> any ExistentialService {
+		get {
+			addInvocation(.subscript_get_index(Parameter<Int>.value(`index`)))
+			do {
+				return try methodReturnValue(.subscript_get_index(Parameter<Int>.value(`index`))).casted()
+			} catch {
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+			}
+		}
+		set {
+			addInvocation(.subscript_set_index(Parameter<Int>.value(`index`), Parameter<any ExistentialService>.value(newValue)))
+		}
+	}
+
+    public subscript (key: String) -> (any ExistentialService)? {
+		get {
+			addInvocation(.subscript_get_key(Parameter<String>.value(`key`)))
+			do {
+				return try methodReturnValue(.subscript_get_key(Parameter<String>.value(`key`))).casted()
+			} catch {
+				return nil
+			}
+		}
+	}
+
+    fileprivate enum StaticMethodType {
+        case sm_makeShared
+        case p_shared_get
+		case p_shared_set(Parameter<any ExistentialService>)
+
+        static func compareParameters(lhs: StaticMethodType, rhs: StaticMethodType, matcher: Matcher) -> Matcher.ComparisonResult {
+            switch (lhs, rhs) {
+            case (.sm_makeShared, .sm_makeShared): return .match
+            case (.p_shared_get,.p_shared_get): return Matcher.ComparisonResult.match
+			case (.p_shared_set(let left),.p_shared_set(let right)): return Matcher.ComparisonResult([Matcher.ParameterComparisonResult(Parameter<any ExistentialService>.compare(lhs: left, rhs: right, with: matcher), left, right, "newValue")])
+            default: return .none
+            }
+        }
+
+        func intValue() -> Int {
+            switch self {
+                case .sm_makeShared: return 0
+                case .p_shared_get: return 0
+			case .p_shared_set(let newValue): return newValue.intValue
+            }
+        }
+        func assertionName() -> String {
+            switch self {
+            case .sm_makeShared: return ".makeShared()"
+            case .p_shared_get: return "[get] .shared"
+			case .p_shared_set: return "[set] .shared"
+
+            }
+        }
+    }
+
+    open class StaticGiven: StubbedMethod {
+        fileprivate var method: StaticMethodType
+
+        private init(method: StaticMethodType, products: [StubProduct]) {
+            self.method = method
+            super.init(products)
+        }
+
+        public static func shared(getter defaultValue: any ExistentialService...) -> StaticPropertyStub {
+            return StaticGiven(method: .p_shared_get, products: defaultValue.map({ StubProduct.return($0 as Any) }))
+        }
+
+        public static func makeShared(willReturn: any ExistentialService...) -> StaticMethodStub {
+            return StaticGiven(method: .sm_makeShared, products: willReturn.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func makeShared(willProduce: (Stubber<any ExistentialService>) -> Void) -> StaticMethodStub {
+            let willReturn: [any ExistentialService] = []
+			let given: StaticGiven = { return StaticGiven(method: .sm_makeShared, products: willReturn.map({ StubProduct.return($0 as Any) })) }()
+			let stubber = given.stub(for: (any ExistentialService).self)
+			willProduce(stubber)
+			return given
+        }
+    }
+
+    public struct StaticVerify {
+        fileprivate var method: StaticMethodType
+
+        public static func makeShared() -> StaticVerify { return StaticVerify(method: .sm_makeShared)}
+        public static var shared: StaticVerify { return StaticVerify(method: .p_shared_get) }
+		public static func shared(set newValue: Parameter<any ExistentialService>) -> StaticVerify { return StaticVerify(method: .p_shared_set(newValue)) }
+    }
+
+    public struct StaticPerform {
+        fileprivate var method: StaticMethodType
+        var performs: Any
+
+        public static func makeShared(perform: @escaping () -> Void) -> StaticPerform {
+            return StaticPerform(method: .sm_makeShared, performs: perform)
+        }
+    }
+
+    
+    fileprivate enum MethodType {
+        case m_take__service(Parameter<any ExistentialService>)
+        case m_takeOptional__service(Parameter<(any ExistentialService)?>)
+        case m_takeMany__services(Parameter<[any ExistentialService]>)
+        case m_takeVariadic__services(Parameter<[any ExistentialService]>)
+        case m_takeInout__service(Parameter<any ExistentialService>)
+        case m_takeCompletion__completion(Parameter<((any Error)?) -> Void>)
+        case m_takeResult__completion(Parameter<(Result<Int, any Error>) -> Void>)
+        case m_makeService
+        case m_makeOptionalService
+        case m_makeThrowing
+        case m_makeAsync
+        case m_takeGeneric__valueother_other(Parameter<GenericAttribute>, Parameter<any ExistentialOther>)
+        case m_convert__error(Parameter<any Error>)
+        case p_service_get
+		case p_service_set(Parameter<any ExistentialService>)
+        case p_optionalService_get
+		case p_optionalService_set(Parameter<(any ExistentialService)?>)
+        case p_services_get
+        case p_servicesById_get
+        case p_composed_get
+        case p_optionalComposed_get
+        case p_numbers_get
+        case subscript_get_index(Parameter<Int>)
+		case subscript_set_index(Parameter<Int>, Parameter<any ExistentialService>)
+        case subscript_get_key(Parameter<String>)
+
+        static func compareParameters(lhs: MethodType, rhs: MethodType, matcher: Matcher) -> Matcher.ComparisonResult {
+            switch (lhs, rhs) {
+            case (.m_take__service(let lhsService), .m_take__service(let rhsService)):
+				var results: [Matcher.ParameterComparisonResult] = []
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsService, rhs: rhsService, with: matcher), lhsService, rhsService, "_ service"))
+				return Matcher.ComparisonResult(results)
+
+            case (.m_takeOptional__service(let lhsService), .m_takeOptional__service(let rhsService)):
+				var results: [Matcher.ParameterComparisonResult] = []
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsService, rhs: rhsService, with: matcher), lhsService, rhsService, "_ service"))
+				return Matcher.ComparisonResult(results)
+
+            case (.m_takeMany__services(let lhsServices), .m_takeMany__services(let rhsServices)):
+				var results: [Matcher.ParameterComparisonResult] = []
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsServices, rhs: rhsServices, with: matcher), lhsServices, rhsServices, "_ services"))
+				return Matcher.ComparisonResult(results)
+
+            case (.m_takeVariadic__services(let lhsServices), .m_takeVariadic__services(let rhsServices)):
+				var results: [Matcher.ParameterComparisonResult] = []
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsServices, rhs: rhsServices, with: matcher), lhsServices, rhsServices, "_ services"))
+				return Matcher.ComparisonResult(results)
+
+            case (.m_takeInout__service(let lhsService), .m_takeInout__service(let rhsService)):
+				var results: [Matcher.ParameterComparisonResult] = []
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsService, rhs: rhsService, with: matcher), lhsService, rhsService, "_ service"))
+				return Matcher.ComparisonResult(results)
+
+            case (.m_takeCompletion__completion(let lhsCompletion), .m_takeCompletion__completion(let rhsCompletion)):
+				var results: [Matcher.ParameterComparisonResult] = []
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsCompletion, rhs: rhsCompletion, with: matcher), lhsCompletion, rhsCompletion, "_ completion"))
+				return Matcher.ComparisonResult(results)
+
+            case (.m_takeResult__completion(let lhsCompletion), .m_takeResult__completion(let rhsCompletion)):
+				var results: [Matcher.ParameterComparisonResult] = []
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsCompletion, rhs: rhsCompletion, with: matcher), lhsCompletion, rhsCompletion, "_ completion"))
+				return Matcher.ComparisonResult(results)
+
+            case (.m_makeService, .m_makeService): return .match
+
+            case (.m_makeOptionalService, .m_makeOptionalService): return .match
+
+            case (.m_makeThrowing, .m_makeThrowing): return .match
+
+            case (.m_makeAsync, .m_makeAsync): return .match
+
+            case (.m_takeGeneric__valueother_other(let lhsValue, let lhsOther), .m_takeGeneric__valueother_other(let rhsValue, let rhsOther)):
+				var results: [Matcher.ParameterComparisonResult] = []
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsValue, rhs: rhsValue, with: matcher), lhsValue, rhsValue, "_ value"))
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsOther, rhs: rhsOther, with: matcher), lhsOther, rhsOther, "other"))
+				return Matcher.ComparisonResult(results)
+
+            case (.m_convert__error(let lhsError), .m_convert__error(let rhsError)):
+				var results: [Matcher.ParameterComparisonResult] = []
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsError, rhs: rhsError, with: matcher), lhsError, rhsError, "_ error"))
+				return Matcher.ComparisonResult(results)
+            case (.p_service_get,.p_service_get): return Matcher.ComparisonResult.match
+			case (.p_service_set(let left),.p_service_set(let right)): return Matcher.ComparisonResult([Matcher.ParameterComparisonResult(Parameter<any ExistentialService>.compare(lhs: left, rhs: right, with: matcher), left, right, "newValue")])
+            case (.p_optionalService_get,.p_optionalService_get): return Matcher.ComparisonResult.match
+			case (.p_optionalService_set(let left),.p_optionalService_set(let right)): return Matcher.ComparisonResult([Matcher.ParameterComparisonResult(Parameter<(any ExistentialService)?>.compare(lhs: left, rhs: right, with: matcher), left, right, "newValue")])
+            case (.p_services_get,.p_services_get): return Matcher.ComparisonResult.match
+            case (.p_servicesById_get,.p_servicesById_get): return Matcher.ComparisonResult.match
+            case (.p_composed_get,.p_composed_get): return Matcher.ComparisonResult.match
+            case (.p_optionalComposed_get,.p_optionalComposed_get): return Matcher.ComparisonResult.match
+            case (.p_numbers_get,.p_numbers_get): return Matcher.ComparisonResult.match
+            case (let .subscript_get_index(lhsIndex), let .subscript_get_index(rhsIndex)):
+				var results: [Matcher.ParameterComparisonResult] = []
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsIndex, rhs: rhsIndex, with: matcher), lhsIndex, rhsIndex, "index"))
+				return Matcher.ComparisonResult(results)
+			case (let .subscript_set_index(lhsIndex, lhsDidSet), let .subscript_set_index(rhsIndex, rhsDidSet)):
+				var results: [Matcher.ParameterComparisonResult] = []
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsIndex, rhs: rhsIndex, with: matcher), lhsIndex, rhsIndex, "index"))
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsDidSet, rhs: rhsDidSet, with: matcher), lhsDidSet, rhsDidSet, "newValue"))
+				return Matcher.ComparisonResult(results)
+            case (let .subscript_get_key(lhsKey), let .subscript_get_key(rhsKey)):
+				var results: [Matcher.ParameterComparisonResult] = []
+				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsKey, rhs: rhsKey, with: matcher), lhsKey, rhsKey, "key"))
+				return Matcher.ComparisonResult(results)
+            default: return .none
+            }
+        }
+
+        func intValue() -> Int {
+            switch self {
+            case let .m_take__service(p0): return p0.intValue
+            case let .m_takeOptional__service(p0): return p0.intValue
+            case let .m_takeMany__services(p0): return p0.intValue
+            case let .m_takeVariadic__services(p0): return p0.intValue
+            case let .m_takeInout__service(p0): return p0.intValue
+            case let .m_takeCompletion__completion(p0): return p0.intValue
+            case let .m_takeResult__completion(p0): return p0.intValue
+            case .m_makeService: return 0
+            case .m_makeOptionalService: return 0
+            case .m_makeThrowing: return 0
+            case .m_makeAsync: return 0
+            case let .m_takeGeneric__valueother_other(p0, p1): return p0.intValue + p1.intValue
+            case let .m_convert__error(p0): return p0.intValue
+            case .p_service_get: return 0
+			case .p_service_set(let newValue): return newValue.intValue
+            case .p_optionalService_get: return 0
+			case .p_optionalService_set(let newValue): return newValue.intValue
+            case .p_services_get: return 0
+            case .p_servicesById_get: return 0
+            case .p_composed_get: return 0
+            case .p_optionalComposed_get: return 0
+            case .p_numbers_get: return 0
+            case let .subscript_get_index(p0): return p0.intValue
+			case let .subscript_set_index(p0, _): return p0.intValue
+            case let .subscript_get_key(p0): return p0.intValue
+            }
+        }
+        func assertionName() -> String {
+            switch self {
+            case .m_take__service: return ".take(_:)"
+            case .m_takeOptional__service: return ".takeOptional(_:)"
+            case .m_takeMany__services: return ".takeMany(_:)"
+            case .m_takeVariadic__services: return ".takeVariadic(_:)"
+            case .m_takeInout__service: return ".takeInout(_:)"
+            case .m_takeCompletion__completion: return ".takeCompletion(_:)"
+            case .m_takeResult__completion: return ".takeResult(_:)"
+            case .m_makeService: return ".makeService()"
+            case .m_makeOptionalService: return ".makeOptionalService()"
+            case .m_makeThrowing: return ".makeThrowing()"
+            case .m_makeAsync: return ".makeAsync()"
+            case .m_takeGeneric__valueother_other: return ".takeGeneric(_:other:)"
+            case .m_convert__error: return ".convert(_:)"
+            case .p_service_get: return "[get] .service"
+			case .p_service_set: return "[set] .service"
+            case .p_optionalService_get: return "[get] .optionalService"
+			case .p_optionalService_set: return "[set] .optionalService"
+            case .p_services_get: return "[get] .services"
+            case .p_servicesById_get: return "[get] .servicesById"
+            case .p_composed_get: return "[get] .composed"
+            case .p_optionalComposed_get: return "[get] .optionalComposed"
+            case .p_numbers_get: return "[get] .numbers"
+            case .subscript_get_index: return "[get] `subscript`[index]"
+			case .subscript_set_index: return "[set] `subscript`[index]"
+            case .subscript_get_key: return "[get] `subscript`[key]"
+            }
+        }
+    }
+
+    open class Given: StubbedMethod {
+        fileprivate var method: MethodType
+
+        private init(method: MethodType, products: [StubProduct]) {
+            self.method = method
+            super.init(products)
+        }
+
+        public static func service(getter defaultValue: any ExistentialService...) -> PropertyStub {
+            return Given(method: .p_service_get, products: defaultValue.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func optionalService(getter defaultValue: (any ExistentialService)?...) -> PropertyStub {
+            return Given(method: .p_optionalService_get, products: defaultValue.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func services(getter defaultValue: [any ExistentialService]...) -> PropertyStub {
+            return Given(method: .p_services_get, products: defaultValue.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func servicesById(getter defaultValue: [String: any ExistentialService]...) -> PropertyStub {
+            return Given(method: .p_servicesById_get, products: defaultValue.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func composed(getter defaultValue: any ExistentialService & ExistentialOther...) -> PropertyStub {
+            return Given(method: .p_composed_get, products: defaultValue.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func optionalComposed(getter defaultValue: (any ExistentialService & ExistentialOther)?...) -> PropertyStub {
+            return Given(method: .p_optionalComposed_get, products: defaultValue.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func numbers(getter defaultValue: (any Collection<Int>)?...) -> PropertyStub {
+            return Given(method: .p_numbers_get, products: defaultValue.map({ StubProduct.return($0 as Any) }))
+        }
+
+        public static func makeService(willReturn: any ExistentialService...) -> MethodStub {
+            return Given(method: .m_makeService, products: willReturn.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func makeOptionalService(willReturn: (any ExistentialService)?...) -> MethodStub {
+            return Given(method: .m_makeOptionalService, products: willReturn.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func makeThrowing(willReturn: any ExistentialService...) -> MethodStub {
+            return Given(method: .m_makeThrowing, products: willReturn.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func makeAsync(willReturn: any ExistentialService...) -> MethodStub {
+            return Given(method: .m_makeAsync, products: willReturn.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func takeGeneric<T: ExistentialService>(_ value: Parameter<T>, other: Parameter<any ExistentialOther>, willReturn: T...) -> MethodStub {
+            return Given(method: .m_takeGeneric__valueother_other(`value`.wrapAsGeneric(), `other`), products: willReturn.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func convert(_ error: Parameter<any Error>, willReturn: any Error...) -> MethodStub {
+            return Given(method: .m_convert__error(`error`), products: willReturn.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func makeService(willProduce: (Stubber<any ExistentialService>) -> Void) -> MethodStub {
+            let willReturn: [any ExistentialService] = []
+			let given: Given = { return Given(method: .m_makeService, products: willReturn.map({ StubProduct.return($0 as Any) })) }()
+			let stubber = given.stub(for: (any ExistentialService).self)
+			willProduce(stubber)
+			return given
+        }
+        public static func makeOptionalService(willProduce: (Stubber<(any ExistentialService)?>) -> Void) -> MethodStub {
+            let willReturn: [(any ExistentialService)?] = []
+			let given: Given = { return Given(method: .m_makeOptionalService, products: willReturn.map({ StubProduct.return($0 as Any) })) }()
+			let stubber = given.stub(for: ((any ExistentialService)?).self)
+			willProduce(stubber)
+			return given
+        }
+        public static func takeGeneric<T: ExistentialService>(_ value: Parameter<T>, other: Parameter<any ExistentialOther>, willProduce: (Stubber<T>) -> Void) -> MethodStub {
+            let willReturn: [T] = []
+			let given: Given = { return Given(method: .m_takeGeneric__valueother_other(`value`.wrapAsGeneric(), `other`), products: willReturn.map({ StubProduct.return($0 as Any) })) }()
+			let stubber = given.stub(for: (T).self)
+			willProduce(stubber)
+			return given
+        }
+        public static func convert(_ error: Parameter<any Error>, willProduce: (Stubber<any Error>) -> Void) -> MethodStub {
+            let willReturn: [any Error] = []
+			let given: Given = { return Given(method: .m_convert__error(`error`), products: willReturn.map({ StubProduct.return($0 as Any) })) }()
+			let stubber = given.stub(for: (any Error).self)
+			willProduce(stubber)
+			return given
+        }
+        public static func `subscript`(index: Parameter<Int>, willReturn: any ExistentialService...) -> SubscriptStub {
+            return Given(method: .subscript_get_index(`index`), products: willReturn.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func `subscript`(key: Parameter<String>, willReturn: (any ExistentialService)?...) -> SubscriptStub {
+            return Given(method: .subscript_get_key(`key`), products: willReturn.map({ StubProduct.return($0 as Any) }))
+        }
+        public static func makeThrowing(willThrow: any Error...) -> MethodStub {
+            return Given(method: .m_makeThrowing, products: willThrow.map({ StubProduct.throw($0) }))
+        }
+        public static func makeThrowing(willProduce: (StubberThrows<any ExistentialService>) -> Void) -> MethodStub {
+            let willThrow: [any Error] = []
+			let given: Given = { return Given(method: .m_makeThrowing, products: willThrow.map({ StubProduct.throw($0) })) }()
+			let stubber = given.stubThrows(for: (any ExistentialService).self)
+			willProduce(stubber)
+			return given
+        }
+        public static func makeAsync(willThrow: any Error...) -> MethodStub {
+            return Given(method: .m_makeAsync, products: willThrow.map({ StubProduct.throw($0) }))
+        }
+        public static func makeAsync(willProduce: (StubberThrows<any ExistentialService>) -> Void) -> MethodStub {
+            let willThrow: [any Error] = []
+			let given: Given = { return Given(method: .m_makeAsync, products: willThrow.map({ StubProduct.throw($0) })) }()
+			let stubber = given.stubThrows(for: (any ExistentialService).self)
+			willProduce(stubber)
+			return given
+        }
+    }
+
+    public struct Verify {
+        fileprivate var method: MethodType
+
+        public static func take(_ service: Parameter<any ExistentialService>) -> Verify { return Verify(method: .m_take__service(`service`))}
+        public static func takeOptional(_ service: Parameter<(any ExistentialService)?>) -> Verify { return Verify(method: .m_takeOptional__service(`service`))}
+        public static func takeMany(_ services: Parameter<[any ExistentialService]>) -> Verify { return Verify(method: .m_takeMany__services(`services`))}
+        public static func takeVariadic(_ services: Parameter<[any ExistentialService]>) -> Verify { return Verify(method: .m_takeVariadic__services(`services`))}
+        public static func takeInout(_ service: Parameter<any ExistentialService>) -> Verify { return Verify(method: .m_takeInout__service(`service`))}
+        public static func takeCompletion(_ completion: Parameter<((any Error)?) -> Void>) -> Verify { return Verify(method: .m_takeCompletion__completion(`completion`))}
+        public static func takeResult(_ completion: Parameter<(Result<Int, any Error>) -> Void>) -> Verify { return Verify(method: .m_takeResult__completion(`completion`))}
+        public static func makeService() -> Verify { return Verify(method: .m_makeService)}
+        public static func makeOptionalService() -> Verify { return Verify(method: .m_makeOptionalService)}
+        public static func makeThrowing() -> Verify { return Verify(method: .m_makeThrowing)}
+        public static func makeAsync() -> Verify { return Verify(method: .m_makeAsync)}
+        public static func takeGeneric<T>(_ value: Parameter<T>, other: Parameter<any ExistentialOther>) -> Verify where T:ExistentialService { return Verify(method: .m_takeGeneric__valueother_other(`value`.wrapAsGeneric(), `other`))}
+        public static func convert(_ error: Parameter<any Error>) -> Verify { return Verify(method: .m_convert__error(`error`))}
+        public static var service: Verify { return Verify(method: .p_service_get) }
+		public static func service(set newValue: Parameter<any ExistentialService>) -> Verify { return Verify(method: .p_service_set(newValue)) }
+        public static var optionalService: Verify { return Verify(method: .p_optionalService_get) }
+		public static func optionalService(set newValue: Parameter<(any ExistentialService)?>) -> Verify { return Verify(method: .p_optionalService_set(newValue)) }
+        public static var services: Verify { return Verify(method: .p_services_get) }
+        public static var servicesById: Verify { return Verify(method: .p_servicesById_get) }
+        public static var composed: Verify { return Verify(method: .p_composed_get) }
+        public static var optionalComposed: Verify { return Verify(method: .p_optionalComposed_get) }
+        public static var numbers: Verify { return Verify(method: .p_numbers_get) }
+        public static func `subscript`(index: Parameter<Int>) -> Verify { return Verify(method: .subscript_get_index(`index`))}
+        public static func `subscript`(index: Parameter<Int>, set newValue: Parameter<any ExistentialService>) -> Verify { return Verify(method: .subscript_set_index(`index`, newValue))}
+        public static func `subscript`(key: Parameter<String>) -> Verify { return Verify(method: .subscript_get_key(`key`))}
+    }
+
+    public struct Perform {
+        fileprivate var method: MethodType
+        var performs: Any
+
+        public static func take(_ service: Parameter<any ExistentialService>, perform: @escaping (any ExistentialService) -> Void) -> Perform {
+            return Perform(method: .m_take__service(`service`), performs: perform)
+        }
+        public static func takeOptional(_ service: Parameter<(any ExistentialService)?>, perform: @escaping ((any ExistentialService)?) -> Void) -> Perform {
+            return Perform(method: .m_takeOptional__service(`service`), performs: perform)
+        }
+        public static func takeMany(_ services: Parameter<[any ExistentialService]>, perform: @escaping ([any ExistentialService]) -> Void) -> Perform {
+            return Perform(method: .m_takeMany__services(`services`), performs: perform)
+        }
+        public static func takeVariadic(_ services: Parameter<[any ExistentialService]>, perform: @escaping ([any ExistentialService]) -> Void) -> Perform {
+            return Perform(method: .m_takeVariadic__services(`services`), performs: perform)
+        }
+        public static func takeInout(_ service: Parameter<any ExistentialService>, perform: @escaping (inout any ExistentialService) -> Void) -> Perform {
+            return Perform(method: .m_takeInout__service(`service`), performs: perform)
+        }
+        public static func takeCompletion(_ completion: Parameter<((any Error)?) -> Void>, perform: @escaping (@escaping ((any Error)?) -> Void) -> Void) -> Perform {
+            return Perform(method: .m_takeCompletion__completion(`completion`), performs: perform)
+        }
+        public static func takeResult(_ completion: Parameter<(Result<Int, any Error>) -> Void>, perform: @escaping (@escaping (Result<Int, any Error>) -> Void) -> Void) -> Perform {
+            return Perform(method: .m_takeResult__completion(`completion`), performs: perform)
+        }
+        public static func makeService(perform: @escaping () -> Void) -> Perform {
+            return Perform(method: .m_makeService, performs: perform)
+        }
+        public static func makeOptionalService(perform: @escaping () -> Void) -> Perform {
+            return Perform(method: .m_makeOptionalService, performs: perform)
+        }
+        public static func makeThrowing(perform: @escaping () -> Void) -> Perform {
+            return Perform(method: .m_makeThrowing, performs: perform)
+        }
+        public static func makeAsync(perform: @escaping () -> Void) -> Perform {
+            return Perform(method: .m_makeAsync, performs: perform)
+        }
+        public static func takeGeneric<T>(_ value: Parameter<T>, other: Parameter<any ExistentialOther>, perform: @escaping (T, any ExistentialOther) -> Void) -> Perform where T:ExistentialService {
+            return Perform(method: .m_takeGeneric__valueother_other(`value`.wrapAsGeneric(), `other`), performs: perform)
+        }
+        public static func convert(_ error: Parameter<any Error>, perform: @escaping (any Error) -> Void) -> Perform {
+            return Perform(method: .m_convert__error(`error`), performs: perform)
+        }
+    }
+
+    public func given(_ method: Given) {
+        methodReturnValues.append(method)
+    }
+
+    public func perform(_ method: Perform) {
+        methodPerformValues.append(method)
+        methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+    }
+
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
+        let fullMatches = matchingCalls(method, file: file, line: line)
+        let success = count.matches(fullMatches)
+        let assertionName = method.method.assertionName()
+        let feedback: String = {
+            guard !success else { return "" }
+            return Utils.closestCallsMessage(
+                for: self.invocations.map { invocation in
+                    matcher.set(file: file, line: line)
+                    defer { matcher.clearFileAndLine() }
+                    return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
+                },
+                name: assertionName
+            )
+        }()
+        MockyAssert(success, "Expected: \(count) invocations of `\(assertionName)`, but was: \(fullMatches).\(feedback)", file: file, line: line)
+    }
+
+    private func addInvocation(_ call: MethodType) {
+        self.queue.sync { invocations.append(call) }
+    }
+    private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
+        matcher.set(file: self.file, line: self.line)
+        defer { matcher.clearFileAndLine() }
+        let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
+        let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
+        guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
+        return product
+    }
+    private func methodPerformValue(_ method: MethodType) -> Any? {
+        matcher.set(file: self.file, line: self.line)
+        defer { matcher.clearFileAndLine() }
+        let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
+        return matched?.performs
+    }
+    private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
+        matcher.set(file: file ?? self.file, line: line ?? self.line)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
+    }
+    private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
+        return matchingCalls(method.method, file: file, line: line).count
+    }
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
+        do {
+            return try methodReturnValue(method).casted()
+        } catch {
+            onFatalFailure(message)
+            Failure(message)
+        }
+    }
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
+        do {
+            return try methodReturnValue(method).casted()
+        } catch {
+            return nil
+        }
+    }
+    private func onFatalFailure(_ message: String) {
+        guard let file = self.file, let line = self.line else { return } // Let if fail if cannot handle gratefully
+        SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
+    }
+
+    static public func given(_ method: StaticGiven) {
+        methodReturnValues.append(method)
+    }
+
+    static public func perform(_ method: StaticPerform) {
+        methodPerformValues.append(method)
+        methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+    }
+
+    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
+        let fullMatches = matchingCalls(method, file: file, line: line)
+        let success = count.matches(fullMatches)
+        let assertionName = method.method.assertionName()
+        let feedback: String = {
+            guard !success else { return "" }
+            return Utils.closestCallsMessage(
+                for: self.invocations.map { invocation in
+                    matcher.set(file: file, line: line)
+                    defer { matcher.clearFileAndLine() }
+                    return StaticMethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
+                },
+                name: assertionName
+            )
+        }()
+        MockyAssert(success, "Expected: \(count) invocations of `\(assertionName)`, but was: \(fullMatches).\(feedback)", file: file, line: line)
+    }
+
+    static private func addInvocation(_ call: StaticMethodType) {
+        self.queue.sync { invocations.append(call) }
+    }
+    static private func methodReturnValue(_ method: StaticMethodType) throws -> StubProduct {
+        let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
+        let matched = candidates.first(where: { $0.isValid && StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
+        guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
+        return product
+    }
+    static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
+        let matched = methodPerformValues.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
+        return matched?.performs
+    }
+    static private func matchingCalls(_ method: StaticMethodType, file: StaticString?, line: UInt?) -> [StaticMethodType] {
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
+    }
+    static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
+        return matchingCalls(method.method, file: file, line: line).count
+    }
+    static private func givenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value {
+        do {
+            return try methodReturnValue(method).casted()
+        } catch {
+            Failure(message)
+        }
+    }
+    static private func optionalGivenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value? {
+        do {
+            return try methodReturnValue(method).casted()
+        } catch {
+            return nil
+        }
+    }
+}
+
 // MARK: - FailsWithAutoClosureOnSwift5
 
 open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock {
@@ -3250,11 +4077,11 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
         if scopes.contains(.perform) { methodPerformValues = [] }
     }
 
-    public var `throw`: Error {
+    public var `throw`: any Error {
 		get {	invocations.append(.p_throw_get); return __p_throw ?? givenGetterValue(.p_throw_get, "FailsWithKeywordArgumentsMock - stub value for `throw` was not defined") }
 		set {	invocations.append(.p_throw_set(.value(newValue))); __p_throw = newValue }
 	}
-	private var __p_throw: (Error)?
+	private var __p_throw: (any Error)?
 
 
 
@@ -3266,11 +4093,11 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
 		perform?(`for`)
     }
 
-    open func `throw`(while: String) -> Error {
+    open func `throw`(while: String) -> any Error {
         addInvocation(.m_throw__while_while(Parameter<String>.value(`while`)))
 		let perform = methodPerformValue(.m_throw__while_while(Parameter<String>.value(`while`))) as? (String) -> Void
 		perform?(`while`)
-		var __value: Error
+		var __value: any Error
 		do {
 		    __value = try methodReturnValue(.m_throw__while_while(Parameter<String>.value(`while`))).casted()
 		} catch {
@@ -3314,7 +4141,7 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
         case m_throw__while_while(Parameter<String>)
         case m_return__do_while(Parameter<String>)
         case p_throw_get
-		case p_throw_set(Parameter<Error>)
+		case p_throw_set(Parameter<any Error>)
         case subscript_get_return(Parameter<Int>)
 		case subscript_set_return(Parameter<Int>, Parameter<Bool>)
 
@@ -3335,7 +4162,7 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
 				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsWhile, rhs: rhsWhile, with: matcher), lhsWhile, rhsWhile, "do while"))
 				return Matcher.ComparisonResult(results)
             case (.p_throw_get,.p_throw_get): return Matcher.ComparisonResult.match
-			case (.p_throw_set(let left),.p_throw_set(let right)): return Matcher.ComparisonResult([Matcher.ParameterComparisonResult(Parameter<Error>.compare(lhs: left, rhs: right, with: matcher), left, right, "newValue")])
+			case (.p_throw_set(let left),.p_throw_set(let right)): return Matcher.ComparisonResult([Matcher.ParameterComparisonResult(Parameter<any Error>.compare(lhs: left, rhs: right, with: matcher), left, right, "newValue")])
             case (let .subscript_get_return(lhsReturn), let .subscript_get_return(rhsReturn)):
 				var results: [Matcher.ParameterComparisonResult] = []
 				results.append(Matcher.ParameterComparisonResult(Parameter.compare(lhs: lhsReturn, rhs: rhsReturn, with: matcher), lhsReturn, rhsReturn, "_ return"))
@@ -3381,20 +4208,20 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
             super.init(products)
         }
 
-        public static func `throw`(getter defaultValue: Error...) -> PropertyStub {
+        public static func `throw`(getter defaultValue: any Error...) -> PropertyStub {
             return Given(method: .p_throw_get, products: defaultValue.map({ StubProduct.return($0 as Any) }))
         }
 
-        public static func `throw`(while: Parameter<String>, willReturn: Error...) -> MethodStub {
+        public static func `throw`(while: Parameter<String>, willReturn: any Error...) -> MethodStub {
             return Given(method: .m_throw__while_while(`while`), products: willReturn.map({ StubProduct.return($0 as Any) }))
         }
         public static func `return`(do while: Parameter<String>, willReturn: Bool...) -> MethodStub {
             return Given(method: .m_return__do_while(`while`), products: willReturn.map({ StubProduct.return($0 as Any) }))
         }
-        public static func `throw`(while: Parameter<String>, willProduce: (Stubber<Error>) -> Void) -> MethodStub {
-            let willReturn: [Error] = []
+        public static func `throw`(while: Parameter<String>, willProduce: (Stubber<any Error>) -> Void) -> MethodStub {
+            let willReturn: [any Error] = []
 			let given: Given = { return Given(method: .m_throw__while_while(`while`), products: willReturn.map({ StubProduct.return($0 as Any) })) }()
-			let stubber = given.stub(for: (Error).self)
+			let stubber = given.stub(for: (any Error).self)
 			willProduce(stubber)
 			return given
         }
@@ -3417,7 +4244,7 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
         public static func `throw`(while: Parameter<String>) -> Verify { return Verify(method: .m_throw__while_while(`while`))}
         public static func `return`(do while: Parameter<String>) -> Verify { return Verify(method: .m_return__do_while(`while`))}
         public static var `throw`: Verify { return Verify(method: .p_throw_get) }
-		public static func `throw`(set newValue: Parameter<Error>) -> Verify { return Verify(method: .p_throw_set(newValue)) }
+		public static func `throw`(set newValue: Parameter<any Error>) -> Verify { return Verify(method: .p_throw_set(newValue)) }
         public static func `subscript`(_ return: Parameter<Int>) -> Verify { return Verify(method: .subscript_get_return(`return`))}
         public static func `subscript`(_ return: Parameter<Int>, set newValue: Parameter<Bool>) -> Verify { return Verify(method: .subscript_set_return(`return`, newValue))}
     }
@@ -6503,23 +7330,23 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
 
 
     @available(iOS 14, *)
-	open func funcB(_ dependency: ProtocolWithAttributes) {
-        addInvocation(.m_funcB__dependency(Parameter<ProtocolWithAttributes>.value(`dependency`).typeErasedAttribute()))
-		let perform = methodPerformValue(.m_funcB__dependency(Parameter<ProtocolWithAttributes>.value(`dependency`).typeErasedAttribute())) as? (ProtocolWithAttributes) -> Void
+	open func funcB(_ dependency: any ProtocolWithAttributes) {
+        addInvocation(.m_funcB__dependency(Parameter<any ProtocolWithAttributes>.value(`dependency`).typeErasedAttribute()))
+		let perform = methodPerformValue(.m_funcB__dependency(Parameter<any ProtocolWithAttributes>.value(`dependency`).typeErasedAttribute())) as? (any ProtocolWithAttributes) -> Void
 		perform?(`dependency`)
     }
 
     @available(iOS 14, *)
-	open func funcC(_ dependency: ProtocolWithAttributes) -> Bool {
-        addInvocation(.m_funcC__dependency(Parameter<ProtocolWithAttributes>.value(`dependency`).typeErasedAttribute()))
-		let perform = methodPerformValue(.m_funcC__dependency(Parameter<ProtocolWithAttributes>.value(`dependency`).typeErasedAttribute())) as? (ProtocolWithAttributes) -> Void
+	open func funcC(_ dependency: any ProtocolWithAttributes) -> Bool {
+        addInvocation(.m_funcC__dependency(Parameter<any ProtocolWithAttributes>.value(`dependency`).typeErasedAttribute()))
+		let perform = methodPerformValue(.m_funcC__dependency(Parameter<any ProtocolWithAttributes>.value(`dependency`).typeErasedAttribute())) as? (any ProtocolWithAttributes) -> Void
 		perform?(`dependency`)
 		var __value: Bool
 		do {
-		    __value = try methodReturnValue(.m_funcC__dependency(Parameter<ProtocolWithAttributes>.value(`dependency`).typeErasedAttribute())).casted()
+		    __value = try methodReturnValue(.m_funcC__dependency(Parameter<any ProtocolWithAttributes>.value(`dependency`).typeErasedAttribute())).casted()
 		} catch {
-			onFatalFailure("Stub return value not specified for funcC(_ dependency: ProtocolWithAttributes). Use given")
-			Failure("Stub return value not specified for funcC(_ dependency: ProtocolWithAttributes). Use given")
+			onFatalFailure("Stub return value not specified for funcC(_ dependency: any ProtocolWithAttributes). Use given")
+			Failure("Stub return value not specified for funcC(_ dependency: any ProtocolWithAttributes). Use given")
 		}
 		return __value
     }
@@ -6645,7 +7472,7 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
 
 
         @available(iOS 14, *)
-		public static func funcC(_ dependency: Parameter<ProtocolWithAttributes>, willReturn: Bool...) -> MethodStub {
+		public static func funcC(_ dependency: Parameter<any ProtocolWithAttributes>, willReturn: Bool...) -> MethodStub {
             return Given(method: .m_funcC__dependency(`dependency`.typeErasedAttribute()), products: willReturn.map({ StubProduct.return($0 as Any) }))
         }
         public static func mutatingFunc(param: Parameter<Int>, willReturn: String...) -> MethodStub {
@@ -6656,7 +7483,7 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
             return Given(method: .m_inlinableFunc__val(`val`), products: willReturn.map({ StubProduct.return($0 as Any) }))
         }
         @available(iOS 14, *)
-		public static func funcC(_ dependency: Parameter<ProtocolWithAttributes>, willProduce: (Stubber<Bool>) -> Void) -> MethodStub {
+		public static func funcC(_ dependency: Parameter<any ProtocolWithAttributes>, willProduce: (Stubber<Bool>) -> Void) -> MethodStub {
             let willReturn: [Bool] = []
 			let given: Given = { return Given(method: .m_funcC__dependency(`dependency`.typeErasedAttribute()), products: willReturn.map({ StubProduct.return($0 as Any) })) }()
 			let stubber = given.stub(for: (Bool).self)
@@ -6688,9 +7515,9 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
         fileprivate var method: MethodType
 
         @available(iOS 14, *)
-		public static func funcB(_ dependency: Parameter<ProtocolWithAttributes>) -> Verify { return Verify(method: .m_funcB__dependency(`dependency`.typeErasedAttribute()))}
+		public static func funcB(_ dependency: Parameter<any ProtocolWithAttributes>) -> Verify { return Verify(method: .m_funcB__dependency(`dependency`.typeErasedAttribute()))}
         @available(iOS 14, *)
-		public static func funcC(_ dependency: Parameter<ProtocolWithAttributes>) -> Verify { return Verify(method: .m_funcC__dependency(`dependency`.typeErasedAttribute()))}
+		public static func funcC(_ dependency: Parameter<any ProtocolWithAttributes>) -> Verify { return Verify(method: .m_funcC__dependency(`dependency`.typeErasedAttribute()))}
         public static func mutatingFunc(param: Parameter<Int>) -> Verify { return Verify(method: .m_mutatingFunc__param_param(`param`))}
         @discardableResult
 		public static func inlinableFunc(_ val: Parameter<Int>) -> Verify { return Verify(method: .m_inlinableFunc__val(`val`))}
@@ -6705,11 +7532,11 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
         var performs: Any
 
         @available(iOS 14, *)
-		public static func funcB(_ dependency: Parameter<ProtocolWithAttributes>, perform: @escaping (ProtocolWithAttributes) -> Void) -> Perform {
+		public static func funcB(_ dependency: Parameter<any ProtocolWithAttributes>, perform: @escaping (any ProtocolWithAttributes) -> Void) -> Perform {
             return Perform(method: .m_funcB__dependency(`dependency`.typeErasedAttribute()), performs: perform)
         }
         @available(iOS 14, *)
-		public static func funcC(_ dependency: Parameter<ProtocolWithAttributes>, perform: @escaping (ProtocolWithAttributes) -> Void) -> Perform {
+		public static func funcC(_ dependency: Parameter<any ProtocolWithAttributes>, perform: @escaping (any ProtocolWithAttributes) -> Void) -> Perform {
             return Perform(method: .m_funcC__dependency(`dependency`.typeErasedAttribute()), performs: perform)
         }
         public static func mutatingFunc(param: Parameter<Int>, perform: @escaping (Int) -> Void) -> Perform {
@@ -6850,9 +7677,9 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
 		perform?(`closure`)
     }
 
-    open func methodThatTakesCompletionBlock(completion: (Bool, Error?) -> Void) {
-        addInvocation(.m_methodThatTakesCompletionBlock__completion_completion(Parameter<(Bool, Error?) -> Void>.any))
-		let perform = methodPerformValue(.m_methodThatTakesCompletionBlock__completion_completion(Parameter<(Bool, Error?) -> Void>.any)) as? ((Bool, Error?) -> Void) -> Void
+    open func methodThatTakesCompletionBlock(completion: (Bool, (any Error)?) -> Void) {
+        addInvocation(.m_methodThatTakesCompletionBlock__completion_completion(Parameter<(Bool, (any Error)?) -> Void>.any))
+		let perform = methodPerformValue(.m_methodThatTakesCompletionBlock__completion_completion(Parameter<(Bool, (any Error)?) -> Void>.any)) as? ((Bool, (any Error)?) -> Void) -> Void
 		perform?(`completion`)
     }
 
@@ -6860,7 +7687,7 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
     fileprivate enum MethodType {
         case m_methodThatTakes__closure_closure(Parameter<(Int) -> Int>)
         case m_methodThatTakesEscaping__closure_closure(Parameter<(Int) -> Int>)
-        case m_methodThatTakesCompletionBlock__completion_completion(Parameter<(Bool, Error?) -> Void>)
+        case m_methodThatTakesCompletionBlock__completion_completion(Parameter<(Bool, (any Error)?) -> Void>)
 
         static func compareParameters(lhs: MethodType, rhs: MethodType, matcher: Matcher) -> Matcher.ComparisonResult {
             switch (lhs, rhs) {
@@ -6914,7 +7741,7 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
 
         public static func methodThatTakes(closure: Parameter<(Int) -> Int>) -> Verify { return Verify(method: .m_methodThatTakes__closure_closure(`closure`))}
         public static func methodThatTakesEscaping(closure: Parameter<(Int) -> Int>) -> Verify { return Verify(method: .m_methodThatTakesEscaping__closure_closure(`closure`))}
-        public static func methodThatTakesCompletionBlock(completion: Parameter<(Bool, Error?) -> Void>) -> Verify { return Verify(method: .m_methodThatTakesCompletionBlock__completion_completion(`completion`))}
+        public static func methodThatTakesCompletionBlock(completion: Parameter<(Bool, (any Error)?) -> Void>) -> Verify { return Verify(method: .m_methodThatTakesCompletionBlock__completion_completion(`completion`))}
     }
 
     public struct Perform {
@@ -6927,7 +7754,7 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
         public static func methodThatTakesEscaping(closure: Parameter<(Int) -> Int>, perform: @escaping (@escaping (Int) -> Int) -> Void) -> Perform {
             return Perform(method: .m_methodThatTakesEscaping__closure_closure(`closure`), performs: perform)
         }
-        public static func methodThatTakesCompletionBlock(completion: Parameter<(Bool, Error?) -> Void>, perform: @escaping ((Bool, Error?) -> Void) -> Void) -> Perform {
+        public static func methodThatTakesCompletionBlock(completion: Parameter<(Bool, (any Error)?) -> Void>, perform: @escaping ((Bool, (any Error)?) -> Void) -> Void) -> Perform {
             return Perform(method: .m_methodThatTakesCompletionBlock__completion_completion(`completion`), performs: perform)
         }
     }
@@ -7394,11 +8221,11 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
 			willProduce(stubber)
 			return given
         }
-        public static func methodThatTakesUser(user: Parameter<UserObject>, willThrow: Error...) -> MethodStub {
+        public static func methodThatTakesUser(user: Parameter<UserObject>, willThrow: any Error...) -> MethodStub {
             return Given(method: .m_methodThatTakesUser__user_user(`user`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func methodThatTakesUser(user: Parameter<UserObject>, willProduce: (StubberThrows<Void>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_methodThatTakesUser__user_user(`user`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Void).self)
 			willProduce(stubber)
@@ -8778,11 +9605,11 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
         public static func max<Type: Comparable>(for attribute: Parameter<Int>, over samples: Parameter<[Int]>, per aggregationUnit: Parameter<String?>, willReturn: [(date: String?, value: Type)]...) -> MethodStub {
             return Given(method: .m_max__for_attributeover_samplesper_aggregationUnit(`attribute`, `samples`, `aggregationUnit`), products: willReturn.map({ StubProduct.return($0 as Any) }))
         }
-        public static func max(for attribute: Parameter<Int>, over samples: Parameter<[Int]>, per aggregationUnit: Parameter<String?>, willThrow: Error...) -> MethodStub {
+        public static func max(for attribute: Parameter<Int>, over samples: Parameter<[Int]>, per aggregationUnit: Parameter<String?>, willThrow: any Error...) -> MethodStub {
             return Given(method: .m_max__for_attributeover_samplesper_aggregationUnit(`attribute`, `samples`, `aggregationUnit`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func max<Type: Comparable>(for attribute: Parameter<Int>, over samples: Parameter<[Int]>, per aggregationUnit: Parameter<String?>, willProduce: (StubberThrows<[(date: String?, value: Type)]>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_max__for_attributeover_samplesper_aggregationUnit(`attribute`, `samples`, `aggregationUnit`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: ([(date: String?, value: Type)]).self)
 			willProduce(stubber)
@@ -9745,11 +10572,11 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
         public static func staticMethod(param: Parameter<Int>, willReturn: Int...) -> StaticMethodStub {
             return StaticGiven(method: .sm_staticMethod__param_param(`param`), products: willReturn.map({ StubProduct.return($0 as Any) }))
         }
-        public static func staticMethod(param: Parameter<Int>, willThrow: Error...) -> StaticMethodStub {
+        public static func staticMethod(param: Parameter<Int>, willThrow: any Error...) -> StaticMethodStub {
             return StaticGiven(method: .sm_staticMethod__param_param(`param`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func staticMethod(param: Parameter<Int>, willProduce: (StubberThrows<Int>) -> Void) -> StaticMethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: StaticGiven = { return StaticGiven(method: .sm_staticMethod__param_param(`param`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Int).self)
 			willProduce(stubber)
@@ -10632,21 +11459,21 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
         public static func methodThatReturnsAndThrows(param: Parameter<Int>, willReturn: Bool...) -> MethodStub {
             return Given(method: .m_methodThatReturnsAndThrows__param_param(`param`), products: willReturn.map({ StubProduct.return($0 as Any) }))
         }
-        public static func methodThatThrows(willThrow: Error...) -> MethodStub {
+        public static func methodThatThrows(willThrow: any Error...) -> MethodStub {
             return Given(method: .m_methodThatThrows, products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func methodThatThrows(willProduce: (StubberThrows<Void>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_methodThatThrows, products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Void).self)
 			willProduce(stubber)
 			return given
         }
-        public static func methodThatReturnsAndThrows(param: Parameter<Int>, willThrow: Error...) -> MethodStub {
+        public static func methodThatReturnsAndThrows(param: Parameter<Int>, willThrow: any Error...) -> MethodStub {
             return Given(method: .m_methodThatReturnsAndThrows__param_param(`param`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func methodThatReturnsAndThrows(param: Parameter<Int>, willProduce: (StubberThrows<Bool>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_methodThatReturnsAndThrows__param_param(`param`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Bool).self)
 			willProduce(stubber)
@@ -11864,11 +12691,11 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
 			willProduce(stubber)
 			return given
         }
-        public static func configure(with secret: Parameter<String>, willThrow: Error...) -> MethodStub {
+        public static func configure(with secret: Parameter<String>, willThrow: any Error...) -> MethodStub {
             return Given(method: .m_configure__with_secret(`secret`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func configure(with secret: Parameter<String>, willProduce: (StubberThrows<SelfConstrainedProtocolMock>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_configure__with_secret(`secret`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (SelfConstrainedProtocolMock).self)
 			willProduce(stubber)
@@ -12297,11 +13124,11 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
 			willProduce(stubber)
 			return given
         }
-        public static func throwingVoidMethod(_ key: Parameter<String>, willThrow: Error...) -> StaticMethodStub {
+        public static func throwingVoidMethod(_ key: Parameter<String>, willThrow: any Error...) -> StaticMethodStub {
             return StaticGiven(method: .sm_throwingVoidMethod__key(`key`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func throwingVoidMethod(_ key: Parameter<String>, willProduce: (StubberThrows<Void>) -> Void) -> StaticMethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: StaticGiven = { return StaticGiven(method: .sm_throwingVoidMethod__key(`key`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Void).self)
 			willProduce(stubber)
@@ -12433,11 +13260,11 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
         public static func `subscript`(_ x: Parameter<Int>, willReturn: Int?...) -> SubscriptStub {
             return Given(method: .subscript_get_x(`x`), products: willReturn.map({ StubProduct.return($0 as Any) }))
         }
-        public static func throwingVoidMethod(_ key: Parameter<String>, willThrow: Error...) -> MethodStub {
+        public static func throwingVoidMethod(_ key: Parameter<String>, willThrow: any Error...) -> MethodStub {
             return Given(method: .m_throwingVoidMethod__key(`key`), products: willThrow.map({ StubProduct.throw($0) }))
         }
         public static func throwingVoidMethod(_ key: Parameter<String>, willProduce: (StubberThrows<Void>) -> Void) -> MethodStub {
-            let willThrow: [Error] = []
+            let willThrow: [any Error] = []
 			let given: Given = { return Given(method: .m_throwingVoidMethod__key(`key`), products: willThrow.map({ StubProduct.throw($0) })) }()
 			let stubber = given.stubThrows(for: (Void).self)
 			willProduce(stubber)
@@ -15174,9 +16001,9 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
 		perform?(`id`, `completion`)
     }
 
-    open func getUserEscaping(for id: String, completion: @escaping (User?, Error?) -> Void) {
-        addInvocation(.m_getUserEscaping__for_idcompletion_completion(Parameter<String>.value(`id`), Parameter<(User?, Error?) -> Void>.value(`completion`)))
-		let perform = methodPerformValue(.m_getUserEscaping__for_idcompletion_completion(Parameter<String>.value(`id`), Parameter<(User?, Error?) -> Void>.value(`completion`))) as? (String, @escaping (User?, Error?) -> Void) -> Void
+    open func getUserEscaping(for id: String, completion: @escaping (User?, (any Error)?) -> Void) {
+        addInvocation(.m_getUserEscaping__for_idcompletion_completion(Parameter<String>.value(`id`), Parameter<(User?, (any Error)?) -> Void>.value(`completion`)))
+		let perform = methodPerformValue(.m_getUserEscaping__for_idcompletion_completion(Parameter<String>.value(`id`), Parameter<(User?, (any Error)?) -> Void>.value(`completion`))) as? (String, @escaping (User?, (any Error)?) -> Void) -> Void
 		perform?(`id`, `completion`)
     }
 
@@ -15195,7 +16022,7 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
 
     fileprivate enum MethodType {
         case m_getUser__for_idcompletion_completion(Parameter<String>, Parameter<(User?) -> Void>)
-        case m_getUserEscaping__for_idcompletion_completion(Parameter<String>, Parameter<(User?, Error?) -> Void>)
+        case m_getUserEscaping__for_idcompletion_completion(Parameter<String>, Parameter<(User?, (any Error)?) -> Void>)
         case m_doSomething__prop_prop(Parameter<() -> String>)
         case m_testDefaultValues__value_value(Parameter<String>)
 
@@ -15259,7 +16086,7 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
         fileprivate var method: MethodType
 
         public static func getUser(for id: Parameter<String>, completion: Parameter<(User?) -> Void>) -> Verify { return Verify(method: .m_getUser__for_idcompletion_completion(`id`, `completion`))}
-        public static func getUserEscaping(for id: Parameter<String>, completion: Parameter<(User?, Error?) -> Void>) -> Verify { return Verify(method: .m_getUserEscaping__for_idcompletion_completion(`id`, `completion`))}
+        public static func getUserEscaping(for id: Parameter<String>, completion: Parameter<(User?, (any Error)?) -> Void>) -> Verify { return Verify(method: .m_getUserEscaping__for_idcompletion_completion(`id`, `completion`))}
         public static func doSomething(prop: Parameter<() -> String>) -> Verify { return Verify(method: .m_doSomething__prop_prop(`prop`))}
         public static func testDefaultValues(value: Parameter<String>) -> Verify { return Verify(method: .m_testDefaultValues__value_value(`value`))}
     }
@@ -15271,7 +16098,7 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
         public static func getUser(for id: Parameter<String>, completion: Parameter<(User?) -> Void>, perform: @escaping (String, (User?) -> Void) -> Void) -> Perform {
             return Perform(method: .m_getUser__for_idcompletion_completion(`id`, `completion`), performs: perform)
         }
-        public static func getUserEscaping(for id: Parameter<String>, completion: Parameter<(User?, Error?) -> Void>, perform: @escaping (String, @escaping (User?, Error?) -> Void) -> Void) -> Perform {
+        public static func getUserEscaping(for id: Parameter<String>, completion: Parameter<(User?, (any Error)?) -> Void>, perform: @escaping (String, @escaping (User?, (any Error)?) -> Void) -> Void) -> Perform {
             return Perform(method: .m_getUserEscaping__for_idcompletion_completion(`id`, `completion`), performs: perform)
         }
         public static func doSomething(prop: Parameter<() -> String>, perform: @escaping (@autoclosure () -> String) -> Void) -> Perform {

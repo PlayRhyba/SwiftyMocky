@@ -1,4 +1,14 @@
 class Helpers {
+    /// Sourcery normalizes `(any P)?` to `any P?` (also `!`, and inside closure types).
+    /// Compilers before Swift 6.4 reject `any P?`, so restore the parenthesized form
+    /// for every optional existential in the generated code.
+    static func parenthesizeOptionalExistentials(_ code: String) -> String {
+        let identifier = #"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*(?:<[^<>]*>)?"#
+        let pattern = #"\bany ("# + identifier + #"(?: ?& ?"# + identifier + #")*)([?!])"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return code }
+        let range = NSRange(code.startIndex..<code.endIndex, in: code)
+        return regex.stringByReplacingMatches(in: code, range: range, withTemplate: "(any $1)$2")
+    }
     static func split(_ string: String, byFirstOccurenceOf word: String) -> (String, String) {
         guard let wordRange = string.range(of: word) else { return (string, "") }
         let selfRange = string.range(of: string)!

@@ -51,10 +51,10 @@ protocol FailsWithUntagged {
 //sourcery: AutoMockable
 protocol FailsWithKeywordArguments {
     func foo(for: String)
-    func `throw`(while: String) -> Error
+    func `throw`(while: String) -> any Error
     func `return`(do while: String) -> Bool
 
-    var `throw`: Error { get set }
+    var `throw`: any Error { get set }
     subscript (_ return: Int) -> Bool { get set }
 }
 

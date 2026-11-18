@@ -533,3 +533,4 @@
 // SwiftyMocky: no AutoMockable found.
 // Please define and inherit from AutoMockable, or annotate protocols to be mocked
 <%_ } -%>
+<%_ sourceryBuffer = Helpers.parenthesizeOptionalExistentials(sourceryBuffer) -%>

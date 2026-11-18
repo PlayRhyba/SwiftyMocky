@@ -33,11 +33,11 @@ class MockfileInteractor {
         try path.write(try YAMLEncoder().encode(mockfile))
     }
 
-    func isSetup(target: ProjectTarget) -> Bool {
+    func isSetup(target: any ProjectTarget) -> Bool {
         return mockfile.allMocks.contains(where: { $0.targets.contains(target.name) })
     }
 
-    func firstMockFor(target: ProjectTarget) -> String? {
+    func firstMockFor(target: any ProjectTarget) -> String? {
         return mockfile.allMembers.first(where: {
             mockfile[dynamicMember: $0]?.targets.contains(target.name) ?? false
         })
