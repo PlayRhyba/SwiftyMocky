@@ -16,8 +16,8 @@
     <a title="CHANGELOG  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">SwiftyMocky 4.2.0 Docs</a> (86% documented)</p>
-        <p class="header-right"><a href="https://github.com/MakeAWishFoundation/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
+        <p><a href="index.html">SwiftyMocky 4.3.0 Docs</a> (85% documented)</p>
+        <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="search.json">
             <input type="text" placeholder="Search documentation" data-typeahead>
@@ -27,7 +27,9 @@
     </header>
     <div class="content-wrapper">
       <p id="breadcrumbs">
-        <a href="index.html">SwiftyMocky Reference</a>
+        <a href="index.html">SwiftyMocky</a>
+        <img id="carat" src="img/carat.png" alt=""/>
+        <a href="Additional%20Guides.html">Additional Guides</a>
         <img id="carat" src="img/carat.png" alt=""/>
         CHANGELOG  Reference
       </p>
@@ -94,25 +96,13 @@
                 <a href="Global%20methods.html#/s:11SwiftyMocky5Givenyyx_ABQzAA14StubbingPolicyOtAA4MockRzlF">Given(_:_:_:)</a>
               </li>
               <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky5Givenyyxm_06StaticC0QzAA14StubbingPolicyOtAA0D4MockRzlF">Given(_:_:_:)</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky7Performyyx_ABQztAA4MockRzlF">Perform(_:_:)</a>
-              </li>
-              <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky7Performyyxm_06StaticC0QztAA0D4MockRzlF">Perform(_:_:)</a>
               </li>
               <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky6Verify__4file4lineyx_ABQzs12StaticStringVSutAA4MockRzlF">Verify(_:_:file:line:)</a>
               </li>
               <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky6Verify__4file4lineyxm_06StaticC0Qzs0F6StringVSutAA0F4MockRzlF">Verify(_:_:file:line:)</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky6Verify___4file4lineyx_AA5CountOABQzs12StaticStringVSutAA4MockRzlF">Verify(_:_:_:file:line:)</a>
-              </li>
-              <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky6Verify___4file4lineyxm_AA5CountO06StaticC0Qzs0G6StringVSutAA0G4MockRzlF">Verify(_:_:_:file:line:)</a>
               </li>
             </ul>
           </li>
@@ -191,9 +181,6 @@
                 <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
               </li>
               <li class="nav-group-task">
-                <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Structs/FatalErrorUtil.html">FatalErrorUtil</a>
               </li>
               <li class="nav-group-task">
@@ -248,6 +235,9 @@
               <li class="nav-group-task">
                 <a href="Classes/ArgumentCaptor.html">ArgumentCaptor</a>
               </li>
+              <li class="nav-group-task">
+                <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
+              </li>
             </ul>
           </li>
           <li class="nav-group-name">
@@ -258,6 +248,23 @@
               </li>
               <li class="nav-group-task">
                 <a href="Enums/Utils.html">Utils</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Other%20Functions.html">Other Functions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky5Givenyyxm_06StaticC0QzAA14StubbingPolicyOtAA0D4MockRzlF">Given(_:_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky7Performyyxm_06StaticC0QztAA0D4MockRzlF">Perform(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky6Verify___4file4lineyxm_AA5CountO06StaticC0Qzs0G6StringVSutAA0G4MockRzlF">Verify(_:_:_:file:line:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky6Verify__4file4lineyxm_06StaticC0Qzs0F6StringVSutAA0F4MockRzlF">Verify(_:_:file:line:)</a>
               </li>
             </ul>
           </li>
@@ -286,6 +293,48 @@
             <h1 id='changelog' class='heading'>Changelog</h1>
 
 <p>All changes to SwiftyMocky project will be documented in this file.</p>
+
+<hr>
+<h2 id='strong-4-3-0-strong-2026' class='heading'><strong>4.3.0</strong> / 2026</h2>
+<h4 id='breaking' class='heading'>Breaking:</h4>
+
+<ul>
+<li>Dropped CocoaPods and Carthage support - SwiftyMocky and SwiftyPrototype are distributed via Swift Package Manager only (CLI via SPM, Mint or <code>make</code>)</li>
+</ul><div class="aside aside-requires">
+    <p class="aside-title">Requires</p>
+    Requires Sourcery 2.4.1 (templates header <code>Required Sourcery: 2.4.1</code>)
+
+</div><ul>
+<li>Package requires swift-tools-version 6.0 and macOS 14 (XcodeProj 9 requirement)</li>
+<li>Built in Swift 6 language mode. Generated mocks compile in Swift 6 mode and require a Swift 5.10+ compiler (<code>nonisolated(unsafe)</code>)</li>
+<li><code>file:</code> default arguments use <code>#filePath</code> instead of <code>#file</code>, so failures are reported at the right location in Swift 6 mode</li>
+<li>Removed unused CLI constant <code>kSwiftyMockyCommand</code>; <code>kSourceryVersion</code> and <code>kDefaultSourceryCommand</code> are now <code>let</code></li>
+</ul>
+<h4 id='concurrency' class='heading'>Concurrency:</h4>
+
+<ul>
+<li><code><a href="Classes/Matcher.html#/s:11SwiftyMocky7MatcherC7defaultACvpZ">Matcher.default</a></code>, <code><a href="Classes/Matcher.html#/s:11SwiftyMocky7MatcherC17fatalErrorHandleryySS_s12StaticStringVSutcvpZ">Matcher.fatalErrorHandler</a></code>, <code><a href="Classes/MockyAssertion.html#/s:11SwiftyMocky0B9AssertionC7handlerySb_SSs12StaticStringVSutcSgvpZ">MockyAssertion.handler</a></code> and internal fatal-error/test-observer state are now lock-protected (same public API)</li>
+<li>Generated mocks: static stubbing state is <code>nonisolated(unsafe)</code>; getter helpers no longer shadow a generic mock&rsquo;s <code>T</code></li>
+</ul>
+<h4 id='existentialany' class='heading'>ExistentialAny:</h4>
+
+<ul>
+<li>Generated mocks compile cleanly with the <code>ExistentialAny</code> upcoming feature (<code>willThrow: any Error...</code>)</li>
+<li>Optional existentials are generated as <code>(any P)?</code> / <code>(any P)!</code>. Sourcery 2.x normalizes them to <code>any P?</code>, which compilers before Swift 6.4 reject</li>
+<li>The project itself builds with <code>ExistentialAny</code> enabled, and the example project covers <code>any P</code> in every supported position</li>
+</ul>
+<h4 id='changed' class='heading'>Changed:</h4>
+
+<ul>
+<li>Updated dependencies: XcodeProj 9.17.8, Yams 6.2.2</li>
+<li>Example project consumes SwiftyMocky as a local Swift package</li>
+</ul>
+<h4 id='fixed' class='heading'>Fixed:</h4>
+
+<ul>
+<li>cli: excluded files in Mockfile were ignored by Sourcery 2.x (relative / differently-cased paths)</li>
+<li>cli: <code>INFOPLIST_FILE</code> lookup with XcodeProj 9 build settings</li>
+</ul>
 
 <hr>
 <h2 id='strong-4-1-0-strong-2021' class='heading'><strong>4.1.0</strong> / 2021</h2>
@@ -637,7 +686,7 @@
         </section>
         <section id="footer">
           <p>Copyright © 2017 MakeAWishFoundation. All rights reserved.</p>
-          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external noopener">jazzy ♪♫ v0.14.2</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external noopener">Realm</a> project.</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external noopener">jazzy ♪♫ v0.15.5</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external noopener">Realm</a> project.</p>
         </section>
       </article>
     </div>

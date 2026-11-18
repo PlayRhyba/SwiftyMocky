@@ -16,8 +16,8 @@
     <a title="Setup in project  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">SwiftyMocky 4.2.0 Docs</a> (86% documented)</p>
-        <p class="header-right"><a href="https://github.com/MakeAWishFoundation/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
+        <p><a href="index.html">SwiftyMocky 4.3.0 Docs</a> (85% documented)</p>
+        <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="search.json">
             <input type="text" placeholder="Search documentation" data-typeahead>
@@ -27,7 +27,9 @@
     </header>
     <div class="content-wrapper">
       <p id="breadcrumbs">
-        <a href="index.html">SwiftyMocky Reference</a>
+        <a href="index.html">SwiftyMocky</a>
+        <img id="carat" src="img/carat.png" alt=""/>
+        <a href="Main%20Guides.html">Main Guides</a>
         <img id="carat" src="img/carat.png" alt=""/>
         Setup in project  Reference
       </p>
@@ -94,25 +96,13 @@
                 <a href="Global%20methods.html#/s:11SwiftyMocky5Givenyyx_ABQzAA14StubbingPolicyOtAA4MockRzlF">Given(_:_:_:)</a>
               </li>
               <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky5Givenyyxm_06StaticC0QzAA14StubbingPolicyOtAA0D4MockRzlF">Given(_:_:_:)</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky7Performyyx_ABQztAA4MockRzlF">Perform(_:_:)</a>
-              </li>
-              <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky7Performyyxm_06StaticC0QztAA0D4MockRzlF">Perform(_:_:)</a>
               </li>
               <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky6Verify__4file4lineyx_ABQzs12StaticStringVSutAA4MockRzlF">Verify(_:_:file:line:)</a>
               </li>
               <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky6Verify__4file4lineyxm_06StaticC0Qzs0F6StringVSutAA0F4MockRzlF">Verify(_:_:file:line:)</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky6Verify___4file4lineyx_AA5CountOABQzs12StaticStringVSutAA4MockRzlF">Verify(_:_:_:file:line:)</a>
-              </li>
-              <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky6Verify___4file4lineyxm_AA5CountO06StaticC0Qzs0G6StringVSutAA0G4MockRzlF">Verify(_:_:_:file:line:)</a>
               </li>
             </ul>
           </li>
@@ -191,9 +181,6 @@
                 <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
               </li>
               <li class="nav-group-task">
-                <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Structs/FatalErrorUtil.html">FatalErrorUtil</a>
               </li>
               <li class="nav-group-task">
@@ -248,6 +235,9 @@
               <li class="nav-group-task">
                 <a href="Classes/ArgumentCaptor.html">ArgumentCaptor</a>
               </li>
+              <li class="nav-group-task">
+                <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
+              </li>
             </ul>
           </li>
           <li class="nav-group-name">
@@ -258,6 +248,23 @@
               </li>
               <li class="nav-group-task">
                 <a href="Enums/Utils.html">Utils</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Other%20Functions.html">Other Functions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky5Givenyyxm_06StaticC0QzAA14StubbingPolicyOtAA0D4MockRzlF">Given(_:_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky7Performyyxm_06StaticC0QztAA0D4MockRzlF">Perform(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky6Verify___4file4lineyxm_AA5CountO06StaticC0Qzs0G6StringVSutAA0G4MockRzlF">Verify(_:_:_:file:line:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky6Verify__4file4lineyxm_06StaticC0Qzs0F6StringVSutAA0F4MockRzlF">Verify(_:_:file:line:)</a>
               </li>
             </ul>
           </li>
@@ -288,11 +295,11 @@
 <p>First, install <strong>CLI</strong> as described in &ldquo;Command Line Interface&rdquo; section.</p>
 
 <p>Then, you can use:</p>
-<pre class="highlight shell"><code><span class="gp">&gt; </span>swiftymocky setup <span class="c"># For automatic setup (preferred)</span>
+<pre class="highlight shell"><code><span class="o">&gt;</span> swiftymocky setup <span class="c"># For automatic setup (preferred)</span>
 </code></pre>
 
 <p>or</p>
-<pre class="highlight shell"><code><span class="gp">&gt; </span>swiftymocky init <span class="c"># Just generate placeholder for Mockfile you can fill manually</span>
+<pre class="highlight shell"><code><span class="o">&gt;</span> swiftymocky init <span class="c"># Just generate placeholder for Mockfile you can fill manually</span>
 </code></pre>
 
 <blockquote>
@@ -303,8 +310,8 @@
 <p><a href="#mock-annotate">Annotate your protocols</a> that are going to be mocked, making them adopt <code>AutoMockable</code> protocol, or adding annotation comment above their definition in the source code.</p>
 
 <p>Mocks are generated from your project root directory, based on configuration inside <strong>Mockfile</strong>.</p>
-<pre class="highlight shell"><code><span class="gp">&gt; </span>swiftymocky doctor    <span class="c"># validate your setup</span>
-<span class="gp">&gt; </span>swiftymocky generate  <span class="c"># generate mocks</span>
+<pre class="highlight shell"><code><span class="o">&gt;</span> swiftymocky doctor    <span class="c"># validate your setup</span>
+<span class="o">&gt;</span> swiftymocky generate  <span class="c"># generate mocks</span>
 </code></pre>
 
 <p><strong>Don&rsquo;t forget</strong> to add generated files like <code>Mock.generated.swift</code> to your test target :)</p>
@@ -369,7 +376,7 @@ Please have in mind, that definition of MockyAssert used in generated mocks is p
         </section>
         <section id="footer">
           <p>Copyright © 2017 MakeAWishFoundation. All rights reserved.</p>
-          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external noopener">jazzy ♪♫ v0.14.2</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external noopener">Realm</a> project.</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external noopener">jazzy ♪♫ v0.15.5</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external noopener">Realm</a> project.</p>
         </section>
       </article>
     </div>

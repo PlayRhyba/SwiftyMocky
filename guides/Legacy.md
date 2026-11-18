@@ -123,9 +123,9 @@ SwiftyMocky templates require **Sourcery 2.4.1**. The commands above run it thro
 
 <!-- Assets -->
 
-[example-link]: https://raw.githubusercontent.com/MakeAWishFoundation/SwiftyMocky/3.2.0/guides/assets/link-binary-with-libraries.png "Example - link binary"
-[example-add]: https://raw.githubusercontent.com/MakeAWishFoundation/SwiftyMocky/3.2.0/guides/assets/add-new-copy-files-phase.png "Example - add copy files phase"
-[example-copy]: https://raw.githubusercontent.com/MakeAWishFoundation/SwiftyMocky/3.2.0/guides/assets/add-framework-tocopy-files-phase.png "Example - add SwiftyMocky to copy frameworks"
+[example-link]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/3.2.0/guides/assets/link-binary-with-libraries.png "Example - link binary"
+[example-add]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/3.2.0/guides/assets/add-new-copy-files-phase.png "Example - add copy files phase"
+[example-copy]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/3.2.0/guides/assets/add-framework-tocopy-files-phase.png "Example - add SwiftyMocky to copy frameworks"
 
 
-[example-watcher]: https://raw.githubusercontent.com/MakeAWishFoundation/SwiftyMocky/1.0.0/guides/assets/example-watcher.gif "Example - generation"
+[example-watcher]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/1.0.0/guides/assets/example-watcher.gif "Example - generation"

@@ -4,7 +4,7 @@ All changes to SwiftyMocky project will be documented in this file.
 
 -----
 
-## __Unreleased__
+## __4.3.0__ / 2026
 
 #### Breaking:
 * Dropped CocoaPods and Carthage support - SwiftyMocky and SwiftyPrototype are distributed via Swift Package Manager only (CLI via SPM, Mint or `make`)

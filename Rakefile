@@ -77,7 +77,6 @@ task :version do
         sh("sed -i '' 's|#{version_from}|#{version_to}|g' ./README.md")
         sh("sed -i '' 's|#{version_from}|#{version_to}|g' ./guides/Installation.md")
         sh("sed -i '' 's|#{version_from}|#{version_to}|g' ./guides/Overview.md")
-        sh("sed -i '' 's|#{version_from}|#{version_to}|g' ./SwiftyMocky-Runtime/Info.plist")
         sh("sed -i '' 's|#{version_from}|#{version_to}|g' ./Templates/Header-Mock.swifttemplate")
         sh("sed -i '' 's|#{version_from}|#{version_to}|g' ./Templates/Header-Prototype.swifttemplate")
         sh("sed -i '' 's|#{version_from}|#{version_to}|g' ./Makefile")
@@ -98,7 +97,6 @@ namespace :cli do
         print_info "Building CLI release version binary"
         # sh "swift build -c release --disable-sandbox"
         sh "swift build -c release"
-        sh "cp ./.build/release/swiftymocky ./bin/swiftymocky"
     end
 end
 
@@ -121,7 +119,9 @@ end
 desc "Update docs"
 task :docs do
     print_info "Updating docs"
-    sh "sourcekitten doc --spm --module-name SwiftyMocky > docs.json && jazzy --clean && rm docs.json"
+    # Build through the package workspace: `--spm` can't read SwiftPM 6.4+ build layout, and the
+    # root SwiftyMocky.xcodeproj would shadow the package for a plain `xcodebuild -scheme`.
+    sh "sourcekitten doc --module-name SwiftyMocky -- -workspace .swiftpm/xcode/package.xcworkspace -scheme SwiftyMocky -destination 'generic/platform=macOS' > docs.json && jazzy --clean && rm docs.json"
 end
 
 ## [ Helpers ] #################################################################

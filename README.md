@@ -1,11 +1,11 @@
 ![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20macOS%20%7C%20tvOS-lightgrey.svg?style=flat)
-[![Docs](https://raw.githubusercontent.com/MakeAWishFoundation/SwiftyMocky/master/docs/badge.svg)](https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/master/docs/index.html)
+[![Docs](https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/master/docs/badge.svg)](https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/master/docs/index.html)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
 ![Mint compatible](https://img.shields.io/badge/🌱%20Mint-compatible-green.svg)
 ![SPM compatible](https://img.shields.io/badge/SwiftPM-compatible-green.svg?style=flat&logo=swift)
 
-[![Build & Test](https://github.com/MakeAWishFoundation/SwiftyMocky/actions/workflows/master.yml/badge.svg?branch=master)](https://github.com/MakeAWishFoundation/SwiftyMocky/actions?query=branch%3Amaster) [![SwiftPM Integration](https://github.com/MakeAWishFoundation/SM-Integration-Tests/actions/workflows/swiftpm.yml/badge.svg?branch=master)](https://github.com/MakeAWishFoundation/SM-Integration-Tests/actions/workflows/swiftpm.yml)
+[![Build & Test](https://github.com/PlayRhyba/SwiftyMocky/actions/workflows/master.yml/badge.svg?branch=master)](https://github.com/PlayRhyba/SwiftyMocky/actions?query=branch%3Amaster)
 
 # ![logo][logo]
 
@@ -51,25 +51,29 @@ The idea of **SwiftyMocky** is to automatically mock Swift protocols and protoco
 
 <a name="current-version"></a>
 
-## **Important!!!** Version 4.1.x
+## Version 4.3.0
 
-CLI was moved bask to the main (this) repo. CLI in this [repository](https://github.com/MakeAWishFoundation/SwiftyMockyCLI) will be supported at least until version 5.0.0.
+This release modernizes **SwiftyMocky** for current Swift toolchains. See the [changelog](https://github.com/PlayRhyba/SwiftyMocky/blob/master/guides/CHANGELOG.md) for details.
 
-## Version 4.0.x
+**Requirements:**
+- Swift 6 toolchain (Xcode 16 or newer). The package builds in Swift 6 language mode.
+- [Sourcery](https://github.com/krzysztofzablocki/Sourcery) **2.4.1** - the CLI runs it through [Mint](https://github.com/yonaskolb/Mint) by default, or set `sourceryCommand` in your [Mockfile][link-guides-mockfile].
+- macOS 14 or newer to build and run the CLI.
 
-Current version has several significant changes. It removes deprecated methods (which might be breaking) and deprecates having CLI in the new [repository](https://github.com/MakeAWishFoundation/SwiftyMockyCLI).
+**Breaking changes:**
+- **Swift Package Manager only.** CocoaPods and Carthage are no longer supported.
+- `file:` default arguments of `Verify`, `setupMock` and the mocks' `init` use `#filePath`, so failures are reported at the right location in Swift 6 language mode.
+- Generated mocks require a Swift 5.10+ compiler (they use `nonisolated(unsafe)` for static stubbing state).
 
-**SwiftyPrototype** was also extracted to separate library. There are no more compilation flags, so if you were relying on **SwiftyMocky** with `-DMockyCustom`, you will have to switch to `SwiftyPrototype`.
+**Also new:** generated mocks compile cleanly in Swift 6 language mode and with the `ExistentialAny` upcoming feature, and the shared runtime state (`Matcher.default`, `MockyAssertion.handler`, ...) is thread-safe.
 
-We consider current version as stable. We are moving toward using the new [Mockfile][link-guides-mockfile] but the previous configuration format would be still supported. Library builds with Swift **6.x** (Swift 5 language mode) and Sourcery **2.4.1**.
-
-While it is technically possible to integrate SwiftyMocky on Linux targets, there is no Mock generation feature there yet. You can use SwiftyMokcy runtime via SwiftPM though, as long as your are fine with generating mocks on mac machine.
+**SwiftyPrototype** is a separate library that does not depend on XCTest - mark a mock in the Mockfile with `prototype: true` to generate prototypes instead of test mocks.
 
 ## Migration from 3.2.0 and below
 
-The migration is not required, you can keep using **SwiftyMocky** as you did before. The [Legacy setup](https://github.com/MakeAWishFoundation/SwiftyMocky/blob/master/guides/Legacy.md) is described in [guides section](https://github.com/MakeAWishFoundation/SwiftyMocky/blob/master/guides/Contents.md).
+The migration is not required, you can keep using **SwiftyMocky** as you did before. The [Legacy setup](https://github.com/PlayRhyba/SwiftyMocky/blob/master/guides/Legacy.md) is described in [guides section](https://github.com/PlayRhyba/SwiftyMocky/blob/master/guides/Contents.md).
 
-Still, we would encourage to try new **CLI** and share a feedback. We believe it will make using and setting up **SwiftyMocky** way easier. If you have an existing setup, install CLI as per this [guide](https://github.com/MakeAWishFoundation/SwiftyMocky/blob/master/guides/Installation.md) and try:
+Still, we would encourage to try new **CLI** and share a feedback. We believe it will make using and setting up **SwiftyMocky** way easier. If you have an existing setup, install CLI as per this [guide](https://github.com/PlayRhyba/SwiftyMocky/blob/master/guides/Installation.md) and try:
 
 ```bash
 > swiftymocky migrate
@@ -89,7 +93,7 @@ Add **SwiftyMocky** to you **Package.swift** dependencies:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/MakeAWishFoundation/SwiftyMocky", from: "4.2.0"),
+    .package(url: "https://github.com/PlayRhyba/SwiftyMocky", from: "4.3.0"),
 ]
 ```
 
@@ -105,18 +109,17 @@ You need to install CLI to generate mocks - see [installation](#installation)
 
 ```bash
 > brew install mint
-> mint install MakeAWishFoundation/SwiftyMocky
-```
-
-**[Marathon 🏃](https://github.com/JohnSundell/Marathon)**:
-
-```bash
-> marathon install MakeAWishFoundation/SwiftyMocky
+> mint install PlayRhyba/SwiftyMocky
 ```
 
 **Make**:
 
-Clone from https://github.com/MakeAWishFoundation/SwiftyMockyCLI and run `make` in the root directory.
+Clone the repository and run `make` in its root directory:
+
+```bash
+> git clone https://github.com/PlayRhyba/SwiftyMocky.git
+> cd SwiftyMocky && make
+```
 
 -----
 
@@ -312,7 +315,7 @@ To trigger mocks generation, run `rake mock` or `swiftymocky generate` from root
 - [ ] cover 95% of framework codebase with unit tests
 - [x] cover 95% of framework codebase with documentation
 - [ ] add unit tests for template
-- [x] support for tvOS, Linux and MacOS
+- [x] support for iOS, tvOS and macOS
 - [x] Subscripts support
 - [x] Stub return values as sequences
 - [x] Simple tool simplifying configuration process
@@ -350,14 +353,14 @@ SwiftyMocky is available under the MIT license. See the [LICENSE][link-license] 
 
 <!-- Links based on tag -->
 
-[link-docs]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/index.html
-[link-docs-features]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/supported-features.html
-[link-docs-installation]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/installation.html
-[link-docs-setup]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/setup-in-project.html
+[link-docs]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/index.html
+[link-docs-features]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/supported-features.html
+[link-docs-installation]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/installation.html
+[link-docs-setup]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/setup-in-project.html
 
 <!-- Assets -->
 
-[logo]: https://raw.githubusercontent.com/MakeAWishFoundation/SwiftyMocky/4.2.0/icon.png
-[example-watcher]: https://raw.githubusercontent.com/MakeAWishFoundation/SwiftyMocky/1.0.0/guides/assets/example-watcher.gif "Example - generation"
-[example-given]: https://raw.githubusercontent.com/MakeAWishFoundation/SwiftyMocky/1.0.0/guides/assets/example-given.gif "Example - given"
-[example-verify]: https://raw.githubusercontent.com/MakeAWishFoundation/SwiftyMocky/1.0.0/guides/assets/example-verify.gif "Example - verify"
+[logo]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/4.3.0/icon.png
+[example-watcher]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/1.0.0/guides/assets/example-watcher.gif "Example - generation"
+[example-given]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/1.0.0/guides/assets/example-given.gif "Example - given"
+[example-verify]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/1.0.0/guides/assets/example-verify.gif "Example - verify"

@@ -45,7 +45,7 @@ In the generated mock, `Entity` would be on "the same level" as `A.Entity` and `
 
 ## 1. When triggering generation - error about modules in different swift versions appears
 
-This seems to be a problem with Swift abi. Either download/build Sourcery binary manually, or use prebuilt sourcery versions from: `https://github.com/MakeAWishFoundation/SwiftyMocky.wiki.git`
+This seems to be a problem with Swift abi. Either download/build Sourcery binary manually, or use prebuilt sourcery versions from: `https://github.com/PlayRhyba/SwiftyMocky.wiki.git`
 
 The best solution is to install **SwiftyMocky CLI** and **mint**, and generate with `swiftymocky generate`
 

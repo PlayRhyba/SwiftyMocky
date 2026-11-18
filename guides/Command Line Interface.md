@@ -2,7 +2,7 @@
 
 **SwiftyMocky CLI** is a custom command line tool, writtten in swift, that will simplify setting up mock configuration, validating and troubleshooting configuration and simplify mocks generation.
 
-CLI is hosted at: [https://github.com/MakeAWishFoundation/SwiftyMocky](https://github.com/MakeAWishFoundation/SwiftyMockyCLI)
+CLI is hosted at: [https://github.com/PlayRhyba/SwiftyMocky](https://github.com/PlayRhyba/SwiftyMocky)
 
 ## Installation:
 
@@ -15,7 +15,7 @@ Please refer to [Guides/Installation.md](./Installation.md#installation-cli)
 $ swift run swiftymocky <command>
 
 // Using mint
-$ mint run MakeAWishFoundation/SwiftyMocky <command>
+$ mint run PlayRhyba/SwiftyMocky <command>
 ```
 
 ## Commands:

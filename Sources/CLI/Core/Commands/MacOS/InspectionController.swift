@@ -88,7 +88,7 @@ public class InspectionController {
             Message.failure("Mockfile does not exist!")
             if self.isSPM {
                 Message.resolutions(
-                    "automatic setup is not yet supported in SwiftPM project. Please create Mockfile according to the documentation at https://cdn.rawgit.com/MakeAWishFoundation/SwiftyMocky/4.0.0/docs/mockfile.html"
+                    "automatic setup is not yet supported in SwiftPM project. Please create Mockfile according to the documentation at https://cdn.rawgit.com/PlayRhyba/SwiftyMocky/4.0.0/docs/mockfile.html"
                 )
             } else {
                 Message.resolutions(

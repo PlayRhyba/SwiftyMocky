@@ -16,8 +16,8 @@
     <a title="Legacy  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">SwiftyMocky 4.2.0 Docs</a> (86% documented)</p>
-        <p class="header-right"><a href="https://github.com/MakeAWishFoundation/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
+        <p><a href="index.html">SwiftyMocky 4.3.0 Docs</a> (85% documented)</p>
+        <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="search.json">
             <input type="text" placeholder="Search documentation" data-typeahead>
@@ -27,7 +27,9 @@
     </header>
     <div class="content-wrapper">
       <p id="breadcrumbs">
-        <a href="index.html">SwiftyMocky Reference</a>
+        <a href="index.html">SwiftyMocky</a>
+        <img id="carat" src="img/carat.png" alt=""/>
+        <a href="Additional%20Guides.html">Additional Guides</a>
         <img id="carat" src="img/carat.png" alt=""/>
         Legacy  Reference
       </p>
@@ -94,25 +96,13 @@
                 <a href="Global%20methods.html#/s:11SwiftyMocky5Givenyyx_ABQzAA14StubbingPolicyOtAA4MockRzlF">Given(_:_:_:)</a>
               </li>
               <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky5Givenyyxm_06StaticC0QzAA14StubbingPolicyOtAA0D4MockRzlF">Given(_:_:_:)</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky7Performyyx_ABQztAA4MockRzlF">Perform(_:_:)</a>
-              </li>
-              <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky7Performyyxm_06StaticC0QztAA0D4MockRzlF">Perform(_:_:)</a>
               </li>
               <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky6Verify__4file4lineyx_ABQzs12StaticStringVSutAA4MockRzlF">Verify(_:_:file:line:)</a>
               </li>
               <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky6Verify__4file4lineyxm_06StaticC0Qzs0F6StringVSutAA0F4MockRzlF">Verify(_:_:file:line:)</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky6Verify___4file4lineyx_AA5CountOABQzs12StaticStringVSutAA4MockRzlF">Verify(_:_:_:file:line:)</a>
-              </li>
-              <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky6Verify___4file4lineyxm_AA5CountO06StaticC0Qzs0G6StringVSutAA0G4MockRzlF">Verify(_:_:_:file:line:)</a>
               </li>
             </ul>
           </li>
@@ -191,9 +181,6 @@
                 <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
               </li>
               <li class="nav-group-task">
-                <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Structs/FatalErrorUtil.html">FatalErrorUtil</a>
               </li>
               <li class="nav-group-task">
@@ -248,6 +235,9 @@
               <li class="nav-group-task">
                 <a href="Classes/ArgumentCaptor.html">ArgumentCaptor</a>
               </li>
+              <li class="nav-group-task">
+                <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
+              </li>
             </ul>
           </li>
           <li class="nav-group-name">
@@ -258,6 +248,23 @@
               </li>
               <li class="nav-group-task">
                 <a href="Enums/Utils.html">Utils</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Other%20Functions.html">Other Functions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky5Givenyyxm_06StaticC0QzAA14StubbingPolicyOtAA0D4MockRzlF">Given(_:_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky7Performyyxm_06StaticC0QztAA0D4MockRzlF">Perform(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky6Verify___4file4lineyxm_AA5CountO06StaticC0Qzs0G6StringVSutAA0G4MockRzlF">Verify(_:_:_:file:line:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky6Verify__4file4lineyxm_06StaticC0Qzs0F6StringVSutAA0F4MockRzlF">Verify(_:_:file:line:)</a>
               </li>
             </ul>
           </li>
@@ -290,20 +297,18 @@
 <p>Summing up, you need <strong>SwiftyMocky</strong> framework in the runtime, and <strong>sourcery</strong> binary with a configuration pointing to our template for the mocks generation.</p>
 <h2 id='installation' class='heading'>Installation</h2>
 
-<p>SwiftyMocky is available through <a href="http://cocoapods.org">CocoaPods</a>. To install it, simply add the following line to your Podfile:</p>
-<pre class="highlight ruby"><code><span class="n">pod</span> <span class="s2">"SwiftyMocky"</span>
-</code></pre>
+<p>Add SwiftyMocky to your test target using <a href="https://swift.org/package-manager/">Swift Package Manager</a>, as described in [installation][link-docs-installation] instructions.</p>
 
 <p>Then add <strong>mocky.yml</strong> and <strong>Rakefile</strong> (or build script phase) to your project root directory, as described in below. See full [setup][link-docs-setup] instructions.</p>
 
-<p>For <a href="https://github.com/Carthage/Carthage">Carthage</a> install instructions, see full [documentation][link-docs-installation].</p>
+<p>You also need the SwiftyMocky template. It ships in the package at <code>Sources/SwiftyMocky/Mock.swifttemplate</code> (for a SwiftPM project, the checkout lives in <code>.build/checkouts/SwiftyMocky</code>). The most reliable option is to copy it into your repository, e.g. <code>./Templates/Mock.swifttemplate</code>, and update it together with the SwiftyMocky version.</p>
 <h3 id='generating-mocks-implementations' class='heading'>Generating mocks implementations:</h3>
 
 <p>One of the boilerplate part of testing and development is writing and updating <strong>mocks</strong> accordingly to newest changes. SwiftyMocky is capable of generating mock implementations (with configurable behavior), based on protocol definition.</p>
 
 <p>During development process it is possible to use SwiftyMocky in a <em>watcher</em> mode, which will observe changes in you project files, and regenerate files on the fly.</p>
 
-<p><img src="https://raw.githubusercontent.com/MakeAWishFoundation/SwiftyMocky/1.0.0/guides/assets/example-watcher.gif" alt="Generating mock" title="Example - generation"></p>
+<p><img src="https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/1.0.0/guides/assets/example-watcher.gif" alt="Generating mock" title="Example - generation"></p>
 
 <p>By default, all protocols marked as AutoMockable (inheriting from dummy protocol <code>AutoMockable</code> or annotated with <code>//sourcery: AutoMockable</code>) are being subject of mock implementation generation. All mocks goes to <code>Mock.generated.swift</code>, which can be imported into test target.</p>
 <h1 id='how-to-start-using-swiftymocky' class='heading'>How to start using SwiftyMocky</h1>
@@ -316,7 +321,7 @@
     <span class="pi">-</span> <span class="s">./ExampleApp</span>
     <span class="pi">-</span> <span class="s">./ExampleAppTests</span>
 <span class="na">templates</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="s">./Pods/SwiftyMocky/Sources/SwiftyMocky</span>
+  <span class="pi">-</span> <span class="s">./Templates/Mock.swifttemplate</span>
 <span class="na">output</span><span class="pi">:</span>
   <span class="s">./ExampleApp</span>
 <span class="na">args</span><span class="pi">:</span>
@@ -334,7 +339,7 @@
 
 <ul>
 <li><strong>sources</strong>: all directories you want to scan for protocols/files marked to be auto mocked, or inline mocked. You can use <code>exclude</code>, to prevent from scanning particular files (makes sense for big <code>*.generated.swift</code> files)</li>
-<li><strong>templates</strong>: path to SwiftyMocky sourcery templates, in Pods directory</li>
+<li><strong>templates</strong>: path to the SwiftyMocky sourcery template</li>
 <li><strong>output</strong>: place where <code>Mock.generated.swift</code> will be placed</li>
 <li><strong>testable</strong>: specify imports for Mock.generated, that should be marked as <code>@testable</code> (usually tested app module)</li>
 <li><strong>import</strong>: all additional imports, external libraries etc. to be placed in Mock.generated</li>
@@ -348,13 +353,13 @@
 <li><strong>manually</strong>: by triggering:</li>
 </ol>
 
-<p><code>Pods/Sourcery/bin/sourcery --config mocky.yml</code></p>
+<p><code>mint run krzysztofzablocki/Sourcery@2.4.1 sourcery --config mocky.yml</code></p>
 
 <ol>
 <li><strong>in <code>watch</code> mode</strong>: changed methods will be reflected in mocks, after generation of mock, by triggering:</li>
 </ol>
 
-<p><code>Pods/Sourcery/bin/sourcery --config mocky.yml --watch</code></p>
+<p><code>mint run krzysztofzablocki/Sourcery@2.4.1 sourcery --config mocky.yml --watch</code></p>
 
 <blockquote>
 <p><strong>!!! In case of incompatibile swift module versions error</strong> - check Known issues section in guides or docs</p>
@@ -368,11 +373,11 @@ Most convenient way is to put generation in some kind of script - like Rakefile 
 Just create file named Rakefile - generation is triggered by <code>rake mock</code></p>
 <pre class="highlight ruby"><code><span class="c1"># Rakefile</span>
 <span class="n">task</span> <span class="ss">:mock</span> <span class="k">do</span>
-  <span class="n">sh</span> <span class="s2">"Pods/Sourcery/bin/sourcery --config mocky.yml"</span>
+  <span class="n">sh</span> <span class="s2">"mint run krzysztofzablocki/Sourcery@2.4.1 sourcery --config mocky.yml"</span>
 <span class="k">end</span>
 
 <span class="n">task</span> <span class="ss">:mock_watcher</span> <span class="k">do</span>
-  <span class="n">sh</span> <span class="s2">"Pods/Sourcery/bin/sourcery --config mocky.yml --watch"</span>
+  <span class="n">sh</span> <span class="s2">"mint run krzysztofzablocki/Sourcery@2.4.1 sourcery --config mocky.yml --watch"</span>
 <span class="k">end</span>
 </code></pre>
 </blockquote>
@@ -380,13 +385,13 @@ Just create file named Rakefile - generation is triggered by <code>rake mock</co
 
 <p>We know that Sourcery is a powerful tool and you are likely to use it already. You can easily integrate SwiftyMocky with your project with keeping all already written templates working.</p>
 
-<p>All you have to do is add path (note that path can be different for Carthage/manual installation) to SwiftyMocky templates in your <code>sourcery.yml</code> file:</p>
+<p>All you have to do is add path to the SwiftyMocky template in your <code>sourcery.yml</code> file:</p>
 <pre class="highlight yaml"><code><span class="na">sources</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">./ExampleApp</span>
     <span class="pi">-</span> <span class="s">./ExampleAppTests</span>
 <span class="na">templates</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;templates path&gt;</span> <span class="c1"># Path to already written Sourcery templates</span>
-    <span class="pi">-</span> <span class="s">./Pods/SwiftyMocky/Sources/SwiftyMocky</span> <span class="c1"># &lt;- SwiftyMocky templates</span>
+    <span class="pi">-</span> <span class="s">./Templates/Mock.swifttemplate</span> <span class="c1"># &lt;- SwiftyMocky template</span>
 <span class="na">output</span><span class="pi">:</span>
     <span class="s">./ExampleApp</span>
 <span class="na">args</span><span class="pi">:</span>
@@ -403,27 +408,9 @@ Just create file named Rakefile - generation is triggered by <code>rake mock</co
 </code></pre>
 
 <p>You can use all arguments (like <code>testable</code>, <code>import</code>, etc.) in the same way as in <code>mocky.yaml</code>, under <code>args</code> key.</p>
-<h2 id='strong-get_sourcery-sh-strong' class='heading'><strong>get_sourcery.sh</strong></h2>
+<h2 id='sourcery-version' class='heading'>Sourcery version</h2>
 
-<p>This is a helper script allowing to obtain Sourcery binary compiled for usage with SwiftyMocky. It can be used with both: legacy configurations and new Mockfile (specify path to binary in Mockfile <code>sourceyCommand</code>)</p>
-<pre class="highlight shell"><code><span class="o">[[</span> <span class="nv">$# </span>&gt; 0 <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">VERSION</span><span class="o">=</span><span class="s2">"</span><span class="nv">$1</span><span class="s2">"</span> <span class="o">||</span> <span class="nv">VERSION</span><span class="o">=</span><span class="s2">"5.0"</span>
-<span class="o">[[</span> <span class="nv">$# </span>&gt; 1 <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">OUTPUT</span><span class="o">=</span><span class="s2">"</span><span class="nv">$2</span><span class="s2">"</span> <span class="o">||</span> <span class="nv">OUTPUT</span><span class="o">=</span><span class="s2">"./Pods/Sourcery/bin"</span>
-<span class="nv">SOURCERY_VERSION</span><span class="o">=</span><span class="s2">"0.16.0"</span> <span class="c"># The version of Sourcery that is associated with this SwiftyMocky version</span>
-
-<span class="nb">echo</span> <span class="s2">"CLONE SOURCERY </span><span class="nv">$SOURCERY_VERSION</span><span class="s2"> FOR Swift </span><span class="nv">$VERSION</span><span class="s2"> INTO </span><span class="nv">$OUTPUT</span><span class="s2">"</span>
-rm -r -f <span class="s2">"</span><span class="nv">$OUTPUT</span><span class="s2">"</span>
-git clone -b <span class="s2">"sourcery/</span><span class="nv">$SOURCERY_VERSION</span><span class="s2">-swift</span><span class="nv">$VERSION</span><span class="s2">"</span> --single-branch --depth 1 https://github.com/MakeAWishFoundation/SwiftyMocky.wiki.git <span class="s2">"</span><span class="nv">$OUTPUT</span><span class="s2">"</span>
-</code></pre>
-
-<blockquote>
-<p><strong>Note!</strong>
-This script is also shipped with SwiftyMocky when installing via cocoapods
-You can use it from project root like <code>sh ./Pods/SwiftyMocky/get_sourcery.sh 4.2</code>
-Version is optional, if you don&rsquo;t specify it, script will use latest supported (5.0 in that case)</p>
-
-<p><strong>Note 2!</strong>
-If you use Carthage, you should specify your custom output location for sourcery binary. Please have in mind, that script clears output dir, so don&rsquo;t point it to <code>~/</code> or something ;)</p>
-</blockquote>
+<p>SwiftyMocky templates require <strong>Sourcery 2.4.1</strong>. The commands above run it through <a href="https://github.com/yonaskolb/Mint">Mint</a>; any other Sourcery 2.4.1 binary works as well.</p>
 
 <!-- Assets -->
 
@@ -431,7 +418,7 @@ If you use Carthage, you should specify your custom output location for sourcery
         </section>
         <section id="footer">
           <p>Copyright © 2017 MakeAWishFoundation. All rights reserved.</p>
-          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external noopener">jazzy ♪♫ v0.14.2</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external noopener">Realm</a> project.</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external noopener">jazzy ♪♫ v0.15.5</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external noopener">Realm</a> project.</p>
         </section>
       </article>
     </div>

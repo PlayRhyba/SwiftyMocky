@@ -16,8 +16,8 @@
     <a title="Mockfile  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">SwiftyMocky 4.2.0 Docs</a> (86% documented)</p>
-        <p class="header-right"><a href="https://github.com/MakeAWishFoundation/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
+        <p><a href="index.html">SwiftyMocky 4.3.0 Docs</a> (85% documented)</p>
+        <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="search.json">
             <input type="text" placeholder="Search documentation" data-typeahead>
@@ -27,7 +27,9 @@
     </header>
     <div class="content-wrapper">
       <p id="breadcrumbs">
-        <a href="index.html">SwiftyMocky Reference</a>
+        <a href="index.html">SwiftyMocky</a>
+        <img id="carat" src="img/carat.png" alt=""/>
+        <a href="Main%20Guides.html">Main Guides</a>
         <img id="carat" src="img/carat.png" alt=""/>
         Mockfile  Reference
       </p>
@@ -94,25 +96,13 @@
                 <a href="Global%20methods.html#/s:11SwiftyMocky5Givenyyx_ABQzAA14StubbingPolicyOtAA4MockRzlF">Given(_:_:_:)</a>
               </li>
               <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky5Givenyyxm_06StaticC0QzAA14StubbingPolicyOtAA0D4MockRzlF">Given(_:_:_:)</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky7Performyyx_ABQztAA4MockRzlF">Perform(_:_:)</a>
-              </li>
-              <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky7Performyyxm_06StaticC0QztAA0D4MockRzlF">Perform(_:_:)</a>
               </li>
               <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky6Verify__4file4lineyx_ABQzs12StaticStringVSutAA4MockRzlF">Verify(_:_:file:line:)</a>
               </li>
               <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky6Verify__4file4lineyxm_06StaticC0Qzs0F6StringVSutAA0F4MockRzlF">Verify(_:_:file:line:)</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky6Verify___4file4lineyx_AA5CountOABQzs12StaticStringVSutAA4MockRzlF">Verify(_:_:_:file:line:)</a>
-              </li>
-              <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky6Verify___4file4lineyxm_AA5CountO06StaticC0Qzs0G6StringVSutAA0G4MockRzlF">Verify(_:_:_:file:line:)</a>
               </li>
             </ul>
           </li>
@@ -191,9 +181,6 @@
                 <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
               </li>
               <li class="nav-group-task">
-                <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Structs/FatalErrorUtil.html">FatalErrorUtil</a>
               </li>
               <li class="nav-group-task">
@@ -248,6 +235,9 @@
               <li class="nav-group-task">
                 <a href="Classes/ArgumentCaptor.html">ArgumentCaptor</a>
               </li>
+              <li class="nav-group-task">
+                <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
+              </li>
             </ul>
           </li>
           <li class="nav-group-name">
@@ -258,6 +248,23 @@
               </li>
               <li class="nav-group-task">
                 <a href="Enums/Utils.html">Utils</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Other%20Functions.html">Other Functions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky5Givenyyxm_06StaticC0QzAA14StubbingPolicyOtAA0D4MockRzlF">Given(_:_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky7Performyyxm_06StaticC0QztAA0D4MockRzlF">Perform(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky6Verify___4file4lineyxm_AA5CountO06StaticC0Qzs0G6StringVSutAA0G4MockRzlF">Verify(_:_:_:file:line:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky6Verify__4file4lineyxm_06StaticC0Qzs0F6StringVSutAA0F4MockRzlF">Verify(_:_:file:line:)</a>
               </li>
             </ul>
           </li>
@@ -290,8 +297,8 @@
 <p>It  also ties generated <strong>Mock</strong> configuration with a specific target, allowing to lint it agains most common issues.</p>
 
 <p>Every generated file have its own section, following pattern below:</p>
-<pre class="highlight yaml"><code><span class="na">sourceryCommand</span><span class="pi">:</span> <span class="s">null</span>               <span class="c1"># 1. (optional)</span>
-<span class="na">sourceryTemplate</span><span class="pi">:</span> <span class="s">null</span>              <span class="c1"># 1. (optional)</span>
+<pre class="highlight yaml"><code><span class="na">sourceryCommand</span><span class="pi">:</span> <span class="kc">null</span>               <span class="c1"># 1. (optional)</span>
+<span class="na">sourceryTemplate</span><span class="pi">:</span> <span class="kc">null</span>              <span class="c1"># 1. (optional)</span>
 
 <span class="na">mock1</span><span class="pi">:</span>                              <span class="c1"># 2.</span>
     <span class="na">sources</span><span class="pi">:</span>                        <span class="c1"># 2.1.</span>
@@ -304,7 +311,7 @@
         <span class="pi">-</span> <span class="s">MyAppUnitTests</span>
     <span class="na">testable</span><span class="pi">:</span> <span class="pi">[]</span>                    <span class="c1"># 2.4 (optional)</span>
     <span class="na">import</span><span class="pi">:</span> <span class="pi">[]</span>                      <span class="c1"># 2.5 (optional)</span>
-    <span class="na">prototype</span><span class="pi">:</span> <span class="s">false</span>                <span class="c1"># 2.6 (optional)</span>
+    <span class="na">prototype</span><span class="pi">:</span> <span class="kc">false</span>                <span class="c1"># 2.6 (optional)</span>
     <span class="na">sourcery</span><span class="pi">:</span>                       <span class="c1"># 2.7 (optional)</span>
         <span class="pi">-</span> <span class="s">./path/to/custom/sourcery.yml</span> <span class="c1"># (optional)</span>
 
@@ -313,7 +320,7 @@
 </code></pre>
 
 <ol>
-<li><code>sourceryCommand</code> is by default <code>nil</code>. You can use it to select custom Sourcery version/command/binary, instead of using default one bundled with SwiftyMocky CLI via <code>mint</code>. <code>sourceryTemplate</code> is custpom template location to use instead of default one. Default template would be derived from Pods,Carthage,SPM directory. If not found, CLI would use bundled template.</li>
+<li><code>sourceryCommand</code> is by default <code>nil</code>. You can use it to select custom Sourcery version/command/binary, instead of using default one bundled with SwiftyMocky CLI via <code>mint</code>. <code>sourceryTemplate</code> is custpom template location to use instead of default one. Default template would be derived from the SwiftPM checkout (<code>.build/checkouts/SwiftyMocky</code>). If not found, CLI would use bundled template.</li>
 <li><strong>Distinctive name</strong> of your mock configuration. You can define as much <strong>configurations</strong> as you want. Each of them represents one generated file. That allows to have a separate mocks for a separate targets (you usually need that if you have more than one test target)
 
 <ol>
@@ -327,7 +334,7 @@
 <li><code>targets</code> list of targets names. It should match the test targets that are using generated mocks file. Used to determine if your setup is correct.</li>
 <li><code>testable</code> list of testable modules imports. By default, if you generate mocks for <code>YourApp</code>, it should contain <code>YourApp</code>. Would be placed at the top of the generated file.</li>
 <li><code>import</code> list of modules imports. Would be placed at the top of the generated file.</li>
-<li><code>prototype</code> default is <code>false</code>. Set <code>true</code> if you are going to use Carthage <code>SwiftyPrototype</code> library</li>
+<li><code>prototype</code> default is <code>false</code>. Set <code>true</code> if you are going to use the <code>SwiftyPrototype</code> library</li>
 <li><code>sourcery</code> list of paths to additional Sourcery configurations, if you want to execute them alongside the mock generation.</li>
 </ol></li>
 </ol>
@@ -344,7 +351,7 @@
         </section>
         <section id="footer">
           <p>Copyright © 2017 MakeAWishFoundation. All rights reserved.</p>
-          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external noopener">jazzy ♪♫ v0.14.2</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external noopener">Realm</a> project.</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external noopener">jazzy ♪♫ v0.15.5</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external noopener">Realm</a> project.</p>
         </section>
       </article>
     </div>

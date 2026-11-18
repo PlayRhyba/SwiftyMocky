@@ -10,18 +10,17 @@ To install it:
 
 ```bash
 > brew install mint
-> mint install MakeAWishFoundation/SwiftyMocky
-```
-
-**[Marathon 🏃](https://github.com/JohnSundell/Marathon)**:
-
-```bash
-> marathon install MakeAWishFoundation/SwiftyMocky
+> mint install PlayRhyba/SwiftyMocky
 ```
 
 **Make**:
 
-Clone from https://github.com/MakeAWishFoundation/SwiftyMockyCLI and run `make` in the root directory.
+Clone the repository and run `make` in its root directory:
+
+```bash
+> git clone https://github.com/PlayRhyba/SwiftyMocky.git
+> cd SwiftyMocky && make
+```
 
 > More information about **CLI** you will fund in "Command Line Interface" section.
 
@@ -34,7 +33,7 @@ SwiftyMocky Runtime is available through:
 ## 1. **[Ice Package Manager ❄️](https://github.com/jakeheis/Ice)**:
 
 ```bash
-> ice add MakeAWishFoundation/SwiftyMocky
+> ice add PlayRhyba/SwiftyMocky
 ```
 
 > It will be supported when Ice reviews PR, fallback to SwiftPM if any issues.
@@ -45,7 +44,7 @@ Add **SwiftyMocky** to you **Package.swift** dependencies:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/MakeAWishFoundation/SwiftyMocky", from: "4.2.0"),
+    .package(url: "https://github.com/PlayRhyba/SwiftyMocky", from: "4.3.0"),
 ]
 ```
 

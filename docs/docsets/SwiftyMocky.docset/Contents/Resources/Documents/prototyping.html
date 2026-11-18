@@ -16,8 +16,8 @@
     <a title="Prototyping  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">SwiftyMocky 4.2.0 Docs</a> (86% documented)</p>
-        <p class="header-right"><a href="https://github.com/MakeAWishFoundation/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
+        <p><a href="index.html">SwiftyMocky 4.3.0 Docs</a> (85% documented)</p>
+        <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="search.json">
             <input type="text" placeholder="Search documentation" data-typeahead>
@@ -27,7 +27,9 @@
     </header>
     <div class="content-wrapper">
       <p id="breadcrumbs">
-        <a href="index.html">SwiftyMocky Reference</a>
+        <a href="index.html">SwiftyMocky</a>
+        <img id="carat" src="img/carat.png" alt=""/>
+        <a href="Main%20Guides.html">Main Guides</a>
         <img id="carat" src="img/carat.png" alt=""/>
         Prototyping  Reference
       </p>
@@ -94,25 +96,13 @@
                 <a href="Global%20methods.html#/s:11SwiftyMocky5Givenyyx_ABQzAA14StubbingPolicyOtAA4MockRzlF">Given(_:_:_:)</a>
               </li>
               <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky5Givenyyxm_06StaticC0QzAA14StubbingPolicyOtAA0D4MockRzlF">Given(_:_:_:)</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky7Performyyx_ABQztAA4MockRzlF">Perform(_:_:)</a>
-              </li>
-              <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky7Performyyxm_06StaticC0QztAA0D4MockRzlF">Perform(_:_:)</a>
               </li>
               <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky6Verify__4file4lineyx_ABQzs12StaticStringVSutAA4MockRzlF">Verify(_:_:file:line:)</a>
               </li>
               <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky6Verify__4file4lineyxm_06StaticC0Qzs0F6StringVSutAA0F4MockRzlF">Verify(_:_:file:line:)</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky6Verify___4file4lineyx_AA5CountOABQzs12StaticStringVSutAA4MockRzlF">Verify(_:_:_:file:line:)</a>
-              </li>
-              <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky6Verify___4file4lineyxm_AA5CountO06StaticC0Qzs0G6StringVSutAA0G4MockRzlF">Verify(_:_:_:file:line:)</a>
               </li>
             </ul>
           </li>
@@ -191,9 +181,6 @@
                 <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
               </li>
               <li class="nav-group-task">
-                <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Structs/FatalErrorUtil.html">FatalErrorUtil</a>
               </li>
               <li class="nav-group-task">
@@ -248,6 +235,9 @@
               <li class="nav-group-task">
                 <a href="Classes/ArgumentCaptor.html">ArgumentCaptor</a>
               </li>
+              <li class="nav-group-task">
+                <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
+              </li>
             </ul>
           </li>
           <li class="nav-group-name">
@@ -258,6 +248,23 @@
               </li>
               <li class="nav-group-task">
                 <a href="Enums/Utils.html">Utils</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Other%20Functions.html">Other Functions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky5Givenyyxm_06StaticC0QzAA14StubbingPolicyOtAA0D4MockRzlF">Given(_:_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky7Performyyxm_06StaticC0QztAA0D4MockRzlF">Perform(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky6Verify___4file4lineyxm_AA5CountO06StaticC0Qzs0G6StringVSutAA0G4MockRzlF">Verify(_:_:_:file:line:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky6Verify__4file4lineyxm_06StaticC0Qzs0F6StringVSutAA0F4MockRzlF">Verify(_:_:file:line:)</a>
               </li>
             </ul>
           </li>
@@ -291,25 +298,11 @@
 
 <p>Installation and generation is exactly same as with <strong>SwiftyMocky</strong>. Install CLI and inegrate runtime, via one of the options below, and mark target in <a href="./Mockfile.md">Mockfile</a> with <code>prototype: true</code></p>
 <h2 id='installation' class='heading'>Installation</h2>
-<h2 id='1-a-href-http-cocoapods-org-cocoapods-a' class='heading'>1. <a href="http://cocoapods.org">CocoaPods</a>.</h2>
-
-<p>To install it, simply add the following line to your Podfile:</p>
-<pre class="highlight ruby"><code><span class="n">pod</span> <span class="s2">"SwiftyPrototype"</span>
-</code></pre>
-
-<p>Then execute <code>pod install</code></p>
-<h2 id='2-a-href-https-github-com-carthage-carthage-carthage-a' class='heading'>2. <a href="https://github.com/Carthage/Carthage">Carthage</a>.</h2>
-
-<p>To install, add following to you Cartfile:</p>
-<pre class="highlight ruby"><code><span class="n">github</span> <span class="s2">"MakeAWishFoundation/SwiftyMocky"</span>
-</code></pre>
-
-<p>Then execute <code>carthage update</code> and add <code>SwiftyPrototype</code> to your target.</p>
-<h3 id='3-strong-a-href-https-swift-org-package-manager-swift-package-manager-a-strong' class='heading'>3. <strong><a href="https://swift.org/package-manager/">Swift Package Manager</a></strong>:</h3>
+<h2 id='strong-a-href-https-swift-org-package-manager-swift-package-manager-a-strong' class='heading'><strong><a href="https://swift.org/package-manager/">Swift Package Manager</a></strong>:</h2>
 
 <p>Add <strong>SwiftyPrototype</strong> to you <strong>Package.swift</strong> dependencies:</p>
 <pre class="highlight swift"><code><span class="nv">dependencies</span><span class="p">:</span> <span class="p">[</span>
-    <span class="o">.</span><span class="nf">package</span><span class="p">(</span><span class="nv">url</span><span class="p">:</span> <span class="s">"https://github.com/MakeAWishFoundation/SwiftyMocky"</span><span class="p">,</span> <span class="nv">from</span><span class="p">:</span> <span class="s">"4.0.1"</span><span class="p">),</span>
+    <span class="o">.</span><span class="nf">package</span><span class="p">(</span><span class="nv">url</span><span class="p">:</span> <span class="s">"https://github.com/PlayRhyba/SwiftyMocky"</span><span class="p">,</span> <span class="nv">from</span><span class="p">:</span> <span class="s">"4.0.1"</span><span class="p">),</span>
 <span class="p">]</span>
 </code></pre>
 
@@ -319,7 +312,7 @@
         </section>
         <section id="footer">
           <p>Copyright © 2017 MakeAWishFoundation. All rights reserved.</p>
-          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external noopener">jazzy ♪♫ v0.14.2</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external noopener">Realm</a> project.</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external noopener">jazzy ♪♫ v0.15.5</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external noopener">Realm</a> project.</p>
         </section>
       </article>
     </div>

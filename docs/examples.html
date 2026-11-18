@@ -16,8 +16,8 @@
     <a title="Examples  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">SwiftyMocky 4.2.0 Docs</a> (86% documented)</p>
-        <p class="header-right"><a href="https://github.com/MakeAWishFoundation/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
+        <p><a href="index.html">SwiftyMocky 4.3.0 Docs</a> (85% documented)</p>
+        <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="search.json">
             <input type="text" placeholder="Search documentation" data-typeahead>
@@ -27,7 +27,9 @@
     </header>
     <div class="content-wrapper">
       <p id="breadcrumbs">
-        <a href="index.html">SwiftyMocky Reference</a>
+        <a href="index.html">SwiftyMocky</a>
+        <img id="carat" src="img/carat.png" alt=""/>
+        <a href="Additional%20Guides.html">Additional Guides</a>
         <img id="carat" src="img/carat.png" alt=""/>
         Examples  Reference
       </p>
@@ -94,25 +96,13 @@
                 <a href="Global%20methods.html#/s:11SwiftyMocky5Givenyyx_ABQzAA14StubbingPolicyOtAA4MockRzlF">Given(_:_:_:)</a>
               </li>
               <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky5Givenyyxm_06StaticC0QzAA14StubbingPolicyOtAA0D4MockRzlF">Given(_:_:_:)</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky7Performyyx_ABQztAA4MockRzlF">Perform(_:_:)</a>
-              </li>
-              <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky7Performyyxm_06StaticC0QztAA0D4MockRzlF">Perform(_:_:)</a>
               </li>
               <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky6Verify__4file4lineyx_ABQzs12StaticStringVSutAA4MockRzlF">Verify(_:_:file:line:)</a>
               </li>
               <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky6Verify__4file4lineyxm_06StaticC0Qzs0F6StringVSutAA0F4MockRzlF">Verify(_:_:file:line:)</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Global%20methods.html#/s:11SwiftyMocky6Verify___4file4lineyx_AA5CountOABQzs12StaticStringVSutAA4MockRzlF">Verify(_:_:_:file:line:)</a>
-              </li>
-              <li class="nav-group-task">
-                <a href="Global%20methods.html#/s:11SwiftyMocky6Verify___4file4lineyxm_AA5CountO06StaticC0Qzs0G6StringVSutAA0G4MockRzlF">Verify(_:_:_:file:line:)</a>
               </li>
             </ul>
           </li>
@@ -191,9 +181,6 @@
                 <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
               </li>
               <li class="nav-group-task">
-                <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
-              </li>
-              <li class="nav-group-task">
                 <a href="Structs/FatalErrorUtil.html">FatalErrorUtil</a>
               </li>
               <li class="nav-group-task">
@@ -248,6 +235,9 @@
               <li class="nav-group-task">
                 <a href="Classes/ArgumentCaptor.html">ArgumentCaptor</a>
               </li>
+              <li class="nav-group-task">
+                <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
+              </li>
             </ul>
           </li>
           <li class="nav-group-name">
@@ -258,6 +248,23 @@
               </li>
               <li class="nav-group-task">
                 <a href="Enums/Utils.html">Utils</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="Other%20Functions.html">Other Functions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky5Givenyyxm_06StaticC0QzAA14StubbingPolicyOtAA0D4MockRzlF">Given(_:_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky7Performyyxm_06StaticC0QztAA0D4MockRzlF">Perform(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky6Verify___4file4lineyxm_AA5CountO06StaticC0Qzs0G6StringVSutAA0G4MockRzlF">Verify(_:_:_:file:line:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="Other%20Functions.html#/s:11SwiftyMocky6Verify__4file4lineyxm_06StaticC0Qzs0F6StringVSutAA0F4MockRzlF">Verify(_:_:file:line:)</a>
               </li>
             </ul>
           </li>
@@ -346,12 +353,12 @@
 <p>Test - usage of <code>Given</code> to specify stubbed methods return values, based on passed attributes, and <code>Verify</code> to check invocations count:</p>
 <pre class="highlight swift"><code><span class="k">let</span> <span class="nv">mock</span> <span class="o">=</span> <span class="kt">SimpleProtocolWithMethodsMock</span><span class="p">()</span>
 
-<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">))</span> <span class="c1">// Should be 0</span>
+<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">))</span> <span class="c1">// Should be 0</span>
 
 <span class="c1">// Regardless of registrations order, first will check most explicit given values</span>
 <span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="s">"a"</span><span class="p">),</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="s">"A"</span><span class="p">))</span>
 <span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="s">"b"</span><span class="p">),</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="s">"B"</span><span class="p">))</span>
-<span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">,</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="s">"default"</span><span class="p">))</span>
+<span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">,</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="s">"default"</span><span class="p">))</span>
 
 <span class="kt">XCTAssertEqual</span><span class="p">(</span><span class="n">mock</span><span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="s">"any parameter"</span><span class="p">),</span> <span class="s">"default"</span><span class="p">)</span>
 <span class="kt">XCTAssertEqual</span><span class="p">(</span><span class="n">mock</span><span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="s">"a"</span><span class="p">),</span> <span class="s">"A"</span><span class="p">)</span>
@@ -362,7 +369,7 @@
 <span class="n">mock</span><span class="o">.</span><span class="nf">simpleMethod</span><span class="p">()</span>
 
 <span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMethod</span><span class="p">())</span> <span class="c1">// Should be 1+</span>
-<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">))</span> <span class="c1">// Total method invocations count should be 4</span>
+<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">))</span> <span class="c1">// Total method invocations count should be 4</span>
 <span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="s">"any parameter"</span><span class="p">)))</span> <span class="c1">// Should be called twice wth "any parameter"</span>
 <span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="s">"a"</span><span class="p">)))</span>
 <span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="s">"b"</span><span class="p">)))</span>
@@ -387,7 +394,7 @@
 <span class="c1">// As String? is not recognized as Equatable, we need to register comparator on matcher</span>
 <span class="n">mock</span><span class="o">.</span><span class="n">matcher</span><span class="o">.</span><span class="nf">register</span><span class="p">((</span><span class="kt">Optional</span><span class="o">&lt;</span><span class="kt">String</span><span class="o">&gt;</span><span class="p">)</span><span class="o">.</span><span class="k">self</span><span class="p">)</span> <span class="p">{</span> <span class="nv">$0</span> <span class="o">==</span> <span class="nv">$1</span> <span class="p">}</span> <span class="c1">// Could use Matcher.default instead, as it is default matcher for all mocks</span>
 
-<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">optionalParam</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">))</span> <span class="c1">// Should be 0</span>
+<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">optionalParam</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">))</span> <span class="c1">// Should be 0</span>
 
 <span class="c1">// When same level of explicity - last given is matched first</span>
 <span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">optionalParam</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="kc">nil</span><span class="p">),</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="kc">nil</span><span class="p">))</span>
@@ -399,7 +406,7 @@
 <span class="kt">XCTAssertEqual</span><span class="p">(</span><span class="n">mock</span><span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">optionalParam</span><span class="p">:</span> <span class="kc">nil</span><span class="p">),</span> <span class="s">"is nil"</span><span class="p">)</span>
 <span class="kt">XCTAssertEqual</span><span class="p">(</span><span class="n">mock</span><span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">optionalParam</span><span class="p">:</span> <span class="s">"some"</span><span class="p">),</span> <span class="s">"not nil"</span><span class="p">)</span>
 
-<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">optionalParam</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">))</span>
+<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">optionalParam</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">))</span>
 <span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">optionalParam</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="kc">nil</span><span class="p">)))</span>
 </code></pre>
 <h3 id='a-name-example1-3-a-simple-protocol-with-properties' class='heading'><a name="example1.3"></a> Simple protocol with properties</h3>
@@ -490,13 +497,13 @@
 
 <span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatReturnsAndThrows</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="mi">200</span><span class="p">),</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="kc">true</span><span class="p">))</span>
 <span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatReturnsAndThrows</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="mi">404</span><span class="p">),</span> <span class="nv">willThrow</span><span class="p">:</span> <span class="kt">SimpleTestError</span><span class="o">.</span><span class="n">failure</span><span class="p">))</span>
-<span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatReturnsAndThrows</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">,</span> <span class="nv">willThrow</span><span class="p">:</span> <span class="kt">SimpleTestError</span><span class="o">.</span><span class="n">other</span><span class="p">))</span>
+<span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatReturnsAndThrows</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">,</span> <span class="nv">willThrow</span><span class="p">:</span> <span class="kt">SimpleTestError</span><span class="o">.</span><span class="n">other</span><span class="p">))</span>
 
 <span class="kt">XCTAssertNoThrow</span><span class="p">(</span><span class="k">try</span> <span class="n">mock</span><span class="o">.</span><span class="nf">methodThatReturnsAndThrows</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="mi">200</span><span class="p">),</span> <span class="s">"Should not throw"</span><span class="p">)</span>
 <span class="kt">XCTAssertThrowsError</span><span class="p">(</span><span class="k">try</span> <span class="n">mock</span><span class="o">.</span><span class="nf">methodThatReturnsAndThrows</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="mi">404</span><span class="p">))</span>
 <span class="kt">XCTAssertThrowsError</span><span class="p">(</span><span class="k">try</span> <span class="n">mock</span><span class="o">.</span><span class="nf">methodThatReturnsAndThrows</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="mi">123</span><span class="p">))</span>
 
-<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatReturnsAndThrows</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">))</span>
+<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatReturnsAndThrows</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">))</span>
 </code></pre>
 <h2 id='a-name-example3-a-example-3' class='heading'><a name="example3"></a> Example 3:</h2>
 
@@ -514,7 +521,7 @@
 <pre class="highlight swift"><code><span class="k">let</span> <span class="nv">mock</span> <span class="o">=</span> <span class="kt">ProtocolWithTuplesMock</span><span class="p">()</span>
 
 <span class="c1">// When using only .any - no matcher registering needed</span>
-<span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesTuple</span><span class="p">(</span><span class="nv">tuple</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">,</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="mi">0</span><span class="p">))</span>
+<span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesTuple</span><span class="p">(</span><span class="nv">tuple</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">,</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="mi">0</span><span class="p">))</span>
 <span class="kt">XCTAssertEqual</span><span class="p">(</span><span class="n">mock</span><span class="o">.</span><span class="nf">methodThatTakesTuple</span><span class="p">(</span><span class="nv">tuple</span><span class="p">:</span> <span class="p">(</span><span class="s">"first"</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span> <span class="mi">0</span><span class="p">)</span>
 
 <span class="c1">// When using custom attributes or tuples as .value(...) - registering comparator in Matcher is required!</span>
@@ -528,7 +535,7 @@
 <span class="kt">XCTAssertEqual</span><span class="p">(</span><span class="n">mock</span><span class="o">.</span><span class="nf">methodThatTakesTuple</span><span class="p">(</span><span class="nv">tuple</span><span class="p">:</span> <span class="p">(</span><span class="s">"second"</span><span class="p">,</span><span class="mi">2</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span>
 <span class="kt">XCTAssertEqual</span><span class="p">(</span><span class="n">mock</span><span class="o">.</span><span class="nf">methodThatTakesTuple</span><span class="p">(</span><span class="nv">tuple</span><span class="p">:</span> <span class="p">(</span><span class="s">"first"</span><span class="p">,</span><span class="mi">0</span><span class="p">)),</span> <span class="mi">0</span><span class="p">)</span>
 
-<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesTuple</span><span class="p">(</span><span class="nv">tuple</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">))</span>
+<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesTuple</span><span class="p">(</span><span class="nv">tuple</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">))</span>
 <span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesTuple</span><span class="p">(</span><span class="nv">tuple</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">((</span><span class="s">"first"</span><span class="p">,</span><span class="mi">1</span><span class="p">))))</span>
 </code></pre>
 <h3 id='a-name-example3-2-a-simple-protocol-with-methods-using-custom-type' class='heading'><a name="example3.2"></a> Simple protocol with methods using custom type</h3>
@@ -563,7 +570,7 @@
 <span class="k">let</span> <span class="nv">user1</span> <span class="o">=</span> <span class="kt">UserObject</span><span class="p">(</span><span class="nv">name</span><span class="p">:</span> <span class="s">"Karl"</span><span class="p">,</span> <span class="nv">surname</span><span class="p">:</span> <span class="s">"Gustav"</span><span class="p">,</span> <span class="nv">age</span><span class="p">:</span> <span class="mi">90</span><span class="p">)</span>
 <span class="k">let</span> <span class="nv">user2</span> <span class="o">=</span> <span class="kt">UserObject</span><span class="p">(</span><span class="nv">name</span><span class="p">:</span> <span class="s">"Dan"</span><span class="p">,</span> <span class="nv">surname</span><span class="p">:</span> <span class="s">"Dannerson"</span><span class="p">,</span> <span class="nv">age</span><span class="p">:</span> <span class="mi">13</span><span class="p">)</span>
 <span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesUser</span><span class="p">(</span><span class="nv">user</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="n">user2</span><span class="p">),</span> <span class="nv">willThrow</span><span class="p">:</span> <span class="kt">UserVerifyError</span><span class="o">.</span><span class="n">tooYoung</span><span class="p">))</span>
-<span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesArrayOfUsers</span><span class="p">(</span><span class="nv">array</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">,</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="mi">0</span><span class="p">))</span>
+<span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesArrayOfUsers</span><span class="p">(</span><span class="nv">array</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">,</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="mi">0</span><span class="p">))</span>
 <span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesArrayOfUsers</span><span class="p">(</span><span class="nv">array</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">([</span><span class="n">user1</span><span class="p">,</span> <span class="n">user2</span><span class="p">]),</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="mi">2</span><span class="p">))</span>
 
 <span class="kt">XCTAssertNoThrow</span><span class="p">(</span><span class="k">try</span> <span class="n">mock</span><span class="o">.</span><span class="nf">methodThatTakesUser</span><span class="p">(</span><span class="nv">user</span><span class="p">:</span> <span class="n">user1</span><span class="p">),</span> <span class="s">"Should not throw"</span><span class="p">)</span>
@@ -594,7 +601,7 @@
 
 <span class="kt">Given</span><span class="p">(</span><span class="kt">ProtocolWithStaticMembersMock</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="o">.</span><span class="nf">staticMethod</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="mi">1</span><span class="p">))</span>
 <span class="kt">Given</span><span class="p">(</span><span class="kt">ProtocolWithStaticMembersMock</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="o">.</span><span class="nf">staticMethod</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="mi">2</span><span class="p">))</span>
-<span class="kt">Given</span><span class="p">(</span><span class="kt">ProtocolWithStaticMembersMock</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="o">.</span><span class="nf">staticMethod</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">,</span> <span class="nv">willThrow</span><span class="p">:</span> <span class="kt">SimpleTestError</span><span class="o">.</span><span class="n">failure</span><span class="p">))</span>
+<span class="kt">Given</span><span class="p">(</span><span class="kt">ProtocolWithStaticMembersMock</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="o">.</span><span class="nf">staticMethod</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">,</span> <span class="nv">willThrow</span><span class="p">:</span> <span class="kt">SimpleTestError</span><span class="o">.</span><span class="n">failure</span><span class="p">))</span>
 
 <span class="kt">XCTAssertEqual</span><span class="p">(</span><span class="kt">ProtocolWithStaticMembersMock</span><span class="o">.</span><span class="n">staticProperty</span><span class="p">,</span> <span class="s">"value"</span><span class="p">)</span>
 <span class="kt">XCTAssertEqual</span><span class="p">(</span><span class="k">try</span><span class="p">?</span> <span class="kt">ProtocolWithStaticMembersMock</span><span class="o">.</span><span class="nf">staticMethod</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
@@ -602,7 +609,7 @@
 <span class="kt">XCTAssertThrowsError</span><span class="p">(</span><span class="k">try</span> <span class="kt">ProtocolWithStaticMembersMock</span><span class="o">.</span><span class="nf">staticMethod</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">))</span>
 <span class="kt">XCTAssertThrowsError</span><span class="p">(</span><span class="k">try</span> <span class="kt">ProtocolWithStaticMembersMock</span><span class="o">.</span><span class="nf">staticMethod</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="mi">2</span><span class="p">))</span>
 
-<span class="kt">Verify</span><span class="p">(</span><span class="kt">ProtocolWithStaticMembersMock</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="nf">staticMethod</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">))</span>
+<span class="kt">Verify</span><span class="p">(</span><span class="kt">ProtocolWithStaticMembersMock</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="o">.</span><span class="nf">staticMethod</span><span class="p">(</span><span class="nv">param</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">))</span>
 </code></pre>
 <h2 id='a-name-example5-a-example-5' class='heading'><a name="example5"></a> Example 5:</h2>
 
@@ -626,7 +633,7 @@
 <span class="n">mock</span><span class="o">.</span><span class="nf">methodThatTakes</span><span class="p">(</span><span class="nv">closure</span><span class="p">:</span> <span class="p">{</span> <span class="nv">$0</span> <span class="p">})</span>
 <span class="n">mock</span><span class="o">.</span><span class="nf">methodThatTakes</span><span class="p">(</span><span class="nv">closure</span><span class="p">:</span> <span class="p">{</span> <span class="nv">$0</span> <span class="o">*</span> <span class="mi">2</span> <span class="p">})</span>
 
-<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakes</span><span class="p">(</span><span class="nv">closure</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">))</span>
+<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakes</span><span class="p">(</span><span class="nv">closure</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">))</span>
 <span class="c1">// For non escaping closures - every .value(...) is always treated as .any</span>
 <span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakes</span><span class="p">(</span><span class="nv">closure</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">({</span> <span class="nv">$0</span> <span class="p">})))</span>
 </code></pre>
@@ -647,7 +654,7 @@
     <span class="k">return</span> <span class="nf">lhs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="nf">rhs</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nf">lhs</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="nf">rhs</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="p">}</span>
 
-<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesEscaping</span><span class="p">(</span><span class="nv">closure</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">))</span>
+<span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesEscaping</span><span class="p">(</span><span class="nv">closure</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">))</span>
 <span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesEscaping</span><span class="p">(</span><span class="nv">closure</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">({</span> <span class="nv">$0</span> <span class="p">})))</span>
 </code></pre>
 <h3 id='a-name-example5-3-a-using-completion-block-based-approach' class='heading'><a name="example5.3"></a> Using completion block based approach</h3>
@@ -660,7 +667,7 @@
 <span class="k">let</span> <span class="nv">calledCompletionBlock</span> <span class="o">=</span> <span class="nf">expectation</span><span class="p">(</span><span class="nv">description</span><span class="p">:</span> <span class="s">"Should call completion block"</span><span class="p">)</span>
 
 <span class="c1">// Perform allows to execute given closure, with all the method parameters, as soon as it is being called</span>
-<span class="kt">Perform</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesCompletionBlock</span><span class="p">(</span><span class="nv">completion</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">,</span> <span class="nv">perform</span><span class="p">:</span> <span class="p">{</span> <span class="p">(</span><span class="n">completion</span><span class="p">)</span> <span class="k">in</span>
+<span class="kt">Perform</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodThatTakesCompletionBlock</span><span class="p">(</span><span class="nv">completion</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">,</span> <span class="nv">perform</span><span class="p">:</span> <span class="p">{</span> <span class="p">(</span><span class="n">completion</span><span class="p">)</span> <span class="k">in</span>
     <span class="nf">completion</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span><span class="kc">nil</span><span class="p">)</span>
 <span class="p">}))</span>
 
@@ -724,7 +731,7 @@
 <span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodWithGeneric</span><span class="p">(</span><span class="nv">lhs</span><span class="p">:</span> <span class="o">.</span><span class="nf">any</span><span class="p">(</span><span class="kt">Int</span><span class="o">.</span><span class="k">self</span><span class="p">),</span> <span class="nv">rhs</span><span class="p">:</span> <span class="o">.</span><span class="nf">any</span><span class="p">(</span><span class="kt">Int</span><span class="o">.</span><span class="k">self</span><span class="p">),</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="kc">false</span><span class="p">))</span>
 <span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodWithGeneric</span><span class="p">(</span><span class="nv">lhs</span><span class="p">:</span> <span class="o">.</span><span class="nf">any</span><span class="p">(</span><span class="kt">String</span><span class="o">.</span><span class="k">self</span><span class="p">),</span> <span class="nv">rhs</span><span class="p">:</span> <span class="o">.</span><span class="nf">any</span><span class="p">(</span><span class="kt">String</span><span class="o">.</span><span class="k">self</span><span class="p">),</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="kc">true</span><span class="p">))</span>
 <span class="c1">// In that case it is enough to specify type for only one elemen, so the type inference could do the rest</span>
-<span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodWithGeneric</span><span class="p">(</span><span class="nv">lhs</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="nv">rhs</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">,</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="kc">true</span><span class="p">))</span>
+<span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">methodWithGeneric</span><span class="p">(</span><span class="nv">lhs</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="nv">rhs</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">,</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="kc">true</span><span class="p">))</span>
 
 <span class="c1">// Also, for generics default comparators for equatable and sequence types breaks - so even for</span>
 <span class="c1">// simple types like Int or String, you have to register comparator</span>
@@ -767,7 +774,7 @@
 
 <span class="c1">// There is autocomplete issue, so in order to get autocomplete for all available methods</span>
 <span class="c1">// Use full &lt;MockName&gt;.Given. ... syntax</span>
-<span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="kt">ProtocolWithAssociatedTypeMock</span><span class="o">.</span><span class="kt">Given</span><span class="o">.</span><span class="nf">methodWithType</span><span class="p">(</span><span class="nv">t</span><span class="p">:</span> <span class="o">.</span><span class="n">any</span><span class="p">,</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="kc">false</span><span class="p">))</span>
+<span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="kt">ProtocolWithAssociatedTypeMock</span><span class="o">.</span><span class="kt">Given</span><span class="o">.</span><span class="nf">methodWithType</span><span class="p">(</span><span class="nv">t</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">,</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="kc">false</span><span class="p">))</span>
 <span class="c1">// It works slightly better, when using given directly on mock instance</span>
 <span class="n">mock</span><span class="o">.</span><span class="nf">given</span><span class="p">(</span><span class="kt">ProtocolWithAssociatedTypeMock</span><span class="o">&lt;</span><span class="p">[</span><span class="kt">Int</span><span class="p">]</span><span class="o">&gt;.</span><span class="kt">Given</span><span class="o">.</span><span class="nf">methodWithType</span><span class="p">(</span><span class="nv">t</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]),</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="kc">true</span><span class="p">))</span>
 
@@ -784,7 +791,7 @@
         </section>
         <section id="footer">
           <p>Copyright © 2017 MakeAWishFoundation. All rights reserved.</p>
-          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external noopener">jazzy ♪♫ v0.14.2</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external noopener">Realm</a> project.</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external noopener">jazzy ♪♫ v0.15.5</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external noopener">Realm</a> project.</p>
         </section>
       </article>
     </div>
