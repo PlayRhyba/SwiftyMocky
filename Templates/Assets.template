@@ -27,7 +27,7 @@ public enum Assets {
     }
 }
 
-public protocol AssetFile {
+public protocol AssetFile: Sendable {
 
     var name: String { get }
     var data: Data { get }

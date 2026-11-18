@@ -1527,7 +1527,7 @@ class VariableWrapper {
     }
 
     var privatePrototype: String {
-        let staticModifier = variable.isStatic ? "static " : ""
+        let staticModifier = variable.isStatic ? "nonisolated(unsafe) static " : ""
         var typeName = "\(variable.typeName.unwrappedTypeName)"
         let isWrappedInBrackets = typeName.hasPrefix("(") && typeName.hasSuffix(")")
         if !isWrappedInBrackets {
@@ -1634,7 +1634,7 @@ _%>
 // MARK: - <%= type.name %>
 <%= attributes %>
 <%= accessModifier %> class <%= type.name %><%= mockTypeName %><%= genericTypesModifier %>:<%= inheritFromNSObject ? " NSObject," : "" %> <%= type.name %>, Mock<%= conformsToStaticMock ? ", StaticMock" : "" %><%= genericTypesConstraints %> {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -1666,7 +1666,7 @@ _%>
     <%_ } %> <%_ -%>
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -1681,13 +1681,13 @@ _%>
     <%_ -%>
   <%# ================================================== STATIC MOCK INTERNALS -%><%_ -%>
     <%_ if conformsToStaticMock { -%>
-    static var matcher: Matcher = Matcher.default
-    static var stubbingPolicy: StubbingPolicy = .wrap
-    static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
-    static private var queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
-    static private var invocations: [StaticMethodType] = []
-    static private var methodReturnValues: [StaticGiven] = []
-    static private var methodPerformValues: [StaticPerform] = []
+    nonisolated(unsafe) static var matcher: Matcher = Matcher.default
+    nonisolated(unsafe) static var stubbingPolicy: StubbingPolicy = .wrap
+    nonisolated(unsafe) static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    static private let queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
+    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
+    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
+    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
@@ -1992,7 +1992,7 @@ _%>
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -2035,7 +2035,7 @@ _%>
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -2043,7 +2043,7 @@ _%>
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -2066,7 +2066,7 @@ _%>
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -2105,14 +2105,14 @@ _%>
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    static private func givenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T {
+    static private func givenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
             Failure(message)
         }
     }
-    static private func optionalGivenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T? {
+    static private func optionalGivenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {

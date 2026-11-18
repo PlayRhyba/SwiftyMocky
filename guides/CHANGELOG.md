@@ -10,6 +10,13 @@ All changes to SwiftyMocky project will be documented in this file.
 * Dropped CocoaPods and Carthage support - SwiftyMocky and SwiftyPrototype are distributed via Swift Package Manager only (CLI via SPM, Mint or `make`)
 * Requires Sourcery 2.4.1 (templates header `Required Sourcery: 2.4.1`)
 * Package requires swift-tools-version 6.0 and macOS 14 (XcodeProj 9 requirement)
+* Built in Swift 6 language mode. Generated mocks compile in Swift 6 mode and require a Swift 5.10+ compiler (`nonisolated(unsafe)`)
+* `file:` default arguments use `#filePath` instead of `#file`, so failures are reported at the right location in Swift 6 mode
+* Removed unused CLI constant `kSwiftyMockyCommand`; `kSourceryVersion` and `kDefaultSourceryCommand` are now `let`
+
+#### Concurrency:
+* `Matcher.default`, `Matcher.fatalErrorHandler`, `MockyAssertion.handler` and internal fatal-error/test-observer state are now lock-protected (same public API)
+* Generated mocks: static stubbing state is `nonisolated(unsafe)`; getter helpers no longer shadow a generic mock's `T`
 
 #### Changed:
 * Updated dependencies: XcodeProj 9.17.8, Yams 6.2.2

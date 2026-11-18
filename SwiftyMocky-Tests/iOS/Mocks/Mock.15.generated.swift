@@ -16,7 +16,7 @@ import UIKit
 // MARK: - AMassiveTestProtocol
 
 open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -40,7 +40,7 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -52,13 +52,13 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
         if scopes.contains(.given) { methodReturnValues = [] }
         if scopes.contains(.perform) { methodPerformValues = [] }
     }
-    static var matcher: Matcher = Matcher.default
-    static var stubbingPolicy: StubbingPolicy = .wrap
-    static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
-    static private var queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
-    static private var invocations: [StaticMethodType] = []
-    static private var methodReturnValues: [StaticGiven] = []
-    static private var methodPerformValues: [StaticPerform] = []
+    nonisolated(unsafe) static var matcher: Matcher = Matcher.default
+    nonisolated(unsafe) static var stubbingPolicy: StubbingPolicy = .wrap
+    nonisolated(unsafe) static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    static private let queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
+    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
+    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
+    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
@@ -93,7 +93,7 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
 		get {	AMassiveTestProtocolMock.invocations.append(.p_optionalClosure_get); return AMassiveTestProtocolMock.__p_optionalClosure ?? optionalGivenGetterValue(.p_optionalClosure_get, "AMassiveTestProtocolMock - stub value for optionalClosure was not defined") }
 		set {	AMassiveTestProtocolMock.invocations.append(.p_optionalClosure_set(.value(newValue))); AMassiveTestProtocolMock.__p_optionalClosure = newValue }
 	}
-	private static var __p_optionalClosure: (() -> Int)?
+	private nonisolated(unsafe) static var __p_optionalClosure: (() -> Int)?
 
 
 
@@ -465,7 +465,7 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -508,7 +508,7 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -516,7 +516,7 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -537,7 +537,7 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -576,14 +576,14 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    static private func givenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T {
+    static private func givenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
             Failure(message)
         }
     }
-    static private func optionalGivenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T? {
+    static private func optionalGivenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -595,7 +595,7 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
 // MARK: - AVeryAssociatedProtocol
 
 open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock where T1: Sequence, T2: Comparable, T2: EmptyProtocol {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -619,7 +619,7 @@ open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock whe
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -720,7 +720,7 @@ open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock whe
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -763,7 +763,7 @@ open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock whe
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -771,7 +771,7 @@ open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock whe
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -787,7 +787,7 @@ open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock whe
 // MARK: - AVeryGenericProtocol
 
 open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -811,7 +811,7 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -823,13 +823,13 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
         if scopes.contains(.given) { methodReturnValues = [] }
         if scopes.contains(.perform) { methodPerformValues = [] }
     }
-    static var matcher: Matcher = Matcher.default
-    static var stubbingPolicy: StubbingPolicy = .wrap
-    static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
-    static private var queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
-    static private var invocations: [StaticMethodType] = []
-    static private var methodReturnValues: [StaticGiven] = []
-    static private var methodPerformValues: [StaticPerform] = []
+    nonisolated(unsafe) static var matcher: Matcher = Matcher.default
+    nonisolated(unsafe) static var stubbingPolicy: StubbingPolicy = .wrap
+    nonisolated(unsafe) static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    static private let queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
+    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
+    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
+    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
@@ -1043,7 +1043,7 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -1086,7 +1086,7 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -1094,7 +1094,7 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -1115,7 +1115,7 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -1154,14 +1154,14 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    static private func givenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T {
+    static private func givenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
             Failure(message)
         }
     }
-    static private func optionalGivenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T? {
+    static private func optionalGivenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -1173,7 +1173,7 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
 // MARK: - AllLiteralsContainer
 
 open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -1197,7 +1197,7 @@ open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -1767,7 +1767,7 @@ open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -1810,7 +1810,7 @@ open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -1818,7 +1818,7 @@ open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -1834,7 +1834,7 @@ open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
 // MARK: - AnotherProtocol
 
 open class AnotherProtocolMock: AnotherProtocol, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -1858,7 +1858,7 @@ open class AnotherProtocolMock: AnotherProtocol, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -1978,7 +1978,7 @@ open class AnotherProtocolMock: AnotherProtocol, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -2021,7 +2021,7 @@ open class AnotherProtocolMock: AnotherProtocol, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -2029,7 +2029,7 @@ open class AnotherProtocolMock: AnotherProtocol, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -2045,7 +2045,7 @@ open class AnotherProtocolMock: AnotherProtocol, Mock {
 // MARK: - AsyncMethodsProtocol
 
 open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -2069,7 +2069,7 @@ open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -2172,7 +2172,7 @@ open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -2215,7 +2215,7 @@ open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -2223,7 +2223,7 @@ open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -2239,7 +2239,7 @@ open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
 // MARK: - ComplicatedServiceType
 
 open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -2263,7 +2263,7 @@ open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -2624,7 +2624,7 @@ open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -2667,7 +2667,7 @@ open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -2675,7 +2675,7 @@ open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -2691,7 +2691,7 @@ open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
 // MARK: - DateSortable
 
 open class DateSortableMock: DateSortable, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -2715,7 +2715,7 @@ open class DateSortableMock: DateSortable, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -2793,7 +2793,7 @@ open class DateSortableMock: DateSortable, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -2836,7 +2836,7 @@ open class DateSortableMock: DateSortable, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -2844,7 +2844,7 @@ open class DateSortableMock: DateSortable, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -2860,7 +2860,7 @@ open class DateSortableMock: DateSortable, Mock {
 // MARK: - EdgeCasesGenericsProtocol
 
 open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -2884,7 +2884,7 @@ open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -3004,7 +3004,7 @@ open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -3047,7 +3047,7 @@ open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -3055,7 +3055,7 @@ open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -3071,7 +3071,7 @@ open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
 // MARK: - EmptyProtocol
 
 open class EmptyProtocolMock: EmptyProtocol, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -3095,7 +3095,7 @@ open class EmptyProtocolMock: EmptyProtocol, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -3150,7 +3150,7 @@ open class EmptyProtocolMock: EmptyProtocol, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -3193,7 +3193,7 @@ open class EmptyProtocolMock: EmptyProtocol, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -3201,7 +3201,7 @@ open class EmptyProtocolMock: EmptyProtocol, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -3217,7 +3217,7 @@ open class EmptyProtocolMock: EmptyProtocol, Mock {
 // MARK: - FailsWithAutoClosureOnSwift5
 
 open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -3241,7 +3241,7 @@ open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock 
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -3342,7 +3342,7 @@ open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock 
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -3385,7 +3385,7 @@ open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock 
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -3393,7 +3393,7 @@ open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock 
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -3409,7 +3409,7 @@ open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock 
 // MARK: - FailsWithKeywordArguments
 
 open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -3433,7 +3433,7 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -3642,7 +3642,7 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -3685,7 +3685,7 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -3693,7 +3693,7 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -3709,7 +3709,7 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
 // MARK: - FailsWithReturnedTypeBeingGenericOfSelf
 
 public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturnedTypeBeingGenericOfSelf, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -3733,7 +3733,7 @@ public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturne
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -3979,7 +3979,7 @@ public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturne
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -4022,7 +4022,7 @@ public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturne
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -4030,7 +4030,7 @@ public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturne
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -4046,7 +4046,7 @@ public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturne
 // MARK: - FailsWithUntagged
 
 open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -4070,7 +4070,7 @@ open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -4155,7 +4155,7 @@ open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -4198,7 +4198,7 @@ open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -4206,7 +4206,7 @@ open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -4222,7 +4222,7 @@ open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
 // MARK: - Fetcher
 
 open class FetcherMock: Fetcher, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -4246,7 +4246,7 @@ open class FetcherMock: Fetcher, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -4347,7 +4347,7 @@ open class FetcherMock: Fetcher, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -4390,7 +4390,7 @@ open class FetcherMock: Fetcher, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -4398,7 +4398,7 @@ open class FetcherMock: Fetcher, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -4414,7 +4414,7 @@ open class FetcherMock: Fetcher, Mock {
 // MARK: - GenericProtocolReturningInt
 
 open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -4438,7 +4438,7 @@ open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -4539,7 +4539,7 @@ open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -4582,7 +4582,7 @@ open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -4590,7 +4590,7 @@ open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -4606,7 +4606,7 @@ open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
 // MARK: - GenericProtocolWithTypeConstraint
 
 open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstraint, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -4630,7 +4630,7 @@ open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstra
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -4769,7 +4769,7 @@ open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstra
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -4812,7 +4812,7 @@ open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstra
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -4820,7 +4820,7 @@ open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstra
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -4836,7 +4836,7 @@ open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstra
 // MARK: - HistorySectionMapperType
 
 open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -4860,7 +4860,7 @@ open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -4961,7 +4961,7 @@ open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -5004,7 +5004,7 @@ open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -5012,7 +5012,7 @@ open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -5028,7 +5028,7 @@ open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
 // MARK: - InoutProtocol
 
 open class InoutProtocolMock: InoutProtocol, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -5052,7 +5052,7 @@ open class InoutProtocolMock: InoutProtocol, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -5190,7 +5190,7 @@ open class InoutProtocolMock: InoutProtocol, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -5233,7 +5233,7 @@ open class InoutProtocolMock: InoutProtocol, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -5241,7 +5241,7 @@ open class InoutProtocolMock: InoutProtocol, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -5257,7 +5257,7 @@ open class InoutProtocolMock: InoutProtocol, Mock {
 // MARK: - NonSwiftProtocol
 @objc
 open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -5281,7 +5281,7 @@ open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -5378,7 +5378,7 @@ open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -5421,7 +5421,7 @@ open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -5429,7 +5429,7 @@ open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -5445,7 +5445,7 @@ open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
 // MARK: - ProtocolMethodsGenericThatDifferOnlyInReturnType
 
 open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethodsGenericThatDifferOnlyInReturnType, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -5469,7 +5469,7 @@ open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethods
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -5815,7 +5815,7 @@ open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethods
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -5858,7 +5858,7 @@ open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethods
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -5866,7 +5866,7 @@ open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethods
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -5882,7 +5882,7 @@ open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethods
 // MARK: - ProtocolMethodsThatDifferOnlyInReturnType
 
 open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDifferOnlyInReturnType, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -5906,7 +5906,7 @@ open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDif
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -6044,7 +6044,7 @@ open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDif
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -6087,7 +6087,7 @@ open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDif
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -6095,7 +6095,7 @@ open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDif
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -6111,7 +6111,7 @@ open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDif
 // MARK: - ProtocolWithAssociatedType
 
 open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock where T: Sequence {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -6135,7 +6135,7 @@ open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock w
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -6250,7 +6250,7 @@ open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock w
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -6293,7 +6293,7 @@ open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock w
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -6301,7 +6301,7 @@ open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock w
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -6317,7 +6317,7 @@ open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock w
 // MARK: - ProtocolWithAssociatedType2
 
 open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedType2, Mock where ValueType: StringConvertibleType {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -6341,7 +6341,7 @@ open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedTyp
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -6419,7 +6419,7 @@ open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedTyp
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -6462,7 +6462,7 @@ open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedTyp
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -6470,7 +6470,7 @@ open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedTyp
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -6486,7 +6486,7 @@ open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedTyp
 // MARK: - ProtocolWithAttributes
 @available(iOS 14, *) @objc
 open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -6510,7 +6510,7 @@ open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -6590,7 +6590,7 @@ open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -6633,7 +6633,7 @@ open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -6641,7 +6641,7 @@ open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -6657,7 +6657,7 @@ open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
 // MARK: - ProtocolWithAttributesB
 
 open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -6681,7 +6681,7 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -6926,7 +6926,7 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -6969,7 +6969,7 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -6977,7 +6977,7 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -6993,7 +6993,7 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
 // MARK: - ProtocolWithClosures
 
 open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -7017,7 +7017,7 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -7137,7 +7137,7 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -7180,7 +7180,7 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -7188,7 +7188,7 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -7204,7 +7204,7 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
 // MARK: - ProtocolWithConflictingMembers
 
 open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -7228,7 +7228,7 @@ open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, M
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -7402,7 +7402,7 @@ open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, M
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -7445,7 +7445,7 @@ open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, M
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -7453,7 +7453,7 @@ open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, M
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -7469,7 +7469,7 @@ open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, M
 // MARK: - ProtocolWithCustomAttributes
 
 open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -7493,7 +7493,7 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -7630,7 +7630,7 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -7673,7 +7673,7 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -7681,7 +7681,7 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -7697,7 +7697,7 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
 // MARK: - ProtocolWithDeprecatedMembers
 
 open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -7721,7 +7721,7 @@ open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Moc
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -7822,7 +7822,7 @@ open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Moc
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -7865,7 +7865,7 @@ open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Moc
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -7873,7 +7873,7 @@ open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Moc
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -7889,7 +7889,7 @@ open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Moc
 // MARK: - ProtocolWithGenericConstraints
 
 open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGenericConstraints, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -7913,7 +7913,7 @@ open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGeneri
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -8024,7 +8024,7 @@ open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGeneri
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -8067,7 +8067,7 @@ open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGeneri
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -8075,7 +8075,7 @@ open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGeneri
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -8091,7 +8091,7 @@ open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGeneri
 // MARK: - ProtocolWithGenericMethods
 
 open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -8115,7 +8115,7 @@ open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -8254,7 +8254,7 @@ open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -8297,7 +8297,7 @@ open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -8305,7 +8305,7 @@ open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -8321,7 +8321,7 @@ open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
 // MARK: - ProtocolWithGenericMethodsNested
 
 open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNested, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -8345,7 +8345,7 @@ open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNeste
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -8446,7 +8446,7 @@ open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNeste
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -8489,7 +8489,7 @@ open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNeste
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -8497,7 +8497,7 @@ open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNeste
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -8513,7 +8513,7 @@ open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNeste
 // MARK: - ProtocolWithInitializers
 
 open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -8537,7 +8537,7 @@ open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -8633,7 +8633,7 @@ open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -8676,7 +8676,7 @@ open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -8684,7 +8684,7 @@ open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -8700,7 +8700,7 @@ open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
 // MARK: - ProtocolWithMethodWithManyParameters
 
 open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyParameters, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -8724,7 +8724,7 @@ open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyP
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -8811,7 +8811,7 @@ open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyP
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -8854,7 +8854,7 @@ open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyP
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -8862,7 +8862,7 @@ open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyP
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -8878,7 +8878,7 @@ open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyP
 // MARK: - ProtocolWithMethodsWithGenericReturnTypeThatThrows
 
 open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithMethodsWithGenericReturnTypeThatThrows, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -8902,7 +8902,7 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -9010,7 +9010,7 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -9053,7 +9053,7 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -9061,7 +9061,7 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -9077,7 +9077,7 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
 // MARK: - ProtocolWithObjc
 @objc(PRProtocolWithObjc)
 open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -9101,7 +9101,7 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -9113,13 +9113,13 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
         if scopes.contains(.given) { methodReturnValues = [] }
         if scopes.contains(.perform) { methodPerformValues = [] }
     }
-    static var matcher: Matcher = Matcher.default
-    static var stubbingPolicy: StubbingPolicy = .wrap
-    static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
-    static private var queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
-    static private var invocations: [StaticMethodType] = []
-    static private var methodReturnValues: [StaticGiven] = []
-    static private var methodPerformValues: [StaticPerform] = []
+    nonisolated(unsafe) static var matcher: Matcher = Matcher.default
+    nonisolated(unsafe) static var stubbingPolicy: StubbingPolicy = .wrap
+    nonisolated(unsafe) static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    static private let queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
+    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
+    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
+    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
@@ -9262,7 +9262,7 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -9305,7 +9305,7 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -9313,7 +9313,7 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -9334,7 +9334,7 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -9373,14 +9373,14 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    static private func givenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T {
+    static private func givenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
             Failure(message)
         }
     }
-    static private func optionalGivenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T? {
+    static private func optionalGivenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -9392,7 +9392,7 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
 // MARK: - ProtocolWithProperties
 
 open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -9416,7 +9416,7 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -9428,13 +9428,13 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
         if scopes.contains(.given) { methodReturnValues = [] }
         if scopes.contains(.perform) { methodPerformValues = [] }
     }
-    static var matcher: Matcher = Matcher.default
-    static var stubbingPolicy: StubbingPolicy = .wrap
-    static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
-    static private var queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
-    static private var invocations: [StaticMethodType] = []
-    static private var methodReturnValues: [StaticGiven] = []
-    static private var methodPerformValues: [StaticPerform] = []
+    nonisolated(unsafe) static var matcher: Matcher = Matcher.default
+    nonisolated(unsafe) static var stubbingPolicy: StubbingPolicy = .wrap
+    nonisolated(unsafe) static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    static private let queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
+    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
+    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
+    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
@@ -9469,13 +9469,13 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
 		get {	ProtocolWithPropertiesMock.invocations.append(.p_name_get); return ProtocolWithPropertiesMock.__p_name ?? givenGetterValue(.p_name_get, "ProtocolWithPropertiesMock - stub value for name was not defined") }
 		set {	ProtocolWithPropertiesMock.invocations.append(.p_name_set(.value(newValue))); ProtocolWithPropertiesMock.__p_name = newValue }
 	}
-	private static var __p_name: (String)?
+	private nonisolated(unsafe) static var __p_name: (String)?
 
     public static var defaultEmail: String? {
 		get {	ProtocolWithPropertiesMock.invocations.append(.p_defaultEmail_get); return ProtocolWithPropertiesMock.__p_defaultEmail ?? optionalGivenGetterValue(.p_defaultEmail_get, "ProtocolWithPropertiesMock - stub value for defaultEmail was not defined") }
 		set {	ProtocolWithPropertiesMock.invocations.append(.p_defaultEmail_set(.value(newValue))); ProtocolWithPropertiesMock.__p_defaultEmail = newValue }
 	}
-	private static var __p_defaultEmail: (String)?
+	private nonisolated(unsafe) static var __p_defaultEmail: (String)?
 
 
 
@@ -9688,7 +9688,7 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -9731,7 +9731,7 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -9739,7 +9739,7 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -9760,7 +9760,7 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -9799,14 +9799,14 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    static private func givenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T {
+    static private func givenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
             Failure(message)
         }
     }
-    static private func optionalGivenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T? {
+    static private func optionalGivenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -9818,7 +9818,7 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
 // MARK: - ProtocolWithStaticMembers
 
 open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, StaticMock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -9842,7 +9842,7 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -9854,13 +9854,13 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
         if scopes.contains(.given) { methodReturnValues = [] }
         if scopes.contains(.perform) { methodPerformValues = [] }
     }
-    static var matcher: Matcher = Matcher.default
-    static var stubbingPolicy: StubbingPolicy = .wrap
-    static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
-    static private var queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
-    static private var invocations: [StaticMethodType] = []
-    static private var methodReturnValues: [StaticGiven] = []
-    static private var methodPerformValues: [StaticPerform] = []
+    nonisolated(unsafe) static var matcher: Matcher = Matcher.default
+    nonisolated(unsafe) static var stubbingPolicy: StubbingPolicy = .wrap
+    nonisolated(unsafe) static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    static private let queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
+    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
+    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
+    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
@@ -9876,7 +9876,7 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
     public static var staticProperty: String {
 		get {	ProtocolWithStaticMembersMock.invocations.append(.p_staticProperty_get); return ProtocolWithStaticMembersMock.__p_staticProperty ?? givenGetterValue(.p_staticProperty_get, "ProtocolWithStaticMembersMock - stub value for staticProperty was not defined") }
 	}
-	private static var __p_staticProperty: (String)?
+	private nonisolated(unsafe) static var __p_staticProperty: (String)?
 
 
 
@@ -10007,7 +10007,7 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -10050,7 +10050,7 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -10058,7 +10058,7 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -10079,7 +10079,7 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -10118,14 +10118,14 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    static private func givenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T {
+    static private func givenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
             Failure(message)
         }
     }
-    static private func optionalGivenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T? {
+    static private func optionalGivenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -10137,7 +10137,7 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
 // MARK: - ProtocolWithSubscripts
 
 open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -10161,7 +10161,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -10648,7 +10648,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -10691,7 +10691,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -10699,7 +10699,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -10715,7 +10715,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 // MARK: - ProtocolWithThrowingMethods
 
 open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -10739,7 +10739,7 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -10878,7 +10878,7 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -10921,7 +10921,7 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -10929,7 +10929,7 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -10945,7 +10945,7 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
 // MARK: - ProtocolWithTuples
 
 open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -10969,7 +10969,7 @@ open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -11070,7 +11070,7 @@ open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -11113,7 +11113,7 @@ open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -11121,7 +11121,7 @@ open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -11137,7 +11137,7 @@ open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
 // MARK: - ProtocolWithWhereAfterDefinition
 
 open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefinition, Mock where T: Sequence, T.Element: Equatable {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -11161,7 +11161,7 @@ open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefini
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -11276,7 +11276,7 @@ open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefini
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -11319,7 +11319,7 @@ open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefini
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -11327,7 +11327,7 @@ open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefini
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -11343,7 +11343,7 @@ open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefini
 // MARK: - SampleServiceType
 
 open class SampleServiceTypeMock: SampleServiceType, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -11367,7 +11367,7 @@ open class SampleServiceTypeMock: SampleServiceType, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -11700,7 +11700,7 @@ open class SampleServiceTypeMock: SampleServiceType, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -11743,7 +11743,7 @@ open class SampleServiceTypeMock: SampleServiceType, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -11751,7 +11751,7 @@ open class SampleServiceTypeMock: SampleServiceType, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -11767,7 +11767,7 @@ open class SampleServiceTypeMock: SampleServiceType, Mock {
 // MARK: - SelfConstrainedProtocol
 
 public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, StaticMock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -11791,7 +11791,7 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -11803,13 +11803,13 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
         if scopes.contains(.given) { methodReturnValues = [] }
         if scopes.contains(.perform) { methodPerformValues = [] }
     }
-    static var matcher: Matcher = Matcher.default
-    static var stubbingPolicy: StubbingPolicy = .wrap
-    static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
-    static private var queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
-    static private var invocations: [StaticMethodType] = []
-    static private var methodReturnValues: [StaticGiven] = []
-    static private var methodPerformValues: [StaticPerform] = []
+    nonisolated(unsafe) static var matcher: Matcher = Matcher.default
+    nonisolated(unsafe) static var stubbingPolicy: StubbingPolicy = .wrap
+    nonisolated(unsafe) static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    static private let queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
+    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
+    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
+    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
@@ -12108,7 +12108,7 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -12151,7 +12151,7 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -12159,7 +12159,7 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -12180,7 +12180,7 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -12219,14 +12219,14 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    static private func givenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T {
+    static private func givenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
             Failure(message)
         }
     }
-    static private func optionalGivenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T? {
+    static private func optionalGivenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -12238,7 +12238,7 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
 // MARK: - ShouldAllowNoStubDefined
 
 open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticMock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -12262,7 +12262,7 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -12274,13 +12274,13 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
         if scopes.contains(.given) { methodReturnValues = [] }
         if scopes.contains(.perform) { methodPerformValues = [] }
     }
-    static var matcher: Matcher = Matcher.default
-    static var stubbingPolicy: StubbingPolicy = .wrap
-    static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
-    static private var queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
-    static private var invocations: [StaticMethodType] = []
-    static private var methodReturnValues: [StaticGiven] = []
-    static private var methodPerformValues: [StaticPerform] = []
+    nonisolated(unsafe) static var matcher: Matcher = Matcher.default
+    nonisolated(unsafe) static var stubbingPolicy: StubbingPolicy = .wrap
+    nonisolated(unsafe) static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    static private let queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
+    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
+    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
+    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
@@ -12301,7 +12301,7 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
     public static var property: Int? {
 		get {	ShouldAllowNoStubDefinedMock.invocations.append(.p_property_get); return ShouldAllowNoStubDefinedMock.__p_property ?? optionalGivenGetterValue(.p_property_get, "ShouldAllowNoStubDefinedMock - stub value for property was not defined") }
 	}
-	private static var __p_property: (Int)?
+	private nonisolated(unsafe) static var __p_property: (Int)?
 
 
 
@@ -12679,7 +12679,7 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -12722,7 +12722,7 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -12730,7 +12730,7 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -12751,7 +12751,7 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -12790,14 +12790,14 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    static private func givenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T {
+    static private func givenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
             Failure(message)
         }
     }
-    static private func optionalGivenGetterValue<T>(_ method: StaticMethodType, _ message: String) -> T? {
+    static private func optionalGivenGetterValue<Value>(_ method: StaticMethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -12809,7 +12809,7 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
 // MARK: - SimpleProtocolThatInheritsOtherProtocols
 
 open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInheritsOtherProtocols, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -12833,7 +12833,7 @@ open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInher
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -13107,7 +13107,7 @@ open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInher
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -13150,7 +13150,7 @@ open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInher
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -13158,7 +13158,7 @@ open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInher
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -13174,7 +13174,7 @@ open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInher
 // MARK: - SimpleProtocolUsingCollections
 
 open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -13198,7 +13198,7 @@ open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, M
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -13406,7 +13406,7 @@ open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, M
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -13449,7 +13449,7 @@ open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, M
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -13457,7 +13457,7 @@ open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, M
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -13473,7 +13473,7 @@ open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, M
 // MARK: - SimpleProtocolWithBothMethodsAndProperties
 
 open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBothMethodsAndProperties, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -13497,7 +13497,7 @@ open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBot
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -13609,7 +13609,7 @@ open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBot
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -13652,7 +13652,7 @@ open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBot
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -13660,7 +13660,7 @@ open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBot
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -13676,7 +13676,7 @@ open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBot
 // MARK: - SimpleProtocolWithMethods
 
 open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -13700,7 +13700,7 @@ open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -13885,7 +13885,7 @@ open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -13928,7 +13928,7 @@ open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -13936,7 +13936,7 @@ open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -13952,7 +13952,7 @@ open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
 // MARK: - SimpleProtocolWithProperties
 
 open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -13976,7 +13976,7 @@ open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock 
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -14131,7 +14131,7 @@ open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock 
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -14174,7 +14174,7 @@ open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock 
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -14182,7 +14182,7 @@ open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock 
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -14198,7 +14198,7 @@ open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock 
 // MARK: - SuggestionProtocol
 
 open class SuggestionProtocolMock: SuggestionProtocol, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -14222,7 +14222,7 @@ open class SuggestionProtocolMock: SuggestionProtocol, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -14277,7 +14277,7 @@ open class SuggestionProtocolMock: SuggestionProtocol, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -14320,7 +14320,7 @@ open class SuggestionProtocolMock: SuggestionProtocol, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -14328,7 +14328,7 @@ open class SuggestionProtocolMock: SuggestionProtocol, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -14344,7 +14344,7 @@ open class SuggestionProtocolMock: SuggestionProtocol, Mock {
 // MARK: - SuggestionRepository
 
 open class SuggestionRepositoryMock: SuggestionRepository, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -14369,7 +14369,7 @@ open class SuggestionRepositoryMock: SuggestionRepository, Mock {
     public typealias Entity = Suggestion
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -14652,7 +14652,7 @@ open class SuggestionRepositoryMock: SuggestionRepository, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -14695,7 +14695,7 @@ open class SuggestionRepositoryMock: SuggestionRepository, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -14703,7 +14703,7 @@ open class SuggestionRepositoryMock: SuggestionRepository, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -14719,7 +14719,7 @@ open class SuggestionRepositoryMock: SuggestionRepository, Mock {
 // MARK: - SuggestionRepositoryConstrainedToProtocol
 
 open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepositoryConstrainedToProtocol, Mock where Entity: SuggestionProtocol {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -14743,7 +14743,7 @@ open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepo
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -15026,7 +15026,7 @@ open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepo
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -15069,7 +15069,7 @@ open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepo
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -15077,7 +15077,7 @@ open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepo
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -15093,7 +15093,7 @@ open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepo
 // MARK: - TestAutoImport
 
 open class TestAutoImportMock: TestAutoImport, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -15117,7 +15117,7 @@ open class TestAutoImportMock: TestAutoImport, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -15172,7 +15172,7 @@ open class TestAutoImportMock: TestAutoImport, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -15215,7 +15215,7 @@ open class TestAutoImportMock: TestAutoImport, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -15223,7 +15223,7 @@ open class TestAutoImportMock: TestAutoImport, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -15239,7 +15239,7 @@ open class TestAutoImportMock: TestAutoImport, Mock {
 // MARK: - ThrowingVarProtocol
 
 open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -15263,7 +15263,7 @@ open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -15343,7 +15343,7 @@ open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -15386,7 +15386,7 @@ open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -15394,7 +15394,7 @@ open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -15410,7 +15410,7 @@ open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
 // MARK: - UnnamedAttributesProtocol
 
 open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -15434,7 +15434,7 @@ open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -15569,7 +15569,7 @@ open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -15612,7 +15612,7 @@ open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -15620,7 +15620,7 @@ open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -15636,7 +15636,7 @@ open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
 // MARK: - UserNetworkType
 
 open class UserNetworkTypeMock: UserNetworkType, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -15660,7 +15660,7 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -15804,7 +15804,7 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -15847,7 +15847,7 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -15855,7 +15855,7 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -15871,7 +15871,7 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
 // MARK: - UserStorageType
 
 open class UserStorageTypeMock: UserStorageType, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -15895,7 +15895,7 @@ open class UserStorageTypeMock: UserStorageType, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -16016,7 +16016,7 @@ open class UserStorageTypeMock: UserStorageType, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -16059,7 +16059,7 @@ open class UserStorageTypeMock: UserStorageType, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -16067,7 +16067,7 @@ open class UserStorageTypeMock: UserStorageType, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -16083,7 +16083,7 @@ open class UserStorageTypeMock: UserStorageType, Mock {
 // MARK: - VariadicParametersProtocol
 
 open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -16107,7 +16107,7 @@ open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -16245,7 +16245,7 @@ open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -16288,7 +16288,7 @@ open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -16296,7 +16296,7 @@ open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -16312,7 +16312,7 @@ open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
 // MARK: - WithConflictingName
 
 open class WithConflictingNameMock: WithConflictingName, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -16337,7 +16337,7 @@ open class WithConflictingNameMock: WithConflictingName, Mock {
     public typealias A = WithConflictingName.A
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -16438,7 +16438,7 @@ open class WithConflictingNameMock: WithConflictingName, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -16481,7 +16481,7 @@ open class WithConflictingNameMock: WithConflictingName, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -16489,7 +16489,7 @@ open class WithConflictingNameMock: WithConflictingName, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -16505,7 +16505,7 @@ open class WithConflictingNameMock: WithConflictingName, Mock {
 // MARK: - ComposedService
 
 open class ComposedServiceMock: ComposedService, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -16529,7 +16529,7 @@ open class ComposedServiceMock: ComposedService, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -16875,7 +16875,7 @@ open class ComposedServiceMock: ComposedService, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -16918,7 +16918,7 @@ open class ComposedServiceMock: ComposedService, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -16926,7 +16926,7 @@ open class ComposedServiceMock: ComposedService, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {

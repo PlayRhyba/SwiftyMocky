@@ -30,7 +30,7 @@ class ItemsRepositoryMock: ItemsRepository, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -200,7 +200,7 @@ class ItemsRepositoryMock: ItemsRepository, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -243,7 +243,7 @@ class ItemsRepositoryMock: ItemsRepository, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -251,7 +251,7 @@ class ItemsRepositoryMock: ItemsRepository, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {

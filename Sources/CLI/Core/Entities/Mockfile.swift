@@ -47,7 +47,7 @@ public struct Mockfile: Codable {
 
     // MARK: - Dynamic lookup
 
-    subscript(dynamicMember member: String) -> MockConfiguration? {
+    public subscript(dynamicMember member: String) -> MockConfiguration? {
         get { return contents[member] }
         set {
             guard let newValue = newValue else {

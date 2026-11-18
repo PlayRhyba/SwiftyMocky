@@ -2,7 +2,8 @@ import Foundation
 import PathKit
 
 public enum Instance {
-    public internal(set) static var factory: InstanceFactory = InstanceFactoryConcrete()
+    // The CLI runs single-threaded; tests swap the factory in setUp.
+    nonisolated(unsafe) public internal(set) static var factory: InstanceFactory = InstanceFactoryConcrete()
 }
 
 public protocol InstanceFactory: AnyObject, AutoMockable {

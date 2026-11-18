@@ -88,11 +88,7 @@ class ExampleTests: XCTestCase {
             XCTAssertNotNil(sut.user)
         }
 
-        waitForExpectations(timeout: 1) { (error) in
-            if let error = error {
-                XCTFail("Fetch user failed woth error: \(error)")
-            }
-        }
+        wait(for: [fetchExpectation], timeout: 1)
     }
 
     func testGiven_with_throwing() {
@@ -167,11 +163,7 @@ class ExampleTests: XCTestCase {
         let value = try? AMassiveTestProtocolMock.methodThatReturnsAndThrows(param: "anything")
         Verify(AMassiveTestProtocolMock.self, .methodThatReturnsAndThrows(param: .value("anything")))
         XCTAssertEqual(value, 1)
-        waitForExpectations(timeout: 1) { error in
-            if let _ = error {
-                XCTFail()
-            }
-        }
+        wait(for: [perform], timeout: 1)
     }
 
     func test_generics() {
@@ -267,4 +259,3 @@ class ExampleTests: XCTestCase {
     }
 }
 
-extension String: EmptyProtocol { }

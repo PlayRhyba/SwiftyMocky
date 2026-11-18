@@ -16,7 +16,7 @@ import PathKit
 // MARK: - GenerationCommand
 
 open class GenerationCommandMock: GenerationCommand, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -40,7 +40,7 @@ open class GenerationCommandMock: GenerationCommand, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -247,7 +247,7 @@ open class GenerationCommandMock: GenerationCommand, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -290,7 +290,7 @@ open class GenerationCommandMock: GenerationCommand, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -298,7 +298,7 @@ open class GenerationCommandMock: GenerationCommand, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -314,7 +314,7 @@ open class GenerationCommandMock: GenerationCommand, Mock {
 // MARK: - InstanceFactory
 
 open class InstanceFactoryMock: InstanceFactory, Mock {
-    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #file, line: UInt = #line) {
+    public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
         self.sequencingPolicy = sequencingPolicy
         self.stubbingPolicy = stubbingPolicy
@@ -338,7 +338,7 @@ open class InstanceFactoryMock: InstanceFactory, Mock {
     public typealias SubscriptStub = Given
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
-    public func setupMock(file: StaticString = #file, line: UInt = #line) {
+    public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
         self.file = file
         self.line = line
     }
@@ -482,7 +482,7 @@ open class InstanceFactoryMock: InstanceFactory, Mock {
         methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
     }
 
-    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #file, line: UInt = #line) {
+    public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
         let fullMatches = matchingCalls(method, file: file, line: line)
         let success = count.matches(fullMatches)
         let assertionName = method.method.assertionName()
@@ -525,7 +525,7 @@ open class InstanceFactoryMock: InstanceFactory, Mock {
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
     }
-    private func givenGetterValue<T>(_ method: MethodType, _ message: String) -> T {
+    private func givenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value {
         do {
             return try methodReturnValue(method).casted()
         } catch {
@@ -533,7 +533,7 @@ open class InstanceFactoryMock: InstanceFactory, Mock {
             Failure(message)
         }
     }
-    private func optionalGivenGetterValue<T>(_ method: MethodType, _ message: String) -> T? {
+    private func optionalGivenGetterValue<Value>(_ method: MethodType, _ message: String) -> Value? {
         do {
             return try methodReturnValue(method).casted()
         } catch {

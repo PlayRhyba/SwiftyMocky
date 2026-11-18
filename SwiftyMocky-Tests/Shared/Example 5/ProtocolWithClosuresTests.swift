@@ -66,9 +66,6 @@ class ProtocolWithClosuresTests: XCTestCase {
             XCTAssertNil(error)
         }
 
-        waitForExpectations(timeout: 0.5) { (error) in
-            guard let error = error else { return }
-            XCTFail("Error: \(error)")
-        }
+        wait(for: [calledCompletionBlock], timeout: 0.5)
     }
 }

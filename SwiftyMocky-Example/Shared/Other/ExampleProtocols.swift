@@ -34,6 +34,9 @@ extension UserNetworkType {
 //sourcery: AutoMockable
 protocol EmptyProtocol { }
 
+// Used by ExampleTests - declared here, so the conformance is not retroactive.
+extension String: EmptyProtocol { }
+
 //sourcery: AutoMockable
 protocol AMassiveTestProtocol {
     var nonOptionalClosure: () -> Void { get set }

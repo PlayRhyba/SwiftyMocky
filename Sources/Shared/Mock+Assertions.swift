@@ -9,7 +9,7 @@ import Foundation
 ///   - method: Method signature with wrapped parameters (`Parameter`)
 ///   - file: for XCTest print purposes
 ///   - line: for XCTest print purposes
-public func Verify<T: Mock>(_ object: T, _ method: T.Verify, file: StaticString = #file, line: UInt = #line) {
+public func Verify<T: Mock>(_ object: T, _ method: T.Verify, file: StaticString = #filePath, line: UInt = #line) {
     object.verify(method, count: .moreOrEqual(to: 1), file: file, line: line)
 }
 
@@ -22,7 +22,7 @@ public func Verify<T: Mock>(_ object: T, _ method: T.Verify, file: StaticString 
 ///   - method: Method signature with wrapped parameters (`Parameter`)
 ///   - file: for XCTest print purposes
 ///   - line: for XCTest print purposes
-public func Verify<T: StaticMock>(_ type: T.Type, _ method: T.StaticVerify, file: StaticString = #file, line: UInt = #line) {
+public func Verify<T: StaticMock>(_ type: T.Type, _ method: T.StaticVerify, file: StaticString = #filePath, line: UInt = #line) {
     T.verify(method, count: .moreOrEqual(to: 1), file: file, line: line)
 }
 
@@ -36,7 +36,7 @@ public func Verify<T: StaticMock>(_ type: T.Type, _ method: T.StaticVerify, file
 ///   - method: Method signature with wrapped parameters (`Parameter`)
 ///   - file: for XCTest print purposes
 ///   - line: for XCTest print purposes
-public func Verify<T: Mock>(_ object: T, _ count: Count, _ method: T.Verify, file: StaticString = #file, line: UInt = #line) {
+public func Verify<T: Mock>(_ object: T, _ count: Count, _ method: T.Verify, file: StaticString = #filePath, line: UInt = #line) {
     object.verify(method, count: count, file: file, line: line)
 }
 
@@ -50,7 +50,7 @@ public func Verify<T: Mock>(_ object: T, _ count: Count, _ method: T.Verify, fil
 ///   - method: Static method signature with wrapped parameters (`Parameter`)
 ///   - file: for XCTest print purposes
 ///   - line: for XCTest print purposes
-public func Verify<T: StaticMock>(_ type: T.Type, _ count: Count, _ method: T.StaticVerify, file: StaticString = #file, line: UInt = #line) {
+public func Verify<T: StaticMock>(_ type: T.Type, _ count: Count, _ method: T.StaticVerify, file: StaticString = #filePath, line: UInt = #line) {
     T.verify(method, count: count, file: file, line: line)
 }
 
@@ -146,12 +146,9 @@ public func Failure(_ message: String) -> Swift.Never {
 /// [Internal] Used for handling fatal errors inside library.
 public struct FatalErrorUtil {
     /// [Internal] Handler
-    private static var handler: (String) -> Never = {
-        print($0)
-        exit(0)
-    }
+    private static let handler = LockedValue<(String) -> Never>(defalutHandler)
     /// [Internal] Default handler
-    private static var defalutHandler: (String) -> Never = {
+    private static let defalutHandler: @Sendable (String) -> Never = {
         print($0)
         exit(0)
     }
@@ -160,19 +157,19 @@ public struct FatalErrorUtil {
     ///
     /// - Parameter new: New handler
     public static func set(_ new: @escaping (String) -> Never) {
-        handler = new
+        handler.value = new
     }
 
     /// [Internal] Restores default handler
     public static func restore() {
-        handler = defalutHandler
+        handler.value = defalutHandler
     }
 
     /// [Internal] Perform fatal error handler
     ///
     /// - Parameter message: Message
     public static func fatalError(_ message: String) -> Never {
-        handler(message)
+        handler.value(message)
     }
 }
 

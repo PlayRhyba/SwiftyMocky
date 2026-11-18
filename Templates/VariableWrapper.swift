@@ -46,7 +46,7 @@ class VariableWrapper {
     }
 
     var privatePrototype: String {
-        let staticModifier = variable.isStatic ? "static " : ""
+        let staticModifier = variable.isStatic ? "nonisolated(unsafe) static " : ""
         var typeName = "\(variable.typeName.unwrappedTypeName)"
         let isWrappedInBrackets = typeName.hasPrefix("(") && typeName.hasSuffix(")")
         if !isWrappedInBrackets {

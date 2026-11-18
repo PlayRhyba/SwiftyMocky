@@ -5,7 +5,7 @@ import PathKit
 public struct ProjectPathOption: RawRepresentable, SelectableOption {
     public typealias RawValue = String
 
-    private static var projects: [Path] = []
+    nonisolated(unsafe) private static var projects: [Path] = []
 
     public var rawValue: String
     public var title: String {

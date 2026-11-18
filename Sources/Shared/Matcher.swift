@@ -3,7 +3,11 @@ import Foundation
 /// Matcher is container class, responsible for storing and resolving comparators for given types.
 public class Matcher {
     /// Shared **Matcher** instance
-    public static var `default` = Matcher()
+    public static var `default`: Matcher {
+        get { _default.value }
+        set { _default.value = newValue }
+    }
+    private static let _default = LockedValue(Matcher())
     /// [Internal] Matchers storage
     private var matchers: [(Mirror,Any)] = []
     /// [Internal] file where comparison faiure should be recorded
@@ -11,7 +15,11 @@ public class Matcher {
     /// [Internal] line where comparison faiure should be recorded
     private var line: UInt?
     /// [Internal] matcher fatal error handler
-    public static var fatalErrorHandler: (String, StaticString, UInt) -> Void = { _,_,_ in}
+    public static var fatalErrorHandler: (String, StaticString, UInt) -> Void {
+        get { _fatalErrorHandler.value }
+        set { _fatalErrorHandler.value = newValue }
+    }
+    private static let _fatalErrorHandler = LockedValue<(String, StaticString, UInt) -> Void>({ _,_,_ in })
 
     /// Create new clean matcher instance.
     public init() {
@@ -197,7 +205,7 @@ public class Matcher {
         self.line = line
     }
 
-    public func setupCorrentFileAndLine(file: StaticString = #file, line: UInt = #line) {
+    public func setupCorrentFileAndLine(file: StaticString = #filePath, line: UInt = #line) {
         self.set(file: file, line: line)
     }
 

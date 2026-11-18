@@ -20,7 +20,8 @@ import SwiftyMocky
     @testable import Mocky_Example_macOS
 #endif
 
-class CombinedFetcher {
+/// Deliberately accesses the mock from a concurrent queue, to verify mocks are thread-safe.
+class CombinedFetcher: @unchecked Sendable {
     let fetcher: Fetcher
     var count = 0
 
@@ -60,7 +61,7 @@ class CombinedFetcherTests: XCTestCase {
         range.forEach { _ in
             let exp = expectation(description: "Fetch complete")
             sut.fetch(forIds: [id1, id2]) { exp.fulfill() }
-            waitForExpectations(timeout: 2)
+            wait(for: [exp], timeout: 2)
         }
     }
 }

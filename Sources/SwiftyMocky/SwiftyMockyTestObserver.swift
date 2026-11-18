@@ -5,25 +5,31 @@ import XCTest
 /// Used for observing tests and handling internal library errors.
 public class SwiftyMockyTestObserver: NSObject, XCTestObservation {
     /// [Internal] Current test case
-    private static var currentTestCase: XCTestCase?
-    /// [Internal] Setup observing once
-    private static let setupBlock: (() -> Void) = {
-        Matcher.fatalErrorHandler = SwiftyMockyTestObserver.handleFatalError
-        let addObserver = { XCTestObservationCenter.shared.addTestObserver(SwiftyMockyTestObserver()) }
-        if Thread.isMainThread {
-            addObserver()
-        } else {
-            DispatchQueue.main.async {
-                addObserver()
-            }
-        }
-        return {}
-    }()
+    private static var currentTestCase: XCTestCase? {
+        get { _currentTestCase.value }
+        set { _currentTestCase.value = newValue }
+    }
+    private static let _currentTestCase = LockedValue<XCTestCase?>(nil)
+    /// [Internal] Whether observing was already set up
+    private static let isSetUp = LockedValue(false)
 
     /// Call this method to setup custom error handling for SwiftyMocky, that allows to gracefully handle missing stub fatal errors.
     /// In general it should be done automatically and there should be no reason to call it directly.
     public static func setup() {
-        setupBlock()
+        let needsSetup = isSetUp.withValue { isSetUp -> Bool in
+            defer { isSetUp = true }
+            return !isSetUp
+        }
+        guard needsSetup else { return }
+
+        Matcher.fatalErrorHandler = SwiftyMockyTestObserver.handleFatalError
+        if Thread.isMainThread {
+            XCTestObservationCenter.shared.addTestObserver(SwiftyMockyTestObserver())
+        } else {
+            DispatchQueue.main.async {
+                XCTestObservationCenter.shared.addTestObserver(SwiftyMockyTestObserver())
+            }
+        }
     }
 
     /// [Internal] Observer for test start

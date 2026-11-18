@@ -7,10 +7,6 @@ final class CommandLineInterfaceTests: XCTestCase {
 
     // MARK: - Properties
 
-    static var allTests = [
-        ("test_command_generate", test_command_generate),
-    ]
-
     var sut: Application!
     var factory: InstanceFactoryMock!
 
@@ -61,7 +57,7 @@ final class CommandLineInterfaceTests: XCTestCase {
 
         // Verify
         Verify(command, .once, .generate(disableCache: .any, verbose: .any))
-        waitForExpectations(timeout: 0.2)
+        wait(for: [errorHandled], timeout: 0.2)
     }
 
     // MARK: - Helpers

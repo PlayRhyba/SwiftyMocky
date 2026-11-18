@@ -13,7 +13,7 @@ public func XCTAssertThrowsError<T, E: Error>(
     _ expression: @autoclosure () throws -> T,
     of error: E.Type,
     _ message: @autoclosure () -> String = "",
-    file: StaticString = #file,
+    file: StaticString = #filePath,
     line: UInt = #line
 ) {
     let throwMessage = message().isEmpty ? "Expected \(T.self) thrown" : message()
@@ -34,7 +34,7 @@ public func XCTAssertThrowsError<T, E: Error>(
 public func XCTAssertThrowsError<T, E>(
     _ expression: @autoclosure () throws -> T,
     error: E, _ message: @autoclosure () -> String = "",
-    file: StaticString = #file,
+    file: StaticString = #filePath,
     line: UInt = #line
 ) where E: Error, E: Equatable {
     let throwMessage = message().isEmpty ? "Expected \(error) thrown" : message()

@@ -2,9 +2,10 @@ import Foundation
 import Chalk
 
 public enum Message {
-    public static var indentString = "  "
-    private static var indentCount = 0
-    private static var count = 0
+    // The CLI prints from a single thread.
+    nonisolated(unsafe) public static var indentString = "  "
+    nonisolated(unsafe) private static var indentCount = 0
+    nonisolated(unsafe) private static var count = 0
 
     private static var indentation: String {
         guard indentCount > 0 else { return "" }
