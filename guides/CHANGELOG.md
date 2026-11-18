@@ -4,6 +4,23 @@ All changes to SwiftyMocky project will be documented in this file.
 
 -----
 
+## __Unreleased__
+
+#### Breaking:
+* Dropped CocoaPods and Carthage support - SwiftyMocky and SwiftyPrototype are distributed via Swift Package Manager only (CLI via SPM, Mint or `make`)
+* Requires Sourcery 2.4.1 (templates header `Required Sourcery: 2.4.1`)
+* Package requires swift-tools-version 6.0 and macOS 14 (XcodeProj 9 requirement)
+
+#### Changed:
+* Updated dependencies: XcodeProj 9.17.8, Yams 6.2.2
+* Example project consumes SwiftyMocky as a local Swift package
+
+#### Fixed:
+* cli: excluded files in Mockfile were ignored by Sourcery 2.x (relative / differently-cased paths)
+* cli: `INFOPLIST_FILE` lookup with XcodeProj 9 build settings
+
+-----
+
 ## __4.1.0__ / 2021
 
 #### Added:

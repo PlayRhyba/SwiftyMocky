@@ -76,37 +76,6 @@ Still, we would encourage to try new **CLI** and share a feedback. We believe it
 
 ### 1. Integrating SwiftyMocky:
 
-**[CocoaPods](http://cocoapods.org)**:
-
-SwiftyMocky is available through [CocoaPods](http://cocoapods.org). To install it, simply add the following line to your Podfile:
-
-```ruby
-pod "SwiftyMocky"
-```
-
-Use CLI tool from your project directory:
-
-```zsh
-# To setup initial Mockfile
-% ./Pods/SwiftyMocky/bin/swiftymocky init
-# To generate mocks
-% ./Pods/SwiftyMocky/bin/swiftymocky generate
-```
-
-**[Carthage](https://github.com/Carthage/Carthage)**:
-
-To install, add following to you Cartfile:
-
-```ruby
-github "MakeAWishFoundation/SwiftyMocky"
-```
-
-Then execute `carthage update`
-
-For [Carthage](https://github.com/Carthage/Carthage), few additional steps are required ⚠️. For detailed install instructions, see full [documentation][link-docs-installation-carthage] or consult [Carthage documentation][carthage-adding-framework].
-
-You need to install CLI to generate mocks - see [installation](#installation)
-
 **[Swift Package Manager](https://swift.org/package-manager/)**:
 
 Add **SwiftyMocky** to you **Package.swift** dependencies:
@@ -320,7 +289,7 @@ For list all supported features, check documentation [here][link-docs-features] 
 
 For more examples, check out our example project, or examples section in [guides][link-guides-examples].
 
-To run the example project, clone the repo, and run `pod install` from the Example directory first.
+To run the example project, clone the repo and open `SwiftyMocky.xcodeproj` - Xcode resolves SwiftyMocky as a local Swift package.
 
 To trigger mocks generation, run `rake mock` or `swiftymocky generate` from root directory (if you installed CLI).
 
@@ -337,7 +306,6 @@ To trigger mocks generation, run `rake mock` or `swiftymocky generate` from root
 - [x] cover 95% of framework codebase with documentation
 - [ ] add unit tests for template
 - [x] support for tvOS, Linux and MacOS
-- [x] Carthage support
 - [x] Subscripts support
 - [x] Stub return values as sequences
 - [x] Simple tool simplifying configuration process
@@ -373,7 +341,6 @@ SwiftyMocky is available under the MIT license. See the [LICENSE][link-license] 
 [link-docs]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/index.html
 [link-docs-features]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/supported-features.html
 [link-docs-installation]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/installation.html
-[link-docs-installation-carthage]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/installation.html#installation-carthage
 [link-docs-setup]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/setup-in-project.html
 
 <!-- Assets -->

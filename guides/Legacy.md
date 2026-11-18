@@ -6,15 +6,11 @@ Summing up, you need **SwiftyMocky** framework in the runtime, and **sourcery** 
 
 ## Installation
 
-SwiftyMocky is available through [CocoaPods](http://cocoapods.org). To install it, simply add the following line to your Podfile:
-
-```ruby
-pod "SwiftyMocky"
-```
+Add SwiftyMocky to your test target using [Swift Package Manager](https://swift.org/package-manager/), as described in [installation][link-docs-installation] instructions.
 
 Then add **mocky.yml** and **Rakefile** (or build script phase) to your project root directory, as described in below. See full [setup][link-docs-setup] instructions.
 
-For [Carthage](https://github.com/Carthage/Carthage) install instructions, see full [documentation][link-docs-installation].
+You also need the SwiftyMocky template. It ships in the package at `Sources/SwiftyMocky/Mock.swifttemplate` (for a SwiftPM project, the checkout lives in `.build/checkouts/SwiftyMocky`). The most reliable option is to copy it into your repository, e.g. `./Templates/Mock.swifttemplate`, and update it together with the SwiftyMocky version.
 
 ### Generating mocks implementations:
 
@@ -38,7 +34,7 @@ sources:
     - ./ExampleApp
     - ./ExampleAppTests
 templates:
-  - ./Pods/SwiftyMocky/Sources/SwiftyMocky
+  - ./Templates/Mock.swifttemplate
 output:
   ./ExampleApp
 args:
@@ -55,7 +51,7 @@ args:
 ```
 
 + **sources**: all directories you want to scan for protocols/files marked to be auto mocked, or inline mocked. You can use `exclude`, to prevent from scanning particular files (makes sense for big `*.generated.swift` files)
-+ **templates**: path to SwiftyMocky sourcery templates, in Pods directory
++ **templates**: path to the SwiftyMocky sourcery template
 + **output**: place where `Mock.generated.swift` will be placed
 + **testable**: specify imports for Mock.generated, that should be marked as `@testable` (usually tested app module)
 + **import**: all additional imports, external libraries etc. to be placed in Mock.generated
@@ -67,10 +63,10 @@ If you are already using [Sourcery](https://github.com/krzysztofzablocki/Sourcer
 
 1. **manually**: by triggering:
 
-  `Pods/Sourcery/bin/sourcery --config mocky.yml`
+  `mint run krzysztofzablocki/Sourcery@2.4.1 sourcery --config mocky.yml`
 1. **in `watch` mode**: changed methods will be reflected in mocks, after generation of mock, by triggering:
 
-  `Pods/Sourcery/bin/sourcery --config mocky.yml --watch`
+  `mint run krzysztofzablocki/Sourcery@2.4.1 sourcery --config mocky.yml --watch`
 
 > **!!! In case of incompatibile swift module versions error** - check Known issues section in guides or docs
 
@@ -82,11 +78,11 @@ If you are already using [Sourcery](https://github.com/krzysztofzablocki/Sourcer
 > ```ruby
 > # Rakefile
 > task :mock do
->   sh "Pods/Sourcery/bin/sourcery --config mocky.yml"
+>   sh "mint run krzysztofzablocki/Sourcery@2.4.1 sourcery --config mocky.yml"
 > end
 >
 > task :mock_watcher do
->   sh "Pods/Sourcery/bin/sourcery --config mocky.yml --watch"
+>   sh "mint run krzysztofzablocki/Sourcery@2.4.1 sourcery --config mocky.yml --watch"
 > end
 > ```
 
@@ -95,7 +91,7 @@ If you are already using [Sourcery](https://github.com/krzysztofzablocki/Sourcer
 
 We know that Sourcery is a powerful tool and you are likely to use it already. You can easily integrate SwiftyMocky with your project with keeping all already written templates working.
 
-All you have to do is add path (note that path can be different for Carthage/manual installation) to SwiftyMocky templates in your `sourcery.yml` file:
+All you have to do is add path to the SwiftyMocky template in your `sourcery.yml` file:
 
 ```yaml
 sources:
@@ -103,7 +99,7 @@ sources:
     - ./ExampleAppTests
 templates:
     - <templates path> # Path to already written Sourcery templates
-    - ./Pods/SwiftyMocky/Sources/SwiftyMocky # <- SwiftyMocky templates
+    - ./Templates/Mock.swifttemplate # <- SwiftyMocky template
 output:
     ./ExampleApp
 args:
@@ -121,27 +117,9 @@ args:
 
 You can use all arguments (like `testable`, `import`, etc.) in the same way as in `mocky.yaml`, under `args` key.
 
-## **get_sourcery.sh**
+## Sourcery version
 
-This is a helper script allowing to obtain Sourcery binary compiled for usage with SwiftyMocky. It can be used with both: legacy configurations and new Mockfile (specify path to binary in Mockfile `sourceyCommand`)
-
-```shell
-[[ $# > 0 ]] && VERSION="$1" || VERSION="5.0"
-[[ $# > 1 ]] && OUTPUT="$2" || OUTPUT="./Pods/Sourcery/bin"
-SOURCERY_VERSION="0.16.0" # The version of Sourcery that is associated with this SwiftyMocky version
-
-echo "CLONE SOURCERY $SOURCERY_VERSION FOR Swift $VERSION INTO $OUTPUT"
-rm -r -f "$OUTPUT"
-git clone -b "sourcery/$SOURCERY_VERSION-swift$VERSION" --single-branch --depth 1 https://github.com/MakeAWishFoundation/SwiftyMocky.wiki.git "$OUTPUT"
-```
-
-> **Note!**
-> This script is also shipped with SwiftyMocky when installing via cocoapods
-> You can use it from project root like `sh ./Pods/SwiftyMocky/get_sourcery.sh 4.2`
-> Version is optional, if you don't specify it, script will use latest supported (5.0 in that case)
-
-> **Note 2!**
-> If you use Carthage, you should specify your custom output location for sourcery binary. Please have in mind, that script clears output dir, so don't point it to `~/` or something ;)
+SwiftyMocky templates require **Sourcery 2.4.1**. The commands above run it through [Mint](https://github.com/yonaskolb/Mint); any other Sourcery 2.4.1 binary works as well.
 
 <!-- Assets -->
 

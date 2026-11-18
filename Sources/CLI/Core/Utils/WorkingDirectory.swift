@@ -27,8 +27,11 @@ class WorkingDirectory {
     }
 
     func create(config: LegacyConfiguration, output: String? = nil) throws {
-        let includes = config.sources.include.map { ".\($0)" }
-        let excludes = config.sources.exclude?.map { ".\($0)" }
+        // Sourcery 2.x matches excluded files against the enumerated (canonical, absolute) paths of
+        // included files, using case-sensitive comparison. Relative paths like `../Dir/File.swift`, or
+        // paths whose letter case differs from the one on disk, would never match - so pass canonical ones.
+        let includes = config.sources.include.map(canonicalPath(for:))
+        let excludes = config.sources.exclude?.map(canonicalPath(for:))
         let templates = config.templates
         let updatedConfig = LegacyConfiguration(
             sources: MockConfiguration.Sources(
@@ -42,6 +45,12 @@ class WorkingDirectory {
         try? self.config.delete()
         let yaml: String = try YAMLEncoder().encode(updatedConfig)
         try self.config.write(yaml)
+    }
+
+    private func canonicalPath(for source: String) -> String {
+        let absolute = (root + Path(source)).absolute()
+        let canonical = try? absolute.url.resourceValues(forKeys: [.canonicalPathKey]).canonicalPath
+        return canonical ?? absolute.string
     }
 
     func cleanup() throws {

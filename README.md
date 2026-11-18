@@ -1,13 +1,11 @@
-[![Platform](https://img.shields.io/cocoapods/p/SwiftyMocky.svg?style=flat)](http://cocoapods.org/pods/SwiftyMocky)
+![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20macOS%20%7C%20tvOS-lightgrey.svg?style=flat)
 [![Docs](https://raw.githubusercontent.com/MakeAWishFoundation/SwiftyMocky/master/docs/badge.svg)](https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/master/docs/index.html)
-[![License](https://img.shields.io/cocoapods/l/SwiftyMocky.svg?style=flat)](http://cocoapods.org/pods/SwiftyMocky)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
-[![Pods compatible](https://img.shields.io/cocoapods/v/SwiftyMocky.svg?style=flat&color=green)](http://cocoapods.org/pods/SwiftyMocky)
-[![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-green.svg?style=flat)](https://github.com/Carthage/Carthage)
 ![Mint compatible](https://img.shields.io/badge/🌱%20Mint-compatible-green.svg)
 ![SPM compatible](https://img.shields.io/badge/SwiftPM-compatible-green.svg?style=flat&logo=swift)
 
-[![Build & Test](https://github.com/MakeAWishFoundation/SwiftyMocky/actions/workflows/master.yml/badge.svg?branch=master)](https://github.com/MakeAWishFoundation/SwiftyMocky/actions?query=branch%3Amaster) [![CocoaPods Integration](https://github.com/MakeAWishFoundation/SM-Integration-Tests/actions/workflows/cocoapods.yml/badge.svg?branch=master)](https://github.com/MakeAWishFoundation/SM-Integration-Tests/actions/workflows/cocoapods.yml) [![SwiftPM Integration](https://github.com/MakeAWishFoundation/SM-Integration-Tests/actions/workflows/swiftpm.yml/badge.svg?branch=master)](https://github.com/MakeAWishFoundation/SM-Integration-Tests/actions/workflows/swiftpm.yml) [![Carthage Integration](https://github.com/MakeAWishFoundation/SM-Integration-Tests/actions/workflows/carthage.yml/badge.svg?branch=master)](https://github.com/MakeAWishFoundation/SM-Integration-Tests/actions/workflows/carthage.yml)
+[![Build & Test](https://github.com/MakeAWishFoundation/SwiftyMocky/actions/workflows/master.yml/badge.svg?branch=master)](https://github.com/MakeAWishFoundation/SwiftyMocky/actions?query=branch%3Amaster) [![SwiftPM Integration](https://github.com/MakeAWishFoundation/SM-Integration-Tests/actions/workflows/swiftpm.yml/badge.svg?branch=master)](https://github.com/MakeAWishFoundation/SM-Integration-Tests/actions/workflows/swiftpm.yml)
 
 # ![logo][logo]
 
@@ -63,7 +61,7 @@ Current version has several significant changes. It removes deprecated methods (
 
 **SwiftyPrototype** was also extracted to separate library. There are no more compilation flags, so if you were relying on **SwiftyMocky** with `-DMockyCustom`, you will have to switch to `SwiftyPrototype`.
 
-We consider current version as stable. We are moving toward using the new [Mockfile][link-guides-mockfile] but the previous configuration format would be still supported. Library works with Swift **4.1, 4.2, 5.0, 5.1.2**  and  Sourcery 1.0.x.
+We consider current version as stable. We are moving toward using the new [Mockfile][link-guides-mockfile] but the previous configuration format would be still supported. Library builds with Swift **6.x** (Swift 5 language mode) and Sourcery **2.4.1**.
 
 While it is technically possible to integrate SwiftyMocky on Linux targets, there is no Mock generation feature there yet. You can use SwiftyMokcy runtime via SwiftPM though, as long as your are fine with generating mocks on mac machine.
 
@@ -84,37 +82,6 @@ Still, we would encourage to try new **CLI** and share a feedback. We believe it
 <a name="integration"></a>
 
 ### 1. Integrating SwiftyMocky:
-
-**[CocoaPods](http://cocoapods.org)**:
-
-SwiftyMocky is available through [CocoaPods](http://cocoapods.org). To install it, simply add the following line to your Podfile:
-
-```ruby
-pod "SwiftyMocky"
-```
-
-Use CLI tool from your project directory:
-
-```zsh
-# To setup initial Mockfile
-% ./Pods/SwiftyMocky/bin/swiftymocky setup
-# To generate mocks
-% ./Pods/SwiftyMocky/bin/swiftymocky generate
-```
-
-**[Carthage](https://github.com/Carthage/Carthage)**:
-
-To install, add following to you Cartfile:
-
-```ruby
-github "MakeAWishFoundation/SwiftyMocky"
-```
-
-Then execute `carthage update`
-
-For [Carthage](https://github.com/Carthage/Carthage), few additional steps are required ⚠️. For detailed install instructions, see full [documentation][link-docs-installation-carthage] or consult [Carthage documentation][carthage-adding-framework].
-
-You need to install CLI to generate mocks - see [installation](#installation)
 
 **[Swift Package Manager](https://swift.org/package-manager/)**:
 
@@ -329,7 +296,7 @@ For list all supported features, check documentation [here][link-docs-features] 
 
 For more examples, check out our example project, or examples section in [guides][link-guides-examples].
 
-To run the example project, clone the repo, and run `pod install` from the Example directory first.
+To run the example project, clone the repo and open `SwiftyMocky.xcodeproj` - Xcode resolves SwiftyMocky as a local Swift package.
 
 To trigger mocks generation, run `rake mock` or `swiftymocky generate` from root directory (if you installed CLI).
 
@@ -346,7 +313,6 @@ To trigger mocks generation, run `rake mock` or `swiftymocky generate` from root
 - [x] cover 95% of framework codebase with documentation
 - [ ] add unit tests for template
 - [x] support for tvOS, Linux and MacOS
-- [x] Carthage support
 - [x] Subscripts support
 - [x] Stub return values as sequences
 - [x] Simple tool simplifying configuration process
@@ -381,14 +347,12 @@ SwiftyMocky is available under the MIT license. See the [LICENSE][link-license] 
 [link-guides-cli-generate]: ./guides/Command%20Line%20Interface.md#generate
 [link-guides-mockfile]: ./guides/Mockfile.md
 
-[carthage-adding-framework]: https://github.com/Carthage/Carthage#adding-frameworks-to-unit-tests-or-a-framework
 
 <!-- Links based on tag -->
 
 [link-docs]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/index.html
 [link-docs-features]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/supported-features.html
 [link-docs-installation]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/installation.html
-[link-docs-installation-carthage]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/installation.html#installation-carthage
 [link-docs-setup]: https://rawcdn.githack.com/MakeAWishFoundation/SwiftyMocky/4.2.0/docs/setup-in-project.html
 
 <!-- Assets -->

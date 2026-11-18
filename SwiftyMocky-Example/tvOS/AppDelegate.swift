@@ -44,3 +44,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 }
 
+
+/// Scene lifecycle is required for apps built with current SDKs. The window and root view
+/// controller are created from the storyboard named in `UIApplicationSceneManifest` (Info.plist).
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+
+    var window: UIWindow?
+}

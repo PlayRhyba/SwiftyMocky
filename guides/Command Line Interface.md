@@ -14,9 +14,6 @@ Please refer to [Guides/Installation.md](./Installation.md#installation-cli)
 // From cloned repo main dir
 $ swift run swiftymocky <command>
 
-// From Pods
-$ ./Pods/SwiftyMocky/bin/swiftymocky <command>
-
 // Using mint
 $ mint run MakeAWishFoundation/SwiftyMocky <command>
 ```

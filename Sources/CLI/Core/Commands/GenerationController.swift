@@ -25,7 +25,7 @@ final class GenerationController: GenerationCommand {
     private let outputHandle = ProxyFileHandle()
 
     private var templatePath: String?
-    private lazy var sourceryCommand: String = { resolveSourceryBinPath() ?? kDefaultSourceryCommand(sourceryVersion) }()
+    private lazy var sourceryCommand: String = { kDefaultSourceryCommand(sourceryVersion) }()
     private lazy var sourceryVersion: String = { resolveSourceryVersion() ?? kSourceryVersion }()
 
     // MARK: - Lifecycle
@@ -339,19 +339,11 @@ final class GenerationController: GenerationCommand {
 
     private func writeMockTemplate() throws {
         let swiftPM: Path = "./.build/checkouts/SwiftyMocky/Sources/SwiftyMocky/Mock.swifttemplate"
-        let cocoapods: Path = "./Pods/SwiftyMocky/Sources/SwiftyMocky/Mock.swifttemplate"
-        let carthage: Path = "./Carthage/Checkouts/SwiftyMocky/Sources/SwiftyMocky/Mock.swifttemplate"
         try? temp.template.delete()
 
         if swiftPM.exists {
             Message.info("Using template from SwiftPM")
             try swiftPM.copy(temp.template)
-        } else if cocoapods.exists {
-            Message.info("Using template from Cocoapods")
-            try cocoapods.copy(temp.template)
-        } else if carthage.exists {
-            Message.info("Using template from Carthage")
-            try carthage.copy(temp.template)
         } else {
             Message.info("Using template from CLI")
             try Assets.swifttemplate.mock.write(to: temp.template)
@@ -360,19 +352,11 @@ final class GenerationController: GenerationCommand {
 
     private func writePrototypeTemplate() throws {
         let swiftPM: Path = "./.build/checkouts/SwiftyMocky/Sources/SwiftyPrototype/Prototype.swifttemplate"
-        let cocoapods: Path = "./Pods/SwiftyMocky/Sources/SwiftyPrototype/Prototype.swifttemplate"
-        let carthage: Path = "./Carthage/Checkouts/SwiftyMocky/Sources/SwiftyPrototype/Prototype.swifttemplate"
         try? temp.template.delete()
 
         if swiftPM.exists {
             Message.info("Using template from SwiftPM")
             try swiftPM.copy(temp.template)
-        } else if cocoapods.exists {
-            Message.info("Using template from Cocoapods")
-            try cocoapods.copy(temp.template)
-        } else if carthage.exists {
-            Message.info("Using template from Carthage")
-            try carthage.copy(temp.template)
         } else {
             Message.info("Using template from CLI")
             try Assets.swifttemplate.prototype.write(to: temp.template)
@@ -385,36 +369,13 @@ final class GenerationController: GenerationCommand {
         }
 
         let swiftPM: Path = root + Path(".build/checkouts/SwiftyMocky/Sources/\(type.libName)/\(type.templateName)")
-        let cocoapods: Path = root + Path("Pods/SwiftyMocky/Sources/\(type.libName)/\(type.templateName)")
-        let carthage: Path = root + Path("Carthage/Checkouts/SwiftyMocky/Sources/\(type.libName)/\(type.templateName)")
-
-        if cocoapods.exists {
-            return cocoapods
-        } else if swiftPM.exists {
-            return swiftPM
-        } else if carthage.exists {
-            return carthage
-        } else {
-            return nil
-        }
+        return swiftPM.exists ? swiftPM : nil
     }
 
     func resolveSourceryVersion() -> String? {
         guard let path = resolveTemplatePath(for: .mock) ?? resolveTemplatePath(for: .prototype) else { return nil }
         guard let template: String = try? path.read() else { return nil }
         return template.firstCapturedGroup(for: #"Required Sourcery: ([0-9]+\.[0-9]+\.[0-9]+)"#)
-    }
-
-    func resolveSourceryBinPath() -> String? {
-        let swiftPM: Path = root + ".build/checkouts/Sourcery/bin/sourcery"
-        let cocoapods: Path = root + "Pods/Sourcery/bin/sourcery"
-        if cocoapods.exists {
-            return cocoapods.string
-        } else if swiftPM.exists {
-            return swiftPM.string
-        } else {
-            return nil
-        }
     }
 
     enum TemplateType: String {

@@ -8,27 +8,7 @@ Installation and generation is exactly same as with **SwiftyMocky**. Install CLI
 
 ## Installation
 
-## 1. [CocoaPods](http://cocoapods.org).
-
-To install it, simply add the following line to your Podfile:
-
-```ruby
-pod "SwiftyPrototype"
-```
-
-Then execute `pod install`
-
-## 2. [Carthage](https://github.com/Carthage/Carthage).
-
-To install, add following to you Cartfile:
-
-```ruby
-github "MakeAWishFoundation/SwiftyMocky"
-```
-
-Then execute `carthage update` and add `SwiftyPrototype` to your target.
-
-### 3. **[Swift Package Manager](https://swift.org/package-manager/)**:
+## **[Swift Package Manager](https://swift.org/package-manager/)**:
 
 Add **SwiftyPrototype** to you **Package.swift** dependencies:
 

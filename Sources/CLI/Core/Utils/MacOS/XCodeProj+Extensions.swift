@@ -28,7 +28,7 @@ extension PBXTarget {
         guard let config = buildConfigurationList?.buildConfigurations.first else {
             return nil
         }
-        guard let path = config.buildSettings["INFOPLIST_FILE"] as? String else {
+        guard let path = config.buildSettings["INFOPLIST_FILE"]?.stringValue else {
             return nil
         }
 

@@ -1,10 +1,13 @@
-// swift-tools-version:4.2
+// swift-tools-version:6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
 let package = Package(
     name: "swiftymocky",
+    platforms: [
+        .macOS(.v14),
+    ],
     products: [
         // XCTest Runtime libraries
         .library(name: "SwiftyMocky", targets: ["SwiftyMocky"]),
@@ -13,12 +16,12 @@ let package = Package(
         .executable(name: "swiftymocky", targets: ["SwiftyMockyCLI"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/JohnSundell/ShellOut", .upToNextMajor(from: "2.3.0")),
-        .package(url: "https://github.com/tuist/xcodeproj", .upToNextMajor(from: "8.3.1")),
-        .package(url: "https://github.com/luoxiu/Chalk", .exact("0.2.1")),
-        .package(url: "https://github.com/kylef/Commander", .upToNextMajor(from: "0.9.1")),
-        .package(url: "https://github.com/kylef/PathKit", .upToNextMajor(from: "1.0.1")),
-        .package(url: "https://github.com/jpsim/Yams", .upToNextMajor(from: "5.0.1")),
+        .package(url: "https://github.com/JohnSundell/ShellOut", from: "2.3.0"),
+        .package(url: "https://github.com/tuist/XcodeProj", from: "9.17.8"),
+        .package(url: "https://github.com/luoxiu/Chalk", exact: "0.2.1"),
+        .package(url: "https://github.com/kylef/Commander", from: "0.9.2"),
+        .package(url: "https://github.com/kylef/PathKit", from: "1.0.1"),
+        .package(url: "https://github.com/jpsim/Yams", from: "6.2.2"),
     ],
     targets: [
         // XCTest Runtime libraries
@@ -53,10 +56,10 @@ let package = Package(
             dependencies: ["SwiftyMocky"]
         ),
         // CLI Executable
-        .target(
+        .executableTarget(
             name: "SwiftyMockyCLI",
             dependencies: [
-                "Commander",
+                .product(name: "Commander", package: "Commander"),
                 "SwiftyMockyCLICore",
             ],
             path: "./Sources/CLI/App"
@@ -64,11 +67,12 @@ let package = Package(
         .target(
             name: "SwiftyMockyCLICore",
             dependencies: [
-                "ShellOut",
-                "Chalk",
-                "XcodeProj",
-                "PathKit",
-                "Yams",
+                .product(name: "Commander", package: "Commander"),
+                .product(name: "ShellOut", package: "ShellOut"),
+                .product(name: "Chalk", package: "Chalk"),
+                .product(name: "XcodeProj", package: "XcodeProj"),
+                .product(name: "PathKit", package: "PathKit"),
+                .product(name: "Yams", package: "Yams"),
             ],
             path: "./Sources/CLI/Core"
         ),
@@ -77,7 +81,9 @@ let package = Package(
            dependencies: [
                "SwiftyMockyCLICore",
                "SwiftyMocky",
+               .product(name: "PathKit", package: "PathKit"),
            ]
         ),
-    ]
+    ],
+    swiftLanguageModes: [.v5]
 )
