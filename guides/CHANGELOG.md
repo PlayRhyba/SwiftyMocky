@@ -4,6 +4,15 @@ All changes to SwiftyMocky project will be documented in this file.
 
 -----
 
+## __Unreleased__
+
+#### Changed:
+* SwiftyPrototype: `MockyAssert` default `file:` argument is now `#filePath` (was `#file`), matching SwiftyMocky
+* `MockyAssert`/`MockyAssertion` and `SwiftyMockyTestObserver` live once in shared sources; SwiftyPrototype keeps its no-XCTest behaviour via the `SWIFTY_PROTOTYPE` compilation condition
+* SwiftPM test suite now includes async method and throwing getter examples (stale macOS 12 excludes removed)
+* Renamed test target `RuntimeLibaryTests` to `RuntimeLibraryTests`
+* Example project: async method and throwing getter examples moved from `Swift5.5` to `Concurrency` (no longer `@available`-gated) and are part of the iOS, macOS and tvOS targets; removed the separate `Mocky_Example_iOS_15` / `Mocky_Tests_iOS_15` targets, their schemes and the `IOS15` flag
+
 ## __4.3.0__ / 2026
 
 #### Breaking:

@@ -9,11 +9,7 @@
 import Foundation
 import SwiftyMocky
 import XCTest
-#if IOS15
-    @testable import Mocky_Example_iOS_15
-#else
-    @testable import Mocky_Example_iOS
-#endif
+@testable import Mocky_Example_iOS
 
 // sourcery: mock = "ItemsRepository"
 class ItemsRepositoryMock: ItemsRepository, Mock {

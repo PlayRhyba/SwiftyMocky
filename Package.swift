@@ -33,7 +33,11 @@ let package = Package(
         .target(
             name: "SwiftyPrototype",
             path: "./Sources/SwiftyPrototype",
-            exclude: ["Prototype.swifttemplate"]
+            exclude: ["Prototype.swifttemplate"],
+            swiftSettings: [
+                // Shared sources use this to skip XCTest-based assertion and failure handling.
+                .define("SWIFTY_PROTOTYPE"),
+            ]
         ),
         .target(
             name: "Shared",
@@ -42,17 +46,15 @@ let package = Package(
         // Example and tests
         .target(
             name: "Mocky_Example_macOS",
-            path: "./SwiftyMocky-Example/Shared",
-            exclude: ["Swift5.5"] // TODO: remove when macOS 12 released
+            path: "./SwiftyMocky-Example/Shared"
         ),
         .testTarget(
             name: "SwiftyMockyTests",
             dependencies: ["Mocky_Example_macOS", "SwiftyMocky"],
-            path: "./Tests/SwiftyMockyTests",
-            exclude: ["Shared/Swift5.5"] // TODO: remove when macOS 12 released
+            path: "./Tests/SwiftyMockyTests"
         ),
         .testTarget(
-            name: "RuntimeLibaryTests",
+            name: "RuntimeLibraryTests",
             dependencies: ["SwiftyMocky"]
         ),
         // CLI Executable

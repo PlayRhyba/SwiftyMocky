@@ -1,5 +1,5 @@
 import Foundation
-#if canImport(XCTest)
+#if canImport(XCTest) && !SWIFTY_PROTOTYPE
 import XCTest
 
 /// Used for observing tests and handling internal library errors.

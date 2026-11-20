@@ -1,4 +1,4 @@
-#if canImport(XCTest)
+#if canImport(XCTest) && !SWIFTY_PROTOTYPE
 import XCTest
 #endif
 import Foundation
@@ -52,7 +52,7 @@ private func XCTMockyAssert(
     file: StaticString = #filePath,
     line: UInt = #line
 ) {
-    #if canImport(XCTest)
+    #if canImport(XCTest) && !SWIFTY_PROTOTYPE
     XCTAssert(expression(), message(), file: file, line: line)
     #else
     assert(expression(), message(), file: file, line: line)
