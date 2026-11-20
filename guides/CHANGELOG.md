@@ -8,7 +8,7 @@ All changes to SwiftyMocky project will be documented in this file.
 
 #### Added:
 * Mocks for protocols that inherit `Sendable` (directly or through another protocol) are generated as `public final class …: Mock, @unchecked Sendable`, so protocols like `protocol DataProviding: Sendable { func getData<T: Decodable>(from url: String) async throws -> T }` can be mocked in Swift 6 mode
-* All generated mocks protect their state (invocations, givens, performs, stubbed property values, matcher and policies) with a lock (new public `MockLock`). Previously only method invocations were synchronized
+* All generated mocks keep their mutable state (invocations, givens, performs, stubbed property values, matcher, policies, file/line) in a private `MockState` struct inside a `LockedValue` (now public), so it can only be reached under the lock. Parameter matching and perform closures run outside the lock. Previously only method invocations were synchronized
 * `Matcher` is thread-safe (`@unchecked Sendable`): registered comparators and the failure location are lock-protected
 
 #### Changed:

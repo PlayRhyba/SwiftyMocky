@@ -116,7 +116,11 @@ func wrapProperty(_ variable: SourceryRuntime.Variable, _ scope: String = "") ->
 
 func stubProperty(_ variable: SourceryRuntime.Variable, _ scope: String) -> String {
     let wrapper = VariableWrapper(variable, scope: scope)
-    return "\(wrapper.prototype)\n\t\(wrapper.privatePrototype)"
+    return wrapper.prototype
+}
+
+func stubPropertyStorage(_ variable: SourceryRuntime.Variable) -> String {
+    return VariableWrapper(variable, scope: "").storagePrototype
 }
 
 func propertyTypes(_ variable: SourceryRuntime.Variable) -> String {

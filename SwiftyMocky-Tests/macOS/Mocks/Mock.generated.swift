@@ -16,34 +16,42 @@ import Foundation
 open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_nonOptionalClosure: (() -> Void)?
+        var __p_optionalClosure: (() -> Int)?
+        var __p_implicitelyUnwrappedClosure: (() -> Void)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -51,77 +59,78 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
-    static private let lock = MockLock()
-    nonisolated(unsafe) static private var _matcher: Matcher = Matcher.default
-    nonisolated(unsafe) static private var _stubbingPolicy: StubbingPolicy = .wrap
-    nonisolated(unsafe) static private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable static mock state. Only reachable through `staticState`, which is lock-protected.
+    private struct StaticMockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [StaticMethodType] = []
+        var methodReturnValues: [StaticGiven] = []
+        var methodPerformValues: [StaticPerform] = []
+        var __p_optionalClosure: (() -> Int)?
+    }
+    static private let staticState = LockedValue(StaticMockState())
+
     static var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { staticState.withValue { $0.matcher } }
+        set { staticState.withValue { $0.matcher = newValue } }
     }
     static var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { staticState.withValue { $0.stubbingPolicy } }
+        set { staticState.withValue { $0.stubbingPolicy = newValue } }
     }
     static var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { staticState.withValue { $0.sequencingPolicy } }
+        set { staticState.withValue { $0.sequencingPolicy = newValue } }
     }
-    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
-    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
-    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public static func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        staticState.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var nonOptionalClosure: () -> Void {
-		get {	addInvocation(.p_nonOptionalClosure_get); return lock.sync { __p_nonOptionalClosure } ?? givenGetterValue(.p_nonOptionalClosure_get, "AMassiveTestProtocolMock - stub value for nonOptionalClosure was not defined") }
-		set {	addInvocation(.p_nonOptionalClosure_set(.value(newValue))); lock.sync { __p_nonOptionalClosure = newValue } }
+		get {	addInvocation(.p_nonOptionalClosure_get); return state.withValue { $0.__p_nonOptionalClosure } ?? givenGetterValue(.p_nonOptionalClosure_get, "AMassiveTestProtocolMock - stub value for nonOptionalClosure was not defined") }
+		set {	addInvocation(.p_nonOptionalClosure_set(.value(newValue))); state.withValue { $0.__p_nonOptionalClosure = newValue } }
 	}
-	private var __p_nonOptionalClosure: (() -> Void)?
 
     public var optionalClosure: (() -> Int)? {
-		get {	addInvocation(.p_optionalClosure_get); return lock.sync { __p_optionalClosure } ?? optionalGivenGetterValue(.p_optionalClosure_get, "AMassiveTestProtocolMock - stub value for optionalClosure was not defined") }
-		set {	addInvocation(.p_optionalClosure_set(.value(newValue))); lock.sync { __p_optionalClosure = newValue } }
+		get {	addInvocation(.p_optionalClosure_get); return state.withValue { $0.__p_optionalClosure } ?? optionalGivenGetterValue(.p_optionalClosure_get, "AMassiveTestProtocolMock - stub value for optionalClosure was not defined") }
+		set {	addInvocation(.p_optionalClosure_set(.value(newValue))); state.withValue { $0.__p_optionalClosure = newValue } }
 	}
-	private var __p_optionalClosure: (() -> Int)?
 
     public var implicitelyUnwrappedClosure: (() -> Void)! {
-		get {	addInvocation(.p_implicitelyUnwrappedClosure_get); return lock.sync { __p_implicitelyUnwrappedClosure } ?? optionalGivenGetterValue(.p_implicitelyUnwrappedClosure_get, "AMassiveTestProtocolMock - stub value for implicitelyUnwrappedClosure was not defined") }
-		set {	addInvocation(.p_implicitelyUnwrappedClosure_set(.value(newValue))); lock.sync { __p_implicitelyUnwrappedClosure = newValue } }
+		get {	addInvocation(.p_implicitelyUnwrappedClosure_get); return state.withValue { $0.__p_implicitelyUnwrappedClosure } ?? optionalGivenGetterValue(.p_implicitelyUnwrappedClosure_get, "AMassiveTestProtocolMock - stub value for implicitelyUnwrappedClosure was not defined") }
+		set {	addInvocation(.p_implicitelyUnwrappedClosure_set(.value(newValue))); state.withValue { $0.__p_implicitelyUnwrappedClosure = newValue } }
 	}
-	private var __p_implicitelyUnwrappedClosure: (() -> Void)?
 
 
     public static var optionalClosure: (() -> Int)? {
-		get {	AMassiveTestProtocolMock.addInvocation(.p_optionalClosure_get); return AMassiveTestProtocolMock.lock.sync { AMassiveTestProtocolMock.__p_optionalClosure } ?? optionalGivenGetterValue(.p_optionalClosure_get, "AMassiveTestProtocolMock - stub value for optionalClosure was not defined") }
-		set {	AMassiveTestProtocolMock.addInvocation(.p_optionalClosure_set(.value(newValue))); AMassiveTestProtocolMock.lock.sync { AMassiveTestProtocolMock.__p_optionalClosure = newValue } }
+		get {	AMassiveTestProtocolMock.addInvocation(.p_optionalClosure_get); return AMassiveTestProtocolMock.staticState.withValue { $0.__p_optionalClosure } ?? optionalGivenGetterValue(.p_optionalClosure_get, "AMassiveTestProtocolMock - stub value for optionalClosure was not defined") }
+		set {	AMassiveTestProtocolMock.addInvocation(.p_optionalClosure_set(.value(newValue))); AMassiveTestProtocolMock.staticState.withValue { $0.__p_optionalClosure = newValue } }
 	}
-	private nonisolated(unsafe) static var __p_optionalClosure: (() -> Int)?
 
 
 
@@ -485,13 +494,13 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -501,8 +510,9 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -514,32 +524,33 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -560,19 +571,19 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
 
     static public func given(_ method: StaticGiven) {
-        lock.sync { methodReturnValues.append(method) }
+        staticState.withValue { $0.methodReturnValues.append(method) }
     }
 
     static public func perform(_ method: StaticPerform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        staticState.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -582,8 +593,9 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return StaticMethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -595,28 +607,29 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
     }
 
     static private func addInvocation(_ call: StaticMethodType) {
-        lock.sync { invocations.append(call) }
+        staticState.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     static private func methodReturnValue(_ method: StaticMethodType) throws -> StubProduct {
-        try lock.sync {
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy) = staticState.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy)
         }
+        for candidate in candidates where StaticMethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
-        lock.sync {
-            let matched = methodPerformValues.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
+        return performs.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     static private func matchingCalls(_ method: StaticMethodType, file: StaticString?, line: UInt?) -> [StaticMethodType] {
-        lock.sync {
-            matcher.set(file: file, line: line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -642,34 +655,39 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
 open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock where T1: Sequence, T2: Comparable, T2: EmptyProtocol {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -677,19 +695,19 @@ open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock whe
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -773,13 +791,13 @@ open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock whe
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -789,8 +807,9 @@ open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock whe
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -802,32 +821,33 @@ open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock whe
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -848,7 +868,7 @@ open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock whe
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -859,34 +879,39 @@ open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock whe
 open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -894,50 +919,54 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
-    static private let lock = MockLock()
-    nonisolated(unsafe) static private var _matcher: Matcher = Matcher.default
-    nonisolated(unsafe) static private var _stubbingPolicy: StubbingPolicy = .wrap
-    nonisolated(unsafe) static private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable static mock state. Only reachable through `staticState`, which is lock-protected.
+    private struct StaticMockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [StaticMethodType] = []
+        var methodReturnValues: [StaticGiven] = []
+        var methodPerformValues: [StaticPerform] = []
+    }
+    static private let staticState = LockedValue(StaticMockState())
+
     static var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { staticState.withValue { $0.matcher } }
+        set { staticState.withValue { $0.matcher = newValue } }
     }
     static var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { staticState.withValue { $0.stubbingPolicy } }
+        set { staticState.withValue { $0.stubbingPolicy = newValue } }
     }
     static var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { staticState.withValue { $0.sequencingPolicy } }
+        set { staticState.withValue { $0.sequencingPolicy = newValue } }
     }
-    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
-    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
-    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public static func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        staticState.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -1135,13 +1164,13 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -1151,8 +1180,9 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -1164,32 +1194,33 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -1210,19 +1241,19 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
 
     static public func given(_ method: StaticGiven) {
-        lock.sync { methodReturnValues.append(method) }
+        staticState.withValue { $0.methodReturnValues.append(method) }
     }
 
     static public func perform(_ method: StaticPerform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        staticState.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -1232,8 +1263,9 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return StaticMethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -1245,28 +1277,29 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
     }
 
     static private func addInvocation(_ call: StaticMethodType) {
-        lock.sync { invocations.append(call) }
+        staticState.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     static private func methodReturnValue(_ method: StaticMethodType) throws -> StubProduct {
-        try lock.sync {
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy) = staticState.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy)
         }
+        for candidate in candidates where StaticMethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
-        lock.sync {
-            let matched = methodPerformValues.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
+        return performs.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     static private func matchingCalls(_ method: StaticMethodType, file: StaticString?, line: UInt?) -> [StaticMethodType] {
-        lock.sync {
-            matcher.set(file: file, line: line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -1292,34 +1325,39 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
 open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -1327,19 +1365,19 @@ open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -1892,13 +1930,13 @@ open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -1908,8 +1946,9 @@ open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -1921,32 +1960,33 @@ open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -1967,7 +2007,7 @@ open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -1978,34 +2018,39 @@ open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
 open class AnotherProtocolMock: AnotherProtocol, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -2013,19 +2058,19 @@ open class AnotherProtocolMock: AnotherProtocol, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -2128,13 +2173,13 @@ open class AnotherProtocolMock: AnotherProtocol, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -2144,8 +2189,9 @@ open class AnotherProtocolMock: AnotherProtocol, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -2157,32 +2203,33 @@ open class AnotherProtocolMock: AnotherProtocol, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -2203,7 +2250,7 @@ open class AnotherProtocolMock: AnotherProtocol, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -2214,34 +2261,39 @@ open class AnotherProtocolMock: AnotherProtocol, Mock {
 open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -2249,19 +2301,19 @@ open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -2342,13 +2394,13 @@ open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -2358,8 +2410,9 @@ open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -2371,32 +2424,33 @@ open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -2417,7 +2471,7 @@ open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -2428,34 +2482,40 @@ open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
 open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_youCouldOnlyGetThis: (String)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -2463,26 +2523,25 @@ open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var youCouldOnlyGetThis: String {
-		get {	addInvocation(.p_youCouldOnlyGetThis_get); return lock.sync { __p_youCouldOnlyGetThis } ?? givenGetterValue(.p_youCouldOnlyGetThis_get, "ComplicatedServiceTypeMock - stub value for youCouldOnlyGetThis was not defined") }
+		get {	addInvocation(.p_youCouldOnlyGetThis_get); return state.withValue { $0.__p_youCouldOnlyGetThis } ?? givenGetterValue(.p_youCouldOnlyGetThis_get, "ComplicatedServiceTypeMock - stub value for youCouldOnlyGetThis was not defined") }
 	}
-	private var __p_youCouldOnlyGetThis: (String)?
 
 
 
@@ -2819,13 +2878,13 @@ open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -2835,8 +2894,9 @@ open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -2848,32 +2908,33 @@ open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -2894,7 +2955,7 @@ open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -2905,34 +2966,39 @@ open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
 public final class DataProvidingMock: DataProviding, Mock, @unchecked Sendable {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -2940,19 +3006,19 @@ public final class DataProvidingMock: DataProviding, Mock, @unchecked Sendable {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -3041,13 +3107,13 @@ public final class DataProvidingMock: DataProviding, Mock, @unchecked Sendable {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -3057,8 +3123,9 @@ public final class DataProvidingMock: DataProviding, Mock, @unchecked Sendable {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -3070,32 +3137,33 @@ public final class DataProvidingMock: DataProviding, Mock, @unchecked Sendable {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -3116,7 +3184,7 @@ public final class DataProvidingMock: DataProviding, Mock, @unchecked Sendable {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -3127,34 +3195,40 @@ public final class DataProvidingMock: DataProviding, Mock, @unchecked Sendable {
 open class DateSortableMock: DateSortable, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_date: (Date)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -3162,26 +3236,25 @@ open class DateSortableMock: DateSortable, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var date: Date {
-		get {	addInvocation(.p_date_get); return lock.sync { __p_date } ?? givenGetterValue(.p_date_get, "DateSortableMock - stub value for date was not defined") }
+		get {	addInvocation(.p_date_get); return state.withValue { $0.__p_date } ?? givenGetterValue(.p_date_get, "DateSortableMock - stub value for date was not defined") }
 	}
-	private var __p_date: (Date)?
 
 
 
@@ -3235,13 +3308,13 @@ open class DateSortableMock: DateSortable, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -3251,8 +3324,9 @@ open class DateSortableMock: DateSortable, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -3264,32 +3338,33 @@ open class DateSortableMock: DateSortable, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -3310,7 +3385,7 @@ open class DateSortableMock: DateSortable, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -3321,34 +3396,39 @@ open class DateSortableMock: DateSortable, Mock {
 open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -3356,19 +3436,19 @@ open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -3471,13 +3551,13 @@ open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -3487,8 +3567,9 @@ open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -3500,32 +3581,33 @@ open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -3546,7 +3628,7 @@ open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -3557,34 +3639,39 @@ open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
 open class EmptyProtocolMock: EmptyProtocol, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -3592,19 +3679,19 @@ open class EmptyProtocolMock: EmptyProtocol, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -3642,13 +3729,13 @@ open class EmptyProtocolMock: EmptyProtocol, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -3658,8 +3745,9 @@ open class EmptyProtocolMock: EmptyProtocol, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -3671,32 +3759,33 @@ open class EmptyProtocolMock: EmptyProtocol, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -3717,7 +3806,7 @@ open class EmptyProtocolMock: EmptyProtocol, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -3728,34 +3817,46 @@ open class EmptyProtocolMock: EmptyProtocol, Mock {
 open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_service: (any ExistentialService)?
+        var __p_optionalService: (any ExistentialService)?
+        var __p_services: ([any ExistentialService])?
+        var __p_servicesById: ([String: any ExistentialService])?
+        var __p_composed: (any ExistentialService & ExistentialOther)?
+        var __p_optionalComposed: (any ExistentialService & ExistentialOther)?
+        var __p_numbers: (any Collection<Int>)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -3763,96 +3864,93 @@ open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock 
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
-    static private let lock = MockLock()
-    nonisolated(unsafe) static private var _matcher: Matcher = Matcher.default
-    nonisolated(unsafe) static private var _stubbingPolicy: StubbingPolicy = .wrap
-    nonisolated(unsafe) static private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable static mock state. Only reachable through `staticState`, which is lock-protected.
+    private struct StaticMockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [StaticMethodType] = []
+        var methodReturnValues: [StaticGiven] = []
+        var methodPerformValues: [StaticPerform] = []
+        var __p_shared: (any ExistentialService)?
+    }
+    static private let staticState = LockedValue(StaticMockState())
+
     static var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { staticState.withValue { $0.matcher } }
+        set { staticState.withValue { $0.matcher = newValue } }
     }
     static var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { staticState.withValue { $0.stubbingPolicy } }
+        set { staticState.withValue { $0.stubbingPolicy = newValue } }
     }
     static var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { staticState.withValue { $0.sequencingPolicy } }
+        set { staticState.withValue { $0.sequencingPolicy = newValue } }
     }
-    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
-    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
-    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public static func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        staticState.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var service: any ExistentialService {
-		get {	addInvocation(.p_service_get); return lock.sync { __p_service } ?? givenGetterValue(.p_service_get, "ExistentialAnyProtocolMock - stub value for service was not defined") }
-		set {	addInvocation(.p_service_set(.value(newValue))); lock.sync { __p_service = newValue } }
+		get {	addInvocation(.p_service_get); return state.withValue { $0.__p_service } ?? givenGetterValue(.p_service_get, "ExistentialAnyProtocolMock - stub value for service was not defined") }
+		set {	addInvocation(.p_service_set(.value(newValue))); state.withValue { $0.__p_service = newValue } }
 	}
-	private var __p_service: (any ExistentialService)?
 
     public var optionalService: (any ExistentialService)? {
-		get {	addInvocation(.p_optionalService_get); return lock.sync { __p_optionalService } ?? optionalGivenGetterValue(.p_optionalService_get, "ExistentialAnyProtocolMock - stub value for optionalService was not defined") }
-		set {	addInvocation(.p_optionalService_set(.value(newValue))); lock.sync { __p_optionalService = newValue } }
+		get {	addInvocation(.p_optionalService_get); return state.withValue { $0.__p_optionalService } ?? optionalGivenGetterValue(.p_optionalService_get, "ExistentialAnyProtocolMock - stub value for optionalService was not defined") }
+		set {	addInvocation(.p_optionalService_set(.value(newValue))); state.withValue { $0.__p_optionalService = newValue } }
 	}
-	private var __p_optionalService: (any ExistentialService)?
 
     public var services: [any ExistentialService] {
-		get {	addInvocation(.p_services_get); return lock.sync { __p_services } ?? givenGetterValue(.p_services_get, "ExistentialAnyProtocolMock - stub value for services was not defined") }
+		get {	addInvocation(.p_services_get); return state.withValue { $0.__p_services } ?? givenGetterValue(.p_services_get, "ExistentialAnyProtocolMock - stub value for services was not defined") }
 	}
-	private var __p_services: ([any ExistentialService])?
 
     public var servicesById: [String: any ExistentialService] {
-		get {	addInvocation(.p_servicesById_get); return lock.sync { __p_servicesById } ?? givenGetterValue(.p_servicesById_get, "ExistentialAnyProtocolMock - stub value for servicesById was not defined") }
+		get {	addInvocation(.p_servicesById_get); return state.withValue { $0.__p_servicesById } ?? givenGetterValue(.p_servicesById_get, "ExistentialAnyProtocolMock - stub value for servicesById was not defined") }
 	}
-	private var __p_servicesById: ([String: any ExistentialService])?
 
     public var composed: any ExistentialService & ExistentialOther {
-		get {	addInvocation(.p_composed_get); return lock.sync { __p_composed } ?? givenGetterValue(.p_composed_get, "ExistentialAnyProtocolMock - stub value for composed was not defined") }
+		get {	addInvocation(.p_composed_get); return state.withValue { $0.__p_composed } ?? givenGetterValue(.p_composed_get, "ExistentialAnyProtocolMock - stub value for composed was not defined") }
 	}
-	private var __p_composed: (any ExistentialService & ExistentialOther)?
 
     public var optionalComposed: (any ExistentialService & ExistentialOther)? {
-		get {	addInvocation(.p_optionalComposed_get); return lock.sync { __p_optionalComposed } ?? optionalGivenGetterValue(.p_optionalComposed_get, "ExistentialAnyProtocolMock - stub value for optionalComposed was not defined") }
+		get {	addInvocation(.p_optionalComposed_get); return state.withValue { $0.__p_optionalComposed } ?? optionalGivenGetterValue(.p_optionalComposed_get, "ExistentialAnyProtocolMock - stub value for optionalComposed was not defined") }
 	}
-	private var __p_optionalComposed: (any ExistentialService & ExistentialOther)?
 
     public var numbers: (any Collection<Int>)? {
-		get {	addInvocation(.p_numbers_get); return lock.sync { __p_numbers } ?? optionalGivenGetterValue(.p_numbers_get, "ExistentialAnyProtocolMock - stub value for numbers was not defined") }
+		get {	addInvocation(.p_numbers_get); return state.withValue { $0.__p_numbers } ?? optionalGivenGetterValue(.p_numbers_get, "ExistentialAnyProtocolMock - stub value for numbers was not defined") }
 	}
-	private var __p_numbers: (any Collection<Int>)?
 
 
     public static var shared: any ExistentialService {
-		get {	ExistentialAnyProtocolMock.addInvocation(.p_shared_get); return ExistentialAnyProtocolMock.lock.sync { ExistentialAnyProtocolMock.__p_shared } ?? givenGetterValue(.p_shared_get, "ExistentialAnyProtocolMock - stub value for shared was not defined") }
-		set {	ExistentialAnyProtocolMock.addInvocation(.p_shared_set(.value(newValue))); ExistentialAnyProtocolMock.lock.sync { ExistentialAnyProtocolMock.__p_shared = newValue } }
+		get {	ExistentialAnyProtocolMock.addInvocation(.p_shared_get); return ExistentialAnyProtocolMock.staticState.withValue { $0.__p_shared } ?? givenGetterValue(.p_shared_get, "ExistentialAnyProtocolMock - stub value for shared was not defined") }
+		set {	ExistentialAnyProtocolMock.addInvocation(.p_shared_set(.value(newValue))); ExistentialAnyProtocolMock.staticState.withValue { $0.__p_shared = newValue } }
 	}
-	private nonisolated(unsafe) static var __p_shared: (any ExistentialService)?
 
 
 
@@ -4445,13 +4543,13 @@ open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock 
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -4461,8 +4559,9 @@ open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock 
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -4474,32 +4573,33 @@ open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock 
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -4520,19 +4620,19 @@ open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock 
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
 
     static public func given(_ method: StaticGiven) {
-        lock.sync { methodReturnValues.append(method) }
+        staticState.withValue { $0.methodReturnValues.append(method) }
     }
 
     static public func perform(_ method: StaticPerform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        staticState.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -4542,8 +4642,9 @@ open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock 
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return StaticMethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -4555,28 +4656,29 @@ open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock 
     }
 
     static private func addInvocation(_ call: StaticMethodType) {
-        lock.sync { invocations.append(call) }
+        staticState.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     static private func methodReturnValue(_ method: StaticMethodType) throws -> StubProduct {
-        try lock.sync {
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy) = staticState.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy)
         }
+        for candidate in candidates where StaticMethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
-        lock.sync {
-            let matched = methodPerformValues.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
+        return performs.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     static private func matchingCalls(_ method: StaticMethodType, file: StaticString?, line: UInt?) -> [StaticMethodType] {
-        lock.sync {
-            matcher.set(file: file, line: line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -4602,34 +4704,39 @@ open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock 
 open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -4637,19 +4744,19 @@ open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock 
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -4733,13 +4840,13 @@ open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock 
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -4749,8 +4856,9 @@ open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock 
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -4762,32 +4870,33 @@ open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock 
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -4808,7 +4917,7 @@ open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock 
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -4819,34 +4928,40 @@ open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock 
 open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_throw: (any Error)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -4854,27 +4969,26 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var `throw`: any Error {
-		get {	addInvocation(.p_throw_get); return lock.sync { __p_throw } ?? givenGetterValue(.p_throw_get, "FailsWithKeywordArgumentsMock - stub value for `throw` was not defined") }
-		set {	addInvocation(.p_throw_set(.value(newValue))); lock.sync { __p_throw = newValue } }
+		get {	addInvocation(.p_throw_get); return state.withValue { $0.__p_throw } ?? givenGetterValue(.p_throw_get, "FailsWithKeywordArgumentsMock - stub value for `throw` was not defined") }
+		set {	addInvocation(.p_throw_set(.value(newValue))); state.withValue { $0.__p_throw = newValue } }
 	}
-	private var __p_throw: (any Error)?
 
 
 
@@ -5058,13 +5172,13 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -5074,8 +5188,9 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -5087,32 +5202,33 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -5133,7 +5249,7 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -5144,34 +5260,39 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
 public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturnedTypeBeingGenericOfSelf, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -5179,19 +5300,19 @@ public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturne
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -5420,13 +5541,13 @@ public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturne
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -5436,8 +5557,9 @@ public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturne
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -5449,32 +5571,33 @@ public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturne
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -5495,7 +5618,7 @@ public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturne
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -5506,34 +5629,39 @@ public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturne
 open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -5541,19 +5669,19 @@ open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -5621,13 +5749,13 @@ open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -5637,8 +5765,9 @@ open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -5650,32 +5779,33 @@ open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -5696,7 +5826,7 @@ open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -5707,34 +5837,39 @@ open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
 open class FetcherMock: Fetcher, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -5742,19 +5877,19 @@ open class FetcherMock: Fetcher, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -5838,13 +5973,13 @@ open class FetcherMock: Fetcher, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -5854,8 +5989,9 @@ open class FetcherMock: Fetcher, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -5867,32 +6003,33 @@ open class FetcherMock: Fetcher, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -5913,7 +6050,7 @@ open class FetcherMock: Fetcher, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -5924,34 +6061,39 @@ open class FetcherMock: Fetcher, Mock {
 open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -5959,19 +6101,19 @@ open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -6055,13 +6197,13 @@ open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -6071,8 +6213,9 @@ open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -6084,32 +6227,33 @@ open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -6130,7 +6274,7 @@ open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -6141,34 +6285,39 @@ open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
 open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstraint, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -6176,19 +6325,19 @@ open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstra
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -6310,13 +6459,13 @@ open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstra
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -6326,8 +6475,9 @@ open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstra
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -6339,32 +6489,33 @@ open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstra
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -6385,7 +6536,7 @@ open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstra
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -6396,34 +6547,39 @@ open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstra
 open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -6431,19 +6587,19 @@ open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -6527,13 +6683,13 @@ open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -6543,8 +6699,9 @@ open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -6556,32 +6713,33 @@ open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -6602,7 +6760,7 @@ open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -6613,34 +6771,39 @@ open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
 open class InoutProtocolMock: InoutProtocol, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -6648,19 +6811,19 @@ open class InoutProtocolMock: InoutProtocol, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -6781,13 +6944,13 @@ open class InoutProtocolMock: InoutProtocol, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -6797,8 +6960,9 @@ open class InoutProtocolMock: InoutProtocol, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -6810,32 +6974,33 @@ open class InoutProtocolMock: InoutProtocol, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -6856,7 +7021,7 @@ open class InoutProtocolMock: InoutProtocol, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -6867,34 +7032,40 @@ open class InoutProtocolMock: InoutProtocol, Mock {
 open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        super.init()
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -6902,19 +7073,19 @@ open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -6994,13 +7165,13 @@ open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -7010,8 +7181,9 @@ open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -7023,32 +7195,33 @@ open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -7069,7 +7242,7 @@ open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -7080,34 +7253,39 @@ open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
 open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethodsGenericThatDifferOnlyInReturnType, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -7115,19 +7293,19 @@ open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethods
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -7456,13 +7634,13 @@ open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethods
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -7472,8 +7650,9 @@ open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethods
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -7485,32 +7664,33 @@ open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethods
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -7531,7 +7711,7 @@ open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethods
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -7542,34 +7722,39 @@ open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethods
 open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDifferOnlyInReturnType, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -7577,19 +7762,19 @@ open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDif
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -7710,13 +7895,13 @@ open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDif
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -7726,8 +7911,9 @@ open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDif
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -7739,32 +7925,33 @@ open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDif
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -7785,7 +7972,7 @@ open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDif
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -7796,34 +7983,40 @@ open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDif
 open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock where T: Sequence {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_sequence: (T)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -7831,26 +8024,25 @@ open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock w
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var sequence: T {
-		get {	addInvocation(.p_sequence_get); return lock.sync { __p_sequence } ?? givenGetterValue(.p_sequence_get, "ProtocolWithAssociatedTypeMock - stub value for sequence was not defined") }
+		get {	addInvocation(.p_sequence_get); return state.withValue { $0.__p_sequence } ?? givenGetterValue(.p_sequence_get, "ProtocolWithAssociatedTypeMock - stub value for sequence was not defined") }
 	}
-	private var __p_sequence: (T)?
 
 
 
@@ -7941,13 +8133,13 @@ open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock w
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -7957,8 +8149,9 @@ open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock w
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -7970,32 +8163,33 @@ open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock w
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -8016,7 +8210,7 @@ open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock w
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -8027,34 +8221,40 @@ open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock w
 open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedType2, Mock where ValueType: StringConvertibleType {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_property: (String)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -8062,26 +8262,25 @@ open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedTyp
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var property: String {
-		get {	addInvocation(.p_property_get); return lock.sync { __p_property } ?? givenGetterValue(.p_property_get, "ProtocolWithAssociatedType2Mock - stub value for property was not defined") }
+		get {	addInvocation(.p_property_get); return state.withValue { $0.__p_property } ?? givenGetterValue(.p_property_get, "ProtocolWithAssociatedType2Mock - stub value for property was not defined") }
 	}
-	private var __p_property: (String)?
 
 
 
@@ -8135,13 +8334,13 @@ open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedTyp
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -8151,8 +8350,9 @@ open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedTyp
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -8164,32 +8364,33 @@ open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedTyp
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -8210,7 +8411,7 @@ open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedTyp
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -8221,34 +8422,40 @@ open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedTyp
 open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        super.init()
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -8256,19 +8463,19 @@ open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -8331,13 +8538,13 @@ open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -8347,8 +8554,9 @@ open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -8360,32 +8568,33 @@ open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -8406,7 +8615,7 @@ open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -8417,34 +8626,39 @@ open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
 open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -8452,19 +8666,19 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -8692,13 +8906,13 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -8708,8 +8922,9 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -8721,32 +8936,33 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -8767,7 +8983,7 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -8778,34 +8994,39 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
 open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -8813,19 +9034,19 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -8928,13 +9149,13 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -8944,8 +9165,9 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -8957,32 +9179,33 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -9003,7 +9226,7 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -9014,34 +9237,39 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
 open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -9049,19 +9277,19 @@ open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, M
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -9218,13 +9446,13 @@ open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, M
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -9234,8 +9462,9 @@ open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, M
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -9247,32 +9476,33 @@ open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, M
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -9293,7 +9523,7 @@ open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, M
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -9304,34 +9534,39 @@ open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, M
 open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -9339,19 +9574,19 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -9471,13 +9706,13 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -9487,8 +9722,9 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -9500,32 +9736,33 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -9546,7 +9783,7 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -9557,34 +9794,39 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
 open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -9592,19 +9834,19 @@ open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Moc
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -9688,13 +9930,13 @@ open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Moc
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -9704,8 +9946,9 @@ open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Moc
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -9717,32 +9960,33 @@ open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Moc
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -9763,7 +10007,7 @@ open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Moc
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -9774,34 +10018,40 @@ open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Moc
 open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGenericConstraints, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_value: (ContainedType)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -9809,26 +10059,25 @@ open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGeneri
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var value: ContainedType {
-		get {	addInvocation(.p_value_get); return lock.sync { __p_value } ?? givenGetterValue(.p_value_get, "ProtocolWithGenericConstraintsMock - stub value for value was not defined") }
+		get {	addInvocation(.p_value_get); return state.withValue { $0.__p_value } ?? givenGetterValue(.p_value_get, "ProtocolWithGenericConstraintsMock - stub value for value was not defined") }
 	}
-	private var __p_value: (ContainedType)?
 
 
 
@@ -9915,13 +10164,13 @@ open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGeneri
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -9931,8 +10180,9 @@ open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGeneri
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -9944,32 +10194,33 @@ open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGeneri
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -9990,7 +10241,7 @@ open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGeneri
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -10001,34 +10252,39 @@ open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGeneri
 open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -10036,19 +10292,19 @@ open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -10170,13 +10426,13 @@ open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -10186,8 +10442,9 @@ open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -10199,32 +10456,33 @@ open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -10245,7 +10503,7 @@ open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -10256,34 +10514,39 @@ open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
 open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNested, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -10291,19 +10554,19 @@ open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNeste
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -10387,13 +10650,13 @@ open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNeste
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -10403,8 +10666,9 @@ open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNeste
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -10416,32 +10680,33 @@ open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNeste
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -10462,7 +10727,7 @@ open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNeste
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -10473,34 +10738,41 @@ open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNeste
 open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_param: (Int)?
+        var __p_other: (String)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -10508,31 +10780,29 @@ open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var param: Int {
-		get {	addInvocation(.p_param_get); return lock.sync { __p_param } ?? givenGetterValue(.p_param_get, "ProtocolWithInitializersMock - stub value for param was not defined") }
+		get {	addInvocation(.p_param_get); return state.withValue { $0.__p_param } ?? givenGetterValue(.p_param_get, "ProtocolWithInitializersMock - stub value for param was not defined") }
 	}
-	private var __p_param: (Int)?
 
     public var other: String {
-		get {	addInvocation(.p_other_get); return lock.sync { __p_other } ?? givenGetterValue(.p_other_get, "ProtocolWithInitializersMock - stub value for other was not defined") }
+		get {	addInvocation(.p_other_get); return state.withValue { $0.__p_other } ?? givenGetterValue(.p_other_get, "ProtocolWithInitializersMock - stub value for other was not defined") }
 	}
-	private var __p_other: (String)?
 
 
 
@@ -10599,13 +10869,13 @@ open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -10615,8 +10885,9 @@ open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -10628,32 +10899,33 @@ open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -10674,7 +10946,7 @@ open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -10685,34 +10957,39 @@ open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
 open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyParameters, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -10720,19 +10997,19 @@ open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyP
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -10802,13 +11079,13 @@ open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyP
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -10818,8 +11095,9 @@ open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyP
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -10831,32 +11109,33 @@ open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyP
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -10877,7 +11156,7 @@ open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyP
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -10888,34 +11167,39 @@ open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyP
 open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithMethodsWithGenericReturnTypeThatThrows, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -10923,19 +11207,19 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -11026,13 +11310,13 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -11042,8 +11326,9 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -11055,32 +11340,33 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -11101,7 +11387,7 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -11112,34 +11398,40 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
 open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        super.init()
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -11147,50 +11439,54 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
-    static private let lock = MockLock()
-    nonisolated(unsafe) static private var _matcher: Matcher = Matcher.default
-    nonisolated(unsafe) static private var _stubbingPolicy: StubbingPolicy = .wrap
-    nonisolated(unsafe) static private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable static mock state. Only reachable through `staticState`, which is lock-protected.
+    private struct StaticMockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [StaticMethodType] = []
+        var methodReturnValues: [StaticGiven] = []
+        var methodPerformValues: [StaticPerform] = []
+    }
+    static private let staticState = LockedValue(StaticMockState())
+
     static var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { staticState.withValue { $0.matcher } }
+        set { staticState.withValue { $0.matcher = newValue } }
     }
     static var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { staticState.withValue { $0.stubbingPolicy } }
+        set { staticState.withValue { $0.stubbingPolicy = newValue } }
     }
     static var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { staticState.withValue { $0.sequencingPolicy } }
+        set { staticState.withValue { $0.sequencingPolicy = newValue } }
     }
-    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
-    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
-    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public static func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        staticState.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -11317,13 +11613,13 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -11333,8 +11629,9 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -11346,32 +11643,33 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -11392,19 +11690,19 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
 
     static public func given(_ method: StaticGiven) {
-        lock.sync { methodReturnValues.append(method) }
+        staticState.withValue { $0.methodReturnValues.append(method) }
     }
 
     static public func perform(_ method: StaticPerform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        staticState.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -11414,8 +11712,9 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return StaticMethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -11427,28 +11726,29 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
     }
 
     static private func addInvocation(_ call: StaticMethodType) {
-        lock.sync { invocations.append(call) }
+        staticState.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     static private func methodReturnValue(_ method: StaticMethodType) throws -> StubProduct {
-        try lock.sync {
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy) = staticState.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy)
         }
+        for candidate in candidates where StaticMethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
-        lock.sync {
-            let matched = methodPerformValues.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
+        return performs.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     static private func matchingCalls(_ method: StaticMethodType, file: StaticString?, line: UInt?) -> [StaticMethodType] {
-        lock.sync {
-            matcher.set(file: file, line: line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -11474,34 +11774,42 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
 open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_name: (String)?
+        var __p_email: (String)?
+        var __p_internalProperty: (InternalType)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -11509,83 +11817,84 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
-    static private let lock = MockLock()
-    nonisolated(unsafe) static private var _matcher: Matcher = Matcher.default
-    nonisolated(unsafe) static private var _stubbingPolicy: StubbingPolicy = .wrap
-    nonisolated(unsafe) static private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable static mock state. Only reachable through `staticState`, which is lock-protected.
+    private struct StaticMockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [StaticMethodType] = []
+        var methodReturnValues: [StaticGiven] = []
+        var methodPerformValues: [StaticPerform] = []
+        var __p_name: (String)?
+        var __p_defaultEmail: (String)?
+    }
+    static private let staticState = LockedValue(StaticMockState())
+
     static var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { staticState.withValue { $0.matcher } }
+        set { staticState.withValue { $0.matcher = newValue } }
     }
     static var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { staticState.withValue { $0.stubbingPolicy } }
+        set { staticState.withValue { $0.stubbingPolicy = newValue } }
     }
     static var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { staticState.withValue { $0.sequencingPolicy } }
+        set { staticState.withValue { $0.sequencingPolicy = newValue } }
     }
-    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
-    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
-    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public static func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        staticState.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var name: String {
-		get {	addInvocation(.p_name_get); return lock.sync { __p_name } ?? givenGetterValue(.p_name_get, "ProtocolWithPropertiesMock - stub value for name was not defined") }
-		set {	addInvocation(.p_name_set(.value(newValue))); lock.sync { __p_name = newValue } }
+		get {	addInvocation(.p_name_get); return state.withValue { $0.__p_name } ?? givenGetterValue(.p_name_get, "ProtocolWithPropertiesMock - stub value for name was not defined") }
+		set {	addInvocation(.p_name_set(.value(newValue))); state.withValue { $0.__p_name = newValue } }
 	}
-	private var __p_name: (String)?
 
     public var email: String? {
-		get {	addInvocation(.p_email_get); return lock.sync { __p_email } ?? optionalGivenGetterValue(.p_email_get, "ProtocolWithPropertiesMock - stub value for email was not defined") }
-		set {	addInvocation(.p_email_set(.value(newValue))); lock.sync { __p_email = newValue } }
+		get {	addInvocation(.p_email_get); return state.withValue { $0.__p_email } ?? optionalGivenGetterValue(.p_email_get, "ProtocolWithPropertiesMock - stub value for email was not defined") }
+		set {	addInvocation(.p_email_set(.value(newValue))); state.withValue { $0.__p_email = newValue } }
 	}
-	private var __p_email: (String)?
 
     public var internalProperty: InternalType {
-		get {	addInvocation(.p_internalProperty_get); return lock.sync { __p_internalProperty } ?? givenGetterValue(.p_internalProperty_get, "ProtocolWithPropertiesMock - stub value for internalProperty was not defined") }
-		set {	addInvocation(.p_internalProperty_set(.value(newValue))); lock.sync { __p_internalProperty = newValue } }
+		get {	addInvocation(.p_internalProperty_get); return state.withValue { $0.__p_internalProperty } ?? givenGetterValue(.p_internalProperty_get, "ProtocolWithPropertiesMock - stub value for internalProperty was not defined") }
+		set {	addInvocation(.p_internalProperty_set(.value(newValue))); state.withValue { $0.__p_internalProperty = newValue } }
 	}
-	private var __p_internalProperty: (InternalType)?
 
 
     public static var name: String {
-		get {	ProtocolWithPropertiesMock.addInvocation(.p_name_get); return ProtocolWithPropertiesMock.lock.sync { ProtocolWithPropertiesMock.__p_name } ?? givenGetterValue(.p_name_get, "ProtocolWithPropertiesMock - stub value for name was not defined") }
-		set {	ProtocolWithPropertiesMock.addInvocation(.p_name_set(.value(newValue))); ProtocolWithPropertiesMock.lock.sync { ProtocolWithPropertiesMock.__p_name = newValue } }
+		get {	ProtocolWithPropertiesMock.addInvocation(.p_name_get); return ProtocolWithPropertiesMock.staticState.withValue { $0.__p_name } ?? givenGetterValue(.p_name_get, "ProtocolWithPropertiesMock - stub value for name was not defined") }
+		set {	ProtocolWithPropertiesMock.addInvocation(.p_name_set(.value(newValue))); ProtocolWithPropertiesMock.staticState.withValue { $0.__p_name = newValue } }
 	}
-	private nonisolated(unsafe) static var __p_name: (String)?
 
     public static var defaultEmail: String? {
-		get {	ProtocolWithPropertiesMock.addInvocation(.p_defaultEmail_get); return ProtocolWithPropertiesMock.lock.sync { ProtocolWithPropertiesMock.__p_defaultEmail } ?? optionalGivenGetterValue(.p_defaultEmail_get, "ProtocolWithPropertiesMock - stub value for defaultEmail was not defined") }
-		set {	ProtocolWithPropertiesMock.addInvocation(.p_defaultEmail_set(.value(newValue))); ProtocolWithPropertiesMock.lock.sync { ProtocolWithPropertiesMock.__p_defaultEmail = newValue } }
+		get {	ProtocolWithPropertiesMock.addInvocation(.p_defaultEmail_get); return ProtocolWithPropertiesMock.staticState.withValue { $0.__p_defaultEmail } ?? optionalGivenGetterValue(.p_defaultEmail_get, "ProtocolWithPropertiesMock - stub value for defaultEmail was not defined") }
+		set {	ProtocolWithPropertiesMock.addInvocation(.p_defaultEmail_set(.value(newValue))); ProtocolWithPropertiesMock.staticState.withValue { $0.__p_defaultEmail = newValue } }
 	}
-	private nonisolated(unsafe) static var __p_defaultEmail: (String)?
 
 
 
@@ -11790,13 +12099,13 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -11806,8 +12115,9 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -11819,32 +12129,33 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -11865,19 +12176,19 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
 
     static public func given(_ method: StaticGiven) {
-        lock.sync { methodReturnValues.append(method) }
+        staticState.withValue { $0.methodReturnValues.append(method) }
     }
 
     static public func perform(_ method: StaticPerform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        staticState.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -11887,8 +12198,9 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return StaticMethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -11900,28 +12212,29 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
     }
 
     static private func addInvocation(_ call: StaticMethodType) {
-        lock.sync { invocations.append(call) }
+        staticState.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     static private func methodReturnValue(_ method: StaticMethodType) throws -> StubProduct {
-        try lock.sync {
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy) = staticState.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy)
         }
+        for candidate in candidates where StaticMethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
-        lock.sync {
-            let matched = methodPerformValues.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
+        return performs.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     static private func matchingCalls(_ method: StaticMethodType, file: StaticString?, line: UInt?) -> [StaticMethodType] {
-        lock.sync {
-            matcher.set(file: file, line: line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -11947,34 +12260,39 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
 open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, StaticMock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -11982,58 +12300,62 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
-    static private let lock = MockLock()
-    nonisolated(unsafe) static private var _matcher: Matcher = Matcher.default
-    nonisolated(unsafe) static private var _stubbingPolicy: StubbingPolicy = .wrap
-    nonisolated(unsafe) static private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable static mock state. Only reachable through `staticState`, which is lock-protected.
+    private struct StaticMockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [StaticMethodType] = []
+        var methodReturnValues: [StaticGiven] = []
+        var methodPerformValues: [StaticPerform] = []
+        var __p_staticProperty: (String)?
+    }
+    static private let staticState = LockedValue(StaticMockState())
+
     static var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { staticState.withValue { $0.matcher } }
+        set { staticState.withValue { $0.matcher = newValue } }
     }
     static var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { staticState.withValue { $0.stubbingPolicy } }
+        set { staticState.withValue { $0.stubbingPolicy = newValue } }
     }
     static var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { staticState.withValue { $0.sequencingPolicy } }
+        set { staticState.withValue { $0.sequencingPolicy = newValue } }
     }
-    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
-    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
-    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public static func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        staticState.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
 
     public static var staticProperty: String {
-		get {	ProtocolWithStaticMembersMock.addInvocation(.p_staticProperty_get); return ProtocolWithStaticMembersMock.lock.sync { ProtocolWithStaticMembersMock.__p_staticProperty } ?? givenGetterValue(.p_staticProperty_get, "ProtocolWithStaticMembersMock - stub value for staticProperty was not defined") }
+		get {	ProtocolWithStaticMembersMock.addInvocation(.p_staticProperty_get); return ProtocolWithStaticMembersMock.staticState.withValue { $0.__p_staticProperty } ?? givenGetterValue(.p_staticProperty_get, "ProtocolWithStaticMembersMock - stub value for staticProperty was not defined") }
 	}
-	private nonisolated(unsafe) static var __p_staticProperty: (String)?
 
 
 
@@ -12156,13 +12478,13 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -12172,8 +12494,9 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -12185,32 +12508,33 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -12231,19 +12555,19 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
 
     static public func given(_ method: StaticGiven) {
-        lock.sync { methodReturnValues.append(method) }
+        staticState.withValue { $0.methodReturnValues.append(method) }
     }
 
     static public func perform(_ method: StaticPerform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        staticState.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -12253,8 +12577,9 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return StaticMethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -12266,28 +12591,29 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
     }
 
     static private func addInvocation(_ call: StaticMethodType) {
-        lock.sync { invocations.append(call) }
+        staticState.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     static private func methodReturnValue(_ method: StaticMethodType) throws -> StubProduct {
-        try lock.sync {
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy) = staticState.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy)
         }
+        for candidate in candidates where StaticMethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
-        lock.sync {
-            let matched = methodPerformValues.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
+        return performs.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     static private func matchingCalls(_ method: StaticMethodType, file: StaticString?, line: UInt?) -> [StaticMethodType] {
-        lock.sync {
-            matcher.set(file: file, line: line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -12313,34 +12639,40 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
 open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_something: (Any)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -12348,27 +12680,26 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var something: Any {
-		get {	addInvocation(.p_something_get); return lock.sync { __p_something } ?? givenGetterValue(.p_something_get, "ProtocolWithSubscriptsMock - stub value for something was not defined") }
-		set {	addInvocation(.p_something_set(.value(newValue))); lock.sync { __p_something = newValue } }
+		get {	addInvocation(.p_something_get); return state.withValue { $0.__p_something } ?? givenGetterValue(.p_something_get, "ProtocolWithSubscriptsMock - stub value for something was not defined") }
+		set {	addInvocation(.p_something_set(.value(newValue))); state.withValue { $0.__p_something = newValue } }
 	}
-	private var __p_something: (Any)?
 
 
 
@@ -12830,13 +13161,13 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -12846,8 +13177,9 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -12859,32 +13191,33 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -12905,7 +13238,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -12916,34 +13249,39 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -12951,19 +13289,19 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -13085,13 +13423,13 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -13101,8 +13439,9 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -13114,32 +13453,33 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -13160,7 +13500,7 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -13171,34 +13511,39 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
 open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -13206,19 +13551,19 @@ open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -13302,13 +13647,13 @@ open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -13318,8 +13663,9 @@ open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -13331,32 +13677,33 @@ open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -13377,7 +13724,7 @@ open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -13388,34 +13735,40 @@ open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
 open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefinition, Mock where T: Sequence, T.Element: Equatable {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_sequence: (T)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -13423,26 +13776,25 @@ open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefini
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var sequence: T {
-		get {	addInvocation(.p_sequence_get); return lock.sync { __p_sequence } ?? givenGetterValue(.p_sequence_get, "ProtocolWithWhereAfterDefinitionMock - stub value for sequence was not defined") }
+		get {	addInvocation(.p_sequence_get); return state.withValue { $0.__p_sequence } ?? givenGetterValue(.p_sequence_get, "ProtocolWithWhereAfterDefinitionMock - stub value for sequence was not defined") }
 	}
-	private var __p_sequence: (T)?
 
 
 
@@ -13533,13 +13885,13 @@ open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefini
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -13549,8 +13901,9 @@ open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefini
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -13562,32 +13915,33 @@ open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefini
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -13608,7 +13962,7 @@ open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefini
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -13619,34 +13973,41 @@ open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefini
 public final class RefinedSendableServiceMock: RefinedSendableService, Mock, StaticMock, @unchecked Sendable {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_name: (String)?
+        var __p_timeout: (Double)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -13654,70 +14015,72 @@ public final class RefinedSendableServiceMock: RefinedSendableService, Mock, Sta
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
-    static private let lock = MockLock()
-    nonisolated(unsafe) static private var _matcher: Matcher = Matcher.default
-    nonisolated(unsafe) static private var _stubbingPolicy: StubbingPolicy = .wrap
-    nonisolated(unsafe) static private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable static mock state. Only reachable through `staticState`, which is lock-protected.
+    private struct StaticMockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [StaticMethodType] = []
+        var methodReturnValues: [StaticGiven] = []
+        var methodPerformValues: [StaticPerform] = []
+        var __p_instances: (Int)?
+    }
+    static private let staticState = LockedValue(StaticMockState())
+
     static var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { staticState.withValue { $0.matcher } }
+        set { staticState.withValue { $0.matcher = newValue } }
     }
     static var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { staticState.withValue { $0.stubbingPolicy } }
+        set { staticState.withValue { $0.stubbingPolicy = newValue } }
     }
     static var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { staticState.withValue { $0.sequencingPolicy } }
+        set { staticState.withValue { $0.sequencingPolicy = newValue } }
     }
-    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
-    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
-    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public static func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        staticState.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var name: String {
-		get {	addInvocation(.p_name_get); return lock.sync { __p_name } ?? givenGetterValue(.p_name_get, "RefinedSendableServiceMock - stub value for name was not defined") }
-		set {	addInvocation(.p_name_set(.value(newValue))); lock.sync { __p_name = newValue } }
+		get {	addInvocation(.p_name_get); return state.withValue { $0.__p_name } ?? givenGetterValue(.p_name_get, "RefinedSendableServiceMock - stub value for name was not defined") }
+		set {	addInvocation(.p_name_set(.value(newValue))); state.withValue { $0.__p_name = newValue } }
 	}
-	private var __p_name: (String)?
 
     public var timeout: Double? {
-		get {	addInvocation(.p_timeout_get); return lock.sync { __p_timeout } ?? optionalGivenGetterValue(.p_timeout_get, "RefinedSendableServiceMock - stub value for timeout was not defined") }
+		get {	addInvocation(.p_timeout_get); return state.withValue { $0.__p_timeout } ?? optionalGivenGetterValue(.p_timeout_get, "RefinedSendableServiceMock - stub value for timeout was not defined") }
 	}
-	private var __p_timeout: (Double)?
 
 
     public static var instances: Int {
-		get {	RefinedSendableServiceMock.addInvocation(.p_instances_get); return RefinedSendableServiceMock.lock.sync { RefinedSendableServiceMock.__p_instances } ?? givenGetterValue(.p_instances_get, "RefinedSendableServiceMock - stub value for instances was not defined") }
-		set {	RefinedSendableServiceMock.addInvocation(.p_instances_set(.value(newValue))); RefinedSendableServiceMock.lock.sync { RefinedSendableServiceMock.__p_instances = newValue } }
+		get {	RefinedSendableServiceMock.addInvocation(.p_instances_get); return RefinedSendableServiceMock.staticState.withValue { $0.__p_instances } ?? givenGetterValue(.p_instances_get, "RefinedSendableServiceMock - stub value for instances was not defined") }
+		set {	RefinedSendableServiceMock.addInvocation(.p_instances_set(.value(newValue))); RefinedSendableServiceMock.staticState.withValue { $0.__p_instances = newValue } }
 	}
-	private nonisolated(unsafe) static var __p_instances: (Int)?
 
 
 
@@ -13923,13 +14286,13 @@ public final class RefinedSendableServiceMock: RefinedSendableService, Mock, Sta
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -13939,8 +14302,9 @@ public final class RefinedSendableServiceMock: RefinedSendableService, Mock, Sta
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -13952,32 +14316,33 @@ public final class RefinedSendableServiceMock: RefinedSendableService, Mock, Sta
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -13998,19 +14363,19 @@ public final class RefinedSendableServiceMock: RefinedSendableService, Mock, Sta
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
 
     static public func given(_ method: StaticGiven) {
-        lock.sync { methodReturnValues.append(method) }
+        staticState.withValue { $0.methodReturnValues.append(method) }
     }
 
     static public func perform(_ method: StaticPerform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        staticState.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -14020,8 +14385,9 @@ public final class RefinedSendableServiceMock: RefinedSendableService, Mock, Sta
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return StaticMethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -14033,28 +14399,29 @@ public final class RefinedSendableServiceMock: RefinedSendableService, Mock, Sta
     }
 
     static private func addInvocation(_ call: StaticMethodType) {
-        lock.sync { invocations.append(call) }
+        staticState.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     static private func methodReturnValue(_ method: StaticMethodType) throws -> StubProduct {
-        try lock.sync {
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy) = staticState.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy)
         }
+        for candidate in candidates where StaticMethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
-        lock.sync {
-            let matched = methodPerformValues.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
+        return performs.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     static private func matchingCalls(_ method: StaticMethodType, file: StaticString?, line: UInt?) -> [StaticMethodType] {
-        lock.sync {
-            matcher.set(file: file, line: line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -14080,34 +14447,39 @@ public final class RefinedSendableServiceMock: RefinedSendableService, Mock, Sta
 open class SampleServiceTypeMock: SampleServiceType, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -14115,19 +14487,19 @@ open class SampleServiceTypeMock: SampleServiceType, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -14443,13 +14815,13 @@ open class SampleServiceTypeMock: SampleServiceType, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -14459,8 +14831,9 @@ open class SampleServiceTypeMock: SampleServiceType, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -14472,32 +14845,33 @@ open class SampleServiceTypeMock: SampleServiceType, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -14518,7 +14892,7 @@ open class SampleServiceTypeMock: SampleServiceType, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -14529,34 +14903,39 @@ open class SampleServiceTypeMock: SampleServiceType, Mock {
 public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, StaticMock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -14564,50 +14943,54 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
-    static private let lock = MockLock()
-    nonisolated(unsafe) static private var _matcher: Matcher = Matcher.default
-    nonisolated(unsafe) static private var _stubbingPolicy: StubbingPolicy = .wrap
-    nonisolated(unsafe) static private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable static mock state. Only reachable through `staticState`, which is lock-protected.
+    private struct StaticMockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [StaticMethodType] = []
+        var methodReturnValues: [StaticGiven] = []
+        var methodPerformValues: [StaticPerform] = []
+    }
+    static private let staticState = LockedValue(StaticMockState())
+
     static var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { staticState.withValue { $0.matcher } }
+        set { staticState.withValue { $0.matcher = newValue } }
     }
     static var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { staticState.withValue { $0.stubbingPolicy } }
+        set { staticState.withValue { $0.stubbingPolicy = newValue } }
     }
     static var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { staticState.withValue { $0.sequencingPolicy } }
+        set { staticState.withValue { $0.sequencingPolicy = newValue } }
     }
-    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
-    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
-    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public static func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        staticState.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -14890,13 +15273,13 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -14906,8 +15289,9 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -14919,32 +15303,33 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -14965,19 +15350,19 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
 
     static public func given(_ method: StaticGiven) {
-        lock.sync { methodReturnValues.append(method) }
+        staticState.withValue { $0.methodReturnValues.append(method) }
     }
 
     static public func perform(_ method: StaticPerform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        staticState.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -14987,8 +15372,9 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return StaticMethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -15000,28 +15386,29 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
     }
 
     static private func addInvocation(_ call: StaticMethodType) {
-        lock.sync { invocations.append(call) }
+        staticState.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     static private func methodReturnValue(_ method: StaticMethodType) throws -> StubProduct {
-        try lock.sync {
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy) = staticState.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy)
         }
+        for candidate in candidates where StaticMethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
-        lock.sync {
-            let matched = methodPerformValues.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
+        return performs.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     static private func matchingCalls(_ method: StaticMethodType, file: StaticString?, line: UInt?) -> [StaticMethodType] {
-        lock.sync {
-            matcher.set(file: file, line: line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -15047,34 +15434,41 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
 public final class SendableServiceMock: SendableService, Mock, StaticMock, @unchecked Sendable {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_name: (String)?
+        var __p_timeout: (Double)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -15082,70 +15476,72 @@ public final class SendableServiceMock: SendableService, Mock, StaticMock, @unch
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
-    static private let lock = MockLock()
-    nonisolated(unsafe) static private var _matcher: Matcher = Matcher.default
-    nonisolated(unsafe) static private var _stubbingPolicy: StubbingPolicy = .wrap
-    nonisolated(unsafe) static private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable static mock state. Only reachable through `staticState`, which is lock-protected.
+    private struct StaticMockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [StaticMethodType] = []
+        var methodReturnValues: [StaticGiven] = []
+        var methodPerformValues: [StaticPerform] = []
+        var __p_instances: (Int)?
+    }
+    static private let staticState = LockedValue(StaticMockState())
+
     static var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { staticState.withValue { $0.matcher } }
+        set { staticState.withValue { $0.matcher = newValue } }
     }
     static var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { staticState.withValue { $0.stubbingPolicy } }
+        set { staticState.withValue { $0.stubbingPolicy = newValue } }
     }
     static var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { staticState.withValue { $0.sequencingPolicy } }
+        set { staticState.withValue { $0.sequencingPolicy = newValue } }
     }
-    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
-    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
-    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public static func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        staticState.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var name: String {
-		get {	addInvocation(.p_name_get); return lock.sync { __p_name } ?? givenGetterValue(.p_name_get, "SendableServiceMock - stub value for name was not defined") }
-		set {	addInvocation(.p_name_set(.value(newValue))); lock.sync { __p_name = newValue } }
+		get {	addInvocation(.p_name_get); return state.withValue { $0.__p_name } ?? givenGetterValue(.p_name_get, "SendableServiceMock - stub value for name was not defined") }
+		set {	addInvocation(.p_name_set(.value(newValue))); state.withValue { $0.__p_name = newValue } }
 	}
-	private var __p_name: (String)?
 
     public var timeout: Double? {
-		get {	addInvocation(.p_timeout_get); return lock.sync { __p_timeout } ?? optionalGivenGetterValue(.p_timeout_get, "SendableServiceMock - stub value for timeout was not defined") }
+		get {	addInvocation(.p_timeout_get); return state.withValue { $0.__p_timeout } ?? optionalGivenGetterValue(.p_timeout_get, "SendableServiceMock - stub value for timeout was not defined") }
 	}
-	private var __p_timeout: (Double)?
 
 
     public static var instances: Int {
-		get {	SendableServiceMock.addInvocation(.p_instances_get); return SendableServiceMock.lock.sync { SendableServiceMock.__p_instances } ?? givenGetterValue(.p_instances_get, "SendableServiceMock - stub value for instances was not defined") }
-		set {	SendableServiceMock.addInvocation(.p_instances_set(.value(newValue))); SendableServiceMock.lock.sync { SendableServiceMock.__p_instances = newValue } }
+		get {	SendableServiceMock.addInvocation(.p_instances_get); return SendableServiceMock.staticState.withValue { $0.__p_instances } ?? givenGetterValue(.p_instances_get, "SendableServiceMock - stub value for instances was not defined") }
+		set {	SendableServiceMock.addInvocation(.p_instances_set(.value(newValue))); SendableServiceMock.staticState.withValue { $0.__p_instances = newValue } }
 	}
-	private nonisolated(unsafe) static var __p_instances: (Int)?
 
 
 
@@ -15336,13 +15732,13 @@ public final class SendableServiceMock: SendableService, Mock, StaticMock, @unch
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -15352,8 +15748,9 @@ public final class SendableServiceMock: SendableService, Mock, StaticMock, @unch
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -15365,32 +15762,33 @@ public final class SendableServiceMock: SendableService, Mock, StaticMock, @unch
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -15411,19 +15809,19 @@ public final class SendableServiceMock: SendableService, Mock, StaticMock, @unch
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
 
     static public func given(_ method: StaticGiven) {
-        lock.sync { methodReturnValues.append(method) }
+        staticState.withValue { $0.methodReturnValues.append(method) }
     }
 
     static public func perform(_ method: StaticPerform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        staticState.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -15433,8 +15831,9 @@ public final class SendableServiceMock: SendableService, Mock, StaticMock, @unch
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return StaticMethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -15446,28 +15845,29 @@ public final class SendableServiceMock: SendableService, Mock, StaticMock, @unch
     }
 
     static private func addInvocation(_ call: StaticMethodType) {
-        lock.sync { invocations.append(call) }
+        staticState.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     static private func methodReturnValue(_ method: StaticMethodType) throws -> StubProduct {
-        try lock.sync {
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy) = staticState.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy)
         }
+        for candidate in candidates where StaticMethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
-        lock.sync {
-            let matched = methodPerformValues.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
+        return performs.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     static private func matchingCalls(_ method: StaticMethodType, file: StaticString?, line: UInt?) -> [StaticMethodType] {
-        lock.sync {
-            matcher.set(file: file, line: line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -15493,34 +15893,40 @@ public final class SendableServiceMock: SendableService, Mock, StaticMock, @unch
 open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticMock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_property: (Int)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -15528,63 +15934,66 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
-    static private let lock = MockLock()
-    nonisolated(unsafe) static private var _matcher: Matcher = Matcher.default
-    nonisolated(unsafe) static private var _stubbingPolicy: StubbingPolicy = .wrap
-    nonisolated(unsafe) static private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable static mock state. Only reachable through `staticState`, which is lock-protected.
+    private struct StaticMockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [StaticMethodType] = []
+        var methodReturnValues: [StaticGiven] = []
+        var methodPerformValues: [StaticPerform] = []
+        var __p_property: (Int)?
+    }
+    static private let staticState = LockedValue(StaticMockState())
+
     static var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { staticState.withValue { $0.matcher } }
+        set { staticState.withValue { $0.matcher = newValue } }
     }
     static var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { staticState.withValue { $0.stubbingPolicy } }
+        set { staticState.withValue { $0.stubbingPolicy = newValue } }
     }
     static var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { staticState.withValue { $0.sequencingPolicy } }
+        set { staticState.withValue { $0.sequencingPolicy = newValue } }
     }
-    nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
-    nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
-    nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
     public typealias StaticPropertyStub = StaticGiven
     public typealias StaticMethodStub = StaticGiven
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public static func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        staticState.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var property: Int? {
-		get {	addInvocation(.p_property_get); return lock.sync { __p_property } ?? optionalGivenGetterValue(.p_property_get, "ShouldAllowNoStubDefinedMock - stub value for property was not defined") }
+		get {	addInvocation(.p_property_get); return state.withValue { $0.__p_property } ?? optionalGivenGetterValue(.p_property_get, "ShouldAllowNoStubDefinedMock - stub value for property was not defined") }
 	}
-	private var __p_property: (Int)?
 
 
     public static var property: Int? {
-		get {	ShouldAllowNoStubDefinedMock.addInvocation(.p_property_get); return ShouldAllowNoStubDefinedMock.lock.sync { ShouldAllowNoStubDefinedMock.__p_property } ?? optionalGivenGetterValue(.p_property_get, "ShouldAllowNoStubDefinedMock - stub value for property was not defined") }
+		get {	ShouldAllowNoStubDefinedMock.addInvocation(.p_property_get); return ShouldAllowNoStubDefinedMock.staticState.withValue { $0.__p_property } ?? optionalGivenGetterValue(.p_property_get, "ShouldAllowNoStubDefinedMock - stub value for property was not defined") }
 	}
-	private nonisolated(unsafe) static var __p_property: (Int)?
 
 
 
@@ -15954,13 +16363,13 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -15970,8 +16379,9 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -15983,32 +16393,33 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -16029,19 +16440,19 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
 
     static public func given(_ method: StaticGiven) {
-        lock.sync { methodReturnValues.append(method) }
+        staticState.withValue { $0.methodReturnValues.append(method) }
     }
 
     static public func perform(_ method: StaticPerform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        staticState.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -16051,8 +16462,9 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return StaticMethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -16064,28 +16476,29 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
     }
 
     static private func addInvocation(_ call: StaticMethodType) {
-        lock.sync { invocations.append(call) }
+        staticState.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     static private func methodReturnValue(_ method: StaticMethodType) throws -> StubProduct {
-        try lock.sync {
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy) = staticState.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy)
         }
+        for candidate in candidates where StaticMethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
-        lock.sync {
-            let matched = methodPerformValues.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
+        return performs.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     static private func matchingCalls(_ method: StaticMethodType, file: StaticString?, line: UInt?) -> [StaticMethodType] {
-        lock.sync {
-            matcher.set(file: file, line: line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher) = staticState.withValue { ($0.invocations, $0.matcher) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -16111,34 +16524,44 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
 open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInheritsOtherProtocols, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_property: (String)?
+        var __p_weakProperty: (AnyObject)?
+        var __p_propertyGetOnly: (String)?
+        var __p_propertyOptional: (Int)?
+        var __p_propertyImplicit: (Int)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -16146,50 +16569,45 @@ open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInher
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var property: String {
-		get {	addInvocation(.p_property_get); return lock.sync { __p_property } ?? givenGetterValue(.p_property_get, "SimpleProtocolThatInheritsOtherProtocolsMock - stub value for property was not defined") }
-		set {	addInvocation(.p_property_set(.value(newValue))); lock.sync { __p_property = newValue } }
+		get {	addInvocation(.p_property_get); return state.withValue { $0.__p_property } ?? givenGetterValue(.p_property_get, "SimpleProtocolThatInheritsOtherProtocolsMock - stub value for property was not defined") }
+		set {	addInvocation(.p_property_set(.value(newValue))); state.withValue { $0.__p_property = newValue } }
 	}
-	private var __p_property: (String)?
 
     public var weakProperty: AnyObject! {
-		get {	addInvocation(.p_weakProperty_get); return lock.sync { __p_weakProperty } ?? optionalGivenGetterValue(.p_weakProperty_get, "SimpleProtocolThatInheritsOtherProtocolsMock - stub value for weakProperty was not defined") }
-		set {	addInvocation(.p_weakProperty_set(.value(newValue))); lock.sync { __p_weakProperty = newValue } }
+		get {	addInvocation(.p_weakProperty_get); return state.withValue { $0.__p_weakProperty } ?? optionalGivenGetterValue(.p_weakProperty_get, "SimpleProtocolThatInheritsOtherProtocolsMock - stub value for weakProperty was not defined") }
+		set {	addInvocation(.p_weakProperty_set(.value(newValue))); state.withValue { $0.__p_weakProperty = newValue } }
 	}
-	private var __p_weakProperty: (AnyObject)?
 
     public var propertyGetOnly: String {
-		get {	addInvocation(.p_propertyGetOnly_get); return lock.sync { __p_propertyGetOnly } ?? givenGetterValue(.p_propertyGetOnly_get, "SimpleProtocolThatInheritsOtherProtocolsMock - stub value for propertyGetOnly was not defined") }
+		get {	addInvocation(.p_propertyGetOnly_get); return state.withValue { $0.__p_propertyGetOnly } ?? givenGetterValue(.p_propertyGetOnly_get, "SimpleProtocolThatInheritsOtherProtocolsMock - stub value for propertyGetOnly was not defined") }
 	}
-	private var __p_propertyGetOnly: (String)?
 
     public var propertyOptional: Int? {
-		get {	addInvocation(.p_propertyOptional_get); return lock.sync { __p_propertyOptional } ?? optionalGivenGetterValue(.p_propertyOptional_get, "SimpleProtocolThatInheritsOtherProtocolsMock - stub value for propertyOptional was not defined") }
-		set {	addInvocation(.p_propertyOptional_set(.value(newValue))); lock.sync { __p_propertyOptional = newValue } }
+		get {	addInvocation(.p_propertyOptional_get); return state.withValue { $0.__p_propertyOptional } ?? optionalGivenGetterValue(.p_propertyOptional_get, "SimpleProtocolThatInheritsOtherProtocolsMock - stub value for propertyOptional was not defined") }
+		set {	addInvocation(.p_propertyOptional_set(.value(newValue))); state.withValue { $0.__p_propertyOptional = newValue } }
 	}
-	private var __p_propertyOptional: (Int)?
 
     public var propertyImplicit: Int! {
-		get {	addInvocation(.p_propertyImplicit_get); return lock.sync { __p_propertyImplicit } ?? optionalGivenGetterValue(.p_propertyImplicit_get, "SimpleProtocolThatInheritsOtherProtocolsMock - stub value for propertyImplicit was not defined") }
-		set {	addInvocation(.p_propertyImplicit_set(.value(newValue))); lock.sync { __p_propertyImplicit = newValue } }
+		get {	addInvocation(.p_propertyImplicit_get); return state.withValue { $0.__p_propertyImplicit } ?? optionalGivenGetterValue(.p_propertyImplicit_get, "SimpleProtocolThatInheritsOtherProtocolsMock - stub value for propertyImplicit was not defined") }
+		set {	addInvocation(.p_propertyImplicit_set(.value(newValue))); state.withValue { $0.__p_propertyImplicit = newValue } }
 	}
-	private var __p_propertyImplicit: (Int)?
 
 
 
@@ -16415,13 +16833,13 @@ open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInher
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -16431,8 +16849,9 @@ open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInher
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -16444,32 +16863,33 @@ open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInher
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -16490,7 +16910,7 @@ open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInher
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -16501,34 +16921,39 @@ open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInher
 open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -16536,19 +16961,19 @@ open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, M
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -16739,13 +17164,13 @@ open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, M
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -16755,8 +17180,9 @@ open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, M
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -16768,32 +17194,33 @@ open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, M
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -16814,7 +17241,7 @@ open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, M
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -16825,34 +17252,40 @@ open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, M
 open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBothMethodsAndProperties, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_property: (String)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -16860,26 +17293,25 @@ open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBot
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var property: String {
-		get {	addInvocation(.p_property_get); return lock.sync { __p_property } ?? givenGetterValue(.p_property_get, "SimpleProtocolWithBothMethodsAndPropertiesMock - stub value for property was not defined") }
+		get {	addInvocation(.p_property_get); return state.withValue { $0.__p_property } ?? givenGetterValue(.p_property_get, "SimpleProtocolWithBothMethodsAndPropertiesMock - stub value for property was not defined") }
 	}
-	private var __p_property: (String)?
 
 
 
@@ -16967,13 +17399,13 @@ open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBot
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -16983,8 +17415,9 @@ open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBot
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -16996,32 +17429,33 @@ open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBot
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -17042,7 +17476,7 @@ open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBot
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -17053,34 +17487,39 @@ open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBot
 open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -17088,19 +17527,19 @@ open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -17268,13 +17707,13 @@ open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -17284,8 +17723,9 @@ open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -17297,32 +17737,33 @@ open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -17343,7 +17784,7 @@ open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -17354,34 +17795,44 @@ open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
 open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_property: (String)?
+        var __p_weakProperty: (AnyObject)?
+        var __p_propertyGetOnly: (String)?
+        var __p_propertyOptional: (Int)?
+        var __p_propertyImplicit: (Int)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -17389,50 +17840,45 @@ open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock 
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var property: String {
-		get {	addInvocation(.p_property_get); return lock.sync { __p_property } ?? givenGetterValue(.p_property_get, "SimpleProtocolWithPropertiesMock - stub value for property was not defined") }
-		set {	addInvocation(.p_property_set(.value(newValue))); lock.sync { __p_property = newValue } }
+		get {	addInvocation(.p_property_get); return state.withValue { $0.__p_property } ?? givenGetterValue(.p_property_get, "SimpleProtocolWithPropertiesMock - stub value for property was not defined") }
+		set {	addInvocation(.p_property_set(.value(newValue))); state.withValue { $0.__p_property = newValue } }
 	}
-	private var __p_property: (String)?
 
     public var weakProperty: AnyObject! {
-		get {	addInvocation(.p_weakProperty_get); return lock.sync { __p_weakProperty } ?? optionalGivenGetterValue(.p_weakProperty_get, "SimpleProtocolWithPropertiesMock - stub value for weakProperty was not defined") }
-		set {	addInvocation(.p_weakProperty_set(.value(newValue))); lock.sync { __p_weakProperty = newValue } }
+		get {	addInvocation(.p_weakProperty_get); return state.withValue { $0.__p_weakProperty } ?? optionalGivenGetterValue(.p_weakProperty_get, "SimpleProtocolWithPropertiesMock - stub value for weakProperty was not defined") }
+		set {	addInvocation(.p_weakProperty_set(.value(newValue))); state.withValue { $0.__p_weakProperty = newValue } }
 	}
-	private var __p_weakProperty: (AnyObject)?
 
     public var propertyGetOnly: String {
-		get {	addInvocation(.p_propertyGetOnly_get); return lock.sync { __p_propertyGetOnly } ?? givenGetterValue(.p_propertyGetOnly_get, "SimpleProtocolWithPropertiesMock - stub value for propertyGetOnly was not defined") }
+		get {	addInvocation(.p_propertyGetOnly_get); return state.withValue { $0.__p_propertyGetOnly } ?? givenGetterValue(.p_propertyGetOnly_get, "SimpleProtocolWithPropertiesMock - stub value for propertyGetOnly was not defined") }
 	}
-	private var __p_propertyGetOnly: (String)?
 
     public var propertyOptional: Int? {
-		get {	addInvocation(.p_propertyOptional_get); return lock.sync { __p_propertyOptional } ?? optionalGivenGetterValue(.p_propertyOptional_get, "SimpleProtocolWithPropertiesMock - stub value for propertyOptional was not defined") }
-		set {	addInvocation(.p_propertyOptional_set(.value(newValue))); lock.sync { __p_propertyOptional = newValue } }
+		get {	addInvocation(.p_propertyOptional_get); return state.withValue { $0.__p_propertyOptional } ?? optionalGivenGetterValue(.p_propertyOptional_get, "SimpleProtocolWithPropertiesMock - stub value for propertyOptional was not defined") }
+		set {	addInvocation(.p_propertyOptional_set(.value(newValue))); state.withValue { $0.__p_propertyOptional = newValue } }
 	}
-	private var __p_propertyOptional: (Int)?
 
     public var propertyImplicit: Int! {
-		get {	addInvocation(.p_propertyImplicit_get); return lock.sync { __p_propertyImplicit } ?? optionalGivenGetterValue(.p_propertyImplicit_get, "SimpleProtocolWithPropertiesMock - stub value for propertyImplicit was not defined") }
-		set {	addInvocation(.p_propertyImplicit_set(.value(newValue))); lock.sync { __p_propertyImplicit = newValue } }
+		get {	addInvocation(.p_propertyImplicit_get); return state.withValue { $0.__p_propertyImplicit } ?? optionalGivenGetterValue(.p_propertyImplicit_get, "SimpleProtocolWithPropertiesMock - stub value for propertyImplicit was not defined") }
+		set {	addInvocation(.p_propertyImplicit_set(.value(newValue))); state.withValue { $0.__p_propertyImplicit = newValue } }
 	}
-	private var __p_propertyImplicit: (Int)?
 
 
 
@@ -17539,13 +17985,13 @@ open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock 
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -17555,8 +18001,9 @@ open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock 
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -17568,32 +18015,33 @@ open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock 
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -17614,7 +18062,7 @@ open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock 
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -17625,34 +18073,39 @@ open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock 
 open class SuggestionProtocolMock: SuggestionProtocol, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -17660,19 +18113,19 @@ open class SuggestionProtocolMock: SuggestionProtocol, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -17710,13 +18163,13 @@ open class SuggestionProtocolMock: SuggestionProtocol, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -17726,8 +18179,9 @@ open class SuggestionProtocolMock: SuggestionProtocol, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -17739,32 +18193,33 @@ open class SuggestionProtocolMock: SuggestionProtocol, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -17785,7 +18240,7 @@ open class SuggestionProtocolMock: SuggestionProtocol, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -17796,34 +18251,39 @@ open class SuggestionProtocolMock: SuggestionProtocol, Mock {
 open class SuggestionRepositoryMock: SuggestionRepository, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -17832,19 +18292,19 @@ open class SuggestionRepositoryMock: SuggestionRepository, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -18110,13 +18570,13 @@ open class SuggestionRepositoryMock: SuggestionRepository, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -18126,8 +18586,9 @@ open class SuggestionRepositoryMock: SuggestionRepository, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -18139,32 +18600,33 @@ open class SuggestionRepositoryMock: SuggestionRepository, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -18185,7 +18647,7 @@ open class SuggestionRepositoryMock: SuggestionRepository, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -18196,34 +18658,39 @@ open class SuggestionRepositoryMock: SuggestionRepository, Mock {
 open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepositoryConstrainedToProtocol, Mock where Entity: SuggestionProtocol {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -18231,19 +18698,19 @@ open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepo
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -18509,13 +18976,13 @@ open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepo
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -18525,8 +18992,9 @@ open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepo
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -18538,32 +19006,33 @@ open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepo
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -18584,7 +19053,7 @@ open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepo
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -18595,34 +19064,40 @@ open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepo
 open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_testVariableThatThrow: (Bool)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -18630,26 +19105,25 @@ open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var testVariableThatThrow: Bool {
-		get {	addInvocation(.p_testVariableThatThrow_get); return lock.sync { __p_testVariableThatThrow } ?? givenGetterValue(.p_testVariableThatThrow_get, "ThrowingVarProtocolMock - stub value for testVariableThatThrow was not defined") }
+		get {	addInvocation(.p_testVariableThatThrow_get); return state.withValue { $0.__p_testVariableThatThrow } ?? givenGetterValue(.p_testVariableThatThrow_get, "ThrowingVarProtocolMock - stub value for testVariableThatThrow was not defined") }
 	}
-	private var __p_testVariableThatThrow: (Bool)?
 
 
 
@@ -18703,13 +19177,13 @@ open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -18719,8 +19193,9 @@ open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -18732,32 +19207,33 @@ open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -18778,7 +19254,7 @@ open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -18789,34 +19265,39 @@ open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
 open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -18824,19 +19305,19 @@ open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -18954,13 +19435,13 @@ open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -18970,8 +19451,9 @@ open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -18983,32 +19465,33 @@ open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -19029,7 +19512,7 @@ open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -19040,34 +19523,39 @@ open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
 open class UserNetworkTypeMock: UserNetworkType, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -19075,19 +19563,19 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -19214,13 +19702,13 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -19230,8 +19718,9 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -19243,32 +19732,33 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -19289,7 +19779,7 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -19300,34 +19790,39 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
 open class UserStorageTypeMock: UserStorageType, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -19335,19 +19830,19 @@ open class UserStorageTypeMock: UserStorageType, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -19451,13 +19946,13 @@ open class UserStorageTypeMock: UserStorageType, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -19467,8 +19962,9 @@ open class UserStorageTypeMock: UserStorageType, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -19480,32 +19976,33 @@ open class UserStorageTypeMock: UserStorageType, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -19526,7 +20023,7 @@ open class UserStorageTypeMock: UserStorageType, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -19537,34 +20034,39 @@ open class UserStorageTypeMock: UserStorageType, Mock {
 open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -19572,19 +20074,19 @@ open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -19705,13 +20207,13 @@ open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -19721,8 +20223,9 @@ open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -19734,32 +20237,33 @@ open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -19780,7 +20284,7 @@ open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -19791,34 +20295,39 @@ open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
 open class WithConflictingNameMock: WithConflictingName, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -19827,19 +20336,19 @@ open class WithConflictingNameMock: WithConflictingName, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
@@ -19923,13 +20432,13 @@ open class WithConflictingNameMock: WithConflictingName, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -19939,8 +20448,9 @@ open class WithConflictingNameMock: WithConflictingName, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -19952,32 +20462,33 @@ open class WithConflictingNameMock: WithConflictingName, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -19998,7 +20509,7 @@ open class WithConflictingNameMock: WithConflictingName, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
@@ -20009,34 +20520,40 @@ open class WithConflictingNameMock: WithConflictingName, Mock {
 open class ComposedServiceMock: ComposedService, Mock {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self._sequencingPolicy = sequencingPolicy
-        self._stubbingPolicy = stubbingPolicy
-        self.file = file
-        self.line = line
+        state.withValue { state in
+            state.sequencingPolicy = sequencingPolicy
+            state.stubbingPolicy = stubbingPolicy
+            state.file = file
+            state.line = line
+        }
     }
 
-    private let lock = MockLock()
-    private var _matcher: Matcher = Matcher.default
-    private var _stubbingPolicy: StubbingPolicy = .wrap
-    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    /// [Internal] All mutable mock state. Only reachable through `state`, which is lock-protected.
+    private struct MockState {
+        var matcher: Matcher = Matcher.default
+        var stubbingPolicy: StubbingPolicy = .wrap
+        var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+        var invocations: [MethodType] = []
+        var methodReturnValues: [Given] = []
+        var methodPerformValues: [Perform] = []
+        var file: StaticString?
+        var line: UInt?
+        var __p_youCouldOnlyGetThis: (String)?
+    }
+    private let state = LockedValue(MockState())
+
     var matcher: Matcher {
-        get { lock.sync { _matcher } }
-        set { lock.sync { _matcher = newValue } }
+        get { state.withValue { $0.matcher } }
+        set { state.withValue { $0.matcher = newValue } }
     }
     var stubbingPolicy: StubbingPolicy {
-        get { lock.sync { _stubbingPolicy } }
-        set { lock.sync { _stubbingPolicy = newValue } }
+        get { state.withValue { $0.stubbingPolicy } }
+        set { state.withValue { $0.stubbingPolicy = newValue } }
     }
     var sequencingPolicy: SequencingPolicy {
-        get { lock.sync { _sequencingPolicy } }
-        set { lock.sync { _sequencingPolicy = newValue } }
+        get { state.withValue { $0.sequencingPolicy } }
+        set { state.withValue { $0.sequencingPolicy = newValue } }
     }
-
-    private var invocations: [MethodType] = []
-    private var methodReturnValues: [Given] = []
-    private var methodPerformValues: [Perform] = []
-    private var file: StaticString?
-    private var line: UInt?
 
     public typealias PropertyStub = Given
     public typealias MethodStub = Given
@@ -20044,26 +20561,25 @@ open class ComposedServiceMock: ComposedService, Mock {
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        lock.sync {
-            self.file = file
-            self.line = line
+        state.withValue { state in
+            state.file = file
+            state.line = line
         }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        lock.sync {
-            if scopes.contains(.invocation) { invocations = [] }
-            if scopes.contains(.given) { methodReturnValues = [] }
-            if scopes.contains(.perform) { methodPerformValues = [] }
+        state.withValue { state in
+            if scopes.contains(.invocation) { state.invocations = [] }
+            if scopes.contains(.given) { state.methodReturnValues = [] }
+            if scopes.contains(.perform) { state.methodPerformValues = [] }
         }
     }
 
     public var youCouldOnlyGetThis: String {
-		get {	addInvocation(.p_youCouldOnlyGetThis_get); return lock.sync { __p_youCouldOnlyGetThis } ?? givenGetterValue(.p_youCouldOnlyGetThis_get, "ComposedServiceMock - stub value for youCouldOnlyGetThis was not defined") }
+		get {	addInvocation(.p_youCouldOnlyGetThis_get); return state.withValue { $0.__p_youCouldOnlyGetThis } ?? givenGetterValue(.p_youCouldOnlyGetThis_get, "ComposedServiceMock - stub value for youCouldOnlyGetThis was not defined") }
 	}
-	private var __p_youCouldOnlyGetThis: (String)?
 
 
 
@@ -20385,13 +20901,13 @@ open class ComposedServiceMock: ComposedService, Mock {
     }
 
     public func given(_ method: Given) {
-        lock.sync { methodReturnValues.append(method) }
+        state.withValue { $0.methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        lock.sync {
-            methodPerformValues.append(method)
-            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        state.withValue { state in
+            state.methodPerformValues.append(method)
+            state.methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
         }
     }
 
@@ -20401,8 +20917,9 @@ open class ComposedServiceMock: ComposedService, Mock {
         let assertionName = method.method.assertionName()
         let feedback: String = {
             guard !success else { return "" }
+            let (invocations, matcher) = state.withValue { ($0.invocations, $0.matcher) }
             return Utils.closestCallsMessage(
-                for: lock.sync { self.invocations }.map { invocation in
+                for: invocations.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -20414,32 +20931,33 @@ open class ComposedServiceMock: ComposedService, Mock {
     }
 
     private func addInvocation(_ call: MethodType) {
-        lock.sync { invocations.append(call) }
+        state.withValue { $0.invocations.append(call) }
     }
+    /// Parameters are matched outside the lock (matchers may run user closures);
+    /// the matching stub is then picked and advanced under it.
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        try lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-            return product
+        let (candidates, matcher, stubbingPolicy, file, line) = state.withValue { state in
+            (state.sequencingPolicy.sorted(state.methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() }).filter { $0.isValid }, state.matcher, state.stubbingPolicy, state.file, state.line)
         }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        for candidate in candidates where MethodType.compareParameters(lhs: candidate.method, rhs: method, matcher: matcher).isFullMatch {
+            let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
+            if let product { return product }
+        }
+        throw MockError.notStubed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        lock.sync {
-            matcher.set(file: self.file, line: self.line)
-            defer { matcher.clearFileAndLine() }
-            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-            return matched?.performs
-        }
+        let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file, line: line)
+        defer { matcher.clearFileAndLine() }
+        return performs.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }?.performs
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        lock.sync {
-            matcher.set(file: file ?? self.file, line: line ?? self.line)
-            defer { matcher.clearFileAndLine() }
-            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
-        }
+        let (invocations, matcher, mockFile, mockLine) = state.withValue { ($0.invocations, $0.matcher, $0.file, $0.line) }
+        matcher.set(file: file ?? mockFile, line: line ?? mockLine)
+        defer { matcher.clearFileAndLine() }
+        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -20460,7 +20978,7 @@ open class ComposedServiceMock: ComposedService, Mock {
         }
     }
     private func onFatalFailure(_ message: String) {
-        let (file, line) = lock.sync { (self.file, self.line) }
+        let (file, line) = state.withValue { ($0.file, $0.line) }
         guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }

@@ -16,17 +16,20 @@ class VariableWrapper {
     }
     var noStubDefinedMessage: String { return "\(scope) - stub value for \(variable.name) was not defined" }
 
+    /// Lock-protected mock state holding the stubbed value (see `MockState` / `StaticMockState` in Main.swifttemplate)
+    var stateAccess: String { return variable.isStatic ? "\(scope).staticState" : "state" }
+
     var getter: String {
         let staticModifier = variable.isStatic ? "\(scope)." : ""
         let returnValue = variable.isOptional ? "optionalGivenGetterValue(.\(propertyCaseGetName), \"\(noStubDefinedMessage)\")" : "givenGetterValue(.\(propertyCaseGetName), \"\(noStubDefinedMessage)\")"
-        return "\n\t\tget {\t\(staticModifier)addInvocation(.\(propertyCaseGetName)); return \(staticModifier)lock.sync { \(staticModifier)\(privatePrototypeName) } ?? \(returnValue) }"
+        return "\n\t\tget {\t\(staticModifier)addInvocation(.\(propertyCaseGetName)); return \(stateAccess).withValue { $0.\(privatePrototypeName) } ?? \(returnValue) }"
     }
     var setter: String {
         let staticModifier = variable.isStatic ? "\(scope)." : ""
         if readonly {
             return ""
         } else {
-            return "\n\t\tset {\t\(staticModifier)addInvocation(.\(propertyCaseSetName)(.value(newValue))); \(staticModifier)lock.sync { \(staticModifier)\(privatePrototypeName) = newValue } }"
+            return "\n\t\tset {\t\(staticModifier)addInvocation(.\(propertyCaseSetName)(.value(newValue))); \(stateAccess).withValue { $0.\(privatePrototypeName) = newValue } }"
         }
     }
     var prototype: String {
@@ -45,14 +48,14 @@ class VariableWrapper {
         return result
     }
 
-    var privatePrototype: String {
-        let staticModifier = variable.isStatic ? "nonisolated(unsafe) static " : ""
+    /// Stored property declaration inside the mock state struct
+    var storagePrototype: String {
         var typeName = "\(variable.typeName.unwrappedTypeName)"
         let isWrappedInBrackets = typeName.hasPrefix("(") && typeName.hasSuffix(")")
         if !isWrappedInBrackets {
             typeName = "(\(typeName))"
         }
-        return "private \(staticModifier)var \(privatePrototypeName): \(typeName)?"
+        return "var \(privatePrototypeName): \(typeName)?"
     }
     var nestedType: String { return "\(TypeWrapper(variable.typeName).nestedParameter)" }
 
