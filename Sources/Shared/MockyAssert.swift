@@ -55,6 +55,7 @@ private func XCTMockyAssert(
     #if canImport(XCTest) && !SWIFTY_PROTOTYPE
     XCTAssert(expression(), message(), file: file, line: line)
     #else
-    assert(expression(), message(), file: file, line: line)
+    // `assert` defaults to `#file`; passing our `#filePath` on is intended (parentheses silence the mismatch warning).
+    assert(expression(), message(), file: (file), line: line)
     #endif
 }
