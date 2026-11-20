@@ -24,7 +24,8 @@
     let containsStaticVariables = !allStaticVariables.isEmpty
     let allMethods = uniques(methods: aProtocol.allMethods.filter({ !$0.isStatic || $0.isInitializer }))
     let selfConstrained = allMethods.map(wrapMethod).contains(where: { $0.returnsGenericConstrainedToSelf || $0.parametersContainsSelf })
-    let accessModifier: String = selfConstrained ? "public final" : "open"
+    let isSendable = aProtocol.based["Sendable"] != nil || aProtocol.based["Swift.Sendable"] != nil
+    let accessModifier: String = (selfConstrained || isSendable) ? "public final" : "open"
     Current.accessModifier = accessModifier // TODO: Temporary workaround for access modifiers
     let inheritFromNSObject = type.annotations["ObjcProtocol"] != nil || attributes.contains("@objc")
     let allMethodsForMethodType = uniquesWithoutGenericConstraints(methods: aProtocol.allMethods.filter({ !$0.isStatic }))
@@ -35,11 +36,11 @@
 <%_ if autoMockable { -%>
 // MARK: - <%= type.name %>
 <%= attributes %>
-<%= accessModifier %> class <%= type.name %><%= mockTypeName %><%= genericTypesModifier %>:<%= inheritFromNSObject ? " NSObject," : "" %> <%= type.name %>, Mock<%= conformsToStaticMock ? ", StaticMock" : "" %><%= genericTypesConstraints %> {
+<%= accessModifier %> class <%= type.name %><%= mockTypeName %><%= genericTypesModifier %>:<%= inheritFromNSObject ? " NSObject," : "" %> <%= type.name %>, Mock<%= conformsToStaticMock ? ", StaticMock" : "" %><%= isSendable ? ", @unchecked Sendable" : "" %><%= genericTypesConstraints %> {
     public init(sequencing sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst, stubbing stubbingPolicy: StubbingPolicy = .wrap, file: StaticString = #filePath, line: UInt = #line) {
         SwiftyMockyTestObserver.setup()
-        self.sequencingPolicy = sequencingPolicy
-        self.stubbingPolicy = stubbingPolicy
+        self._sequencingPolicy = sequencingPolicy
+        self._stubbingPolicy = stubbingPolicy
         self.file = file
         self.line = line
     }
@@ -49,11 +50,23 @@
 <%_ } -%>
 <%# ================================================== MAIN CLASS -%><%_ -%>
   <%# ================================================== MOCK INTERNALS -%><%_ -%>
-    var matcher: Matcher = Matcher.default
-    var stubbingPolicy: StubbingPolicy = .wrap
-    var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    private let lock = MockLock()
+    private var _matcher: Matcher = Matcher.default
+    private var _stubbingPolicy: StubbingPolicy = .wrap
+    private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    var matcher: Matcher {
+        get { lock.sync { _matcher } }
+        set { lock.sync { _matcher = newValue } }
+    }
+    var stubbingPolicy: StubbingPolicy {
+        get { lock.sync { _stubbingPolicy } }
+        set { lock.sync { _stubbingPolicy = newValue } }
+    }
+    var sequencingPolicy: SequencingPolicy {
+        get { lock.sync { _sequencingPolicy } }
+        set { lock.sync { _sequencingPolicy = newValue } }
+    }
 
-    private var queue = DispatchQueue(label: "com.swiftymocky.invocations", qos: .userInteractive)
     private var invocations: [MethodType] = []
     private var methodReturnValues: [Given] = []
     private var methodPerformValues: [Perform] = []
@@ -69,24 +82,40 @@
 
     /// Convenience method - call setupMock() to extend debug information when failure occurs
     public func setupMock(file: StaticString = #filePath, line: UInt = #line) {
-        self.file = file
-        self.line = line
+        lock.sync {
+            self.file = file
+            self.line = line
+        }
     }
 
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        if scopes.contains(.invocation) { invocations = [] }
-        if scopes.contains(.given) { methodReturnValues = [] }
-        if scopes.contains(.perform) { methodPerformValues = [] }
+        lock.sync {
+            if scopes.contains(.invocation) { invocations = [] }
+            if scopes.contains(.given) { methodReturnValues = [] }
+            if scopes.contains(.perform) { methodPerformValues = [] }
+        }
     }
     <%_ -%>
   <%# ================================================== STATIC MOCK INTERNALS -%><%_ -%>
     <%_ if conformsToStaticMock { -%>
-    nonisolated(unsafe) static var matcher: Matcher = Matcher.default
-    nonisolated(unsafe) static var stubbingPolicy: StubbingPolicy = .wrap
-    nonisolated(unsafe) static var sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
-    static private let queue = DispatchQueue(label: "com.swiftymocky.invocations.static", qos: .userInteractive)
+    static private let lock = MockLock()
+    nonisolated(unsafe) static private var _matcher: Matcher = Matcher.default
+    nonisolated(unsafe) static private var _stubbingPolicy: StubbingPolicy = .wrap
+    nonisolated(unsafe) static private var _sequencingPolicy: SequencingPolicy = .lastWrittenResolvedFirst
+    static var matcher: Matcher {
+        get { lock.sync { _matcher } }
+        set { lock.sync { _matcher = newValue } }
+    }
+    static var stubbingPolicy: StubbingPolicy {
+        get { lock.sync { _stubbingPolicy } }
+        set { lock.sync { _stubbingPolicy = newValue } }
+    }
+    static var sequencingPolicy: SequencingPolicy {
+        get { lock.sync { _sequencingPolicy } }
+        set { lock.sync { _sequencingPolicy = newValue } }
+    }
     nonisolated(unsafe) static private var invocations: [StaticMethodType] = []
     nonisolated(unsafe) static private var methodReturnValues: [StaticGiven] = []
     nonisolated(unsafe) static private var methodPerformValues: [StaticPerform] = []
@@ -96,9 +125,11 @@
     /// Clear mock internals. You can specify what to reset (invocations aka verify, givens or performs) or leave it empty to clear all mock internals
     public static func resetMock(_ scopes: MockScope...) {
         let scopes: [MockScope] = scopes.isEmpty ? [.invocation, .given, .perform] : scopes
-        if scopes.contains(.invocation) { invocations = [] }
-        if scopes.contains(.given) { methodReturnValues = [] }
-        if scopes.contains(.perform) { methodPerformValues = [] }
+        lock.sync {
+            if scopes.contains(.invocation) { invocations = [] }
+            if scopes.contains(.given) { methodReturnValues = [] }
+            if scopes.contains(.perform) { methodPerformValues = [] }
+        }
     }
     <%_  } -%>
 
@@ -386,12 +417,14 @@
 
   <%# ================================================== MOCK METHODS -%><%_ -%>
     public func given(_ method: Given) {
-        methodReturnValues.append(method)
+        lock.sync { methodReturnValues.append(method) }
     }
 
     public func perform(_ method: Perform) {
-        methodPerformValues.append(method)
-        methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        lock.sync {
+            methodPerformValues.append(method)
+            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        }
     }
 
     public func verify(_ method: Verify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
@@ -401,7 +434,7 @@
         let feedback: String = {
             guard !success else { return "" }
             return Utils.closestCallsMessage(
-                for: self.invocations.map { invocation in
+                for: lock.sync { self.invocations }.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return MethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -413,26 +446,32 @@
     }
 
     private func addInvocation(_ call: MethodType) {
-        self.queue.sync { invocations.append(call) }
+        lock.sync { invocations.append(call) }
     }
     private func methodReturnValue(_ method: MethodType) throws -> StubProduct {
-        matcher.set(file: self.file, line: self.line)
-        defer { matcher.clearFileAndLine() }
-        let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-        let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-        guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-        return product
+        try lock.sync {
+            matcher.set(file: self.file, line: self.line)
+            defer { matcher.clearFileAndLine() }
+            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
+            let matched = candidates.first(where: { $0.isValid && MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
+            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
+            return product
+        }
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
-        matcher.set(file: self.file, line: self.line)
-        defer { matcher.clearFileAndLine() }
-        let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-        return matched?.performs
+        lock.sync {
+            matcher.set(file: self.file, line: self.line)
+            defer { matcher.clearFileAndLine() }
+            let matched = methodPerformValues.reversed().first { MethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
+            return matched?.performs
+        }
     }
     private func matchingCalls(_ method: MethodType, file: StaticString?, line: UInt?) -> [MethodType] {
-        matcher.set(file: file ?? self.file, line: line ?? self.line)
-        defer { matcher.clearFileAndLine() }
-        return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
+        lock.sync {
+            matcher.set(file: file ?? self.file, line: line ?? self.line)
+            defer { matcher.clearFileAndLine() }
+            return invocations.filter { MethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
+        }
     }
     private func matchingCalls(_ method: Verify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count
@@ -453,19 +492,22 @@
         }
     }
     private func onFatalFailure(_ message: String) {
-        guard let file = self.file, let line = self.line else { return } // Let if fail if cannot handle gratefully
+        let (file, line) = lock.sync { (self.file, self.line) }
+        guard let file, let line else { return } // Let if fail if cannot handle gratefully
         SwiftyMockyTestObserver.handleFatalError(message: message, file: file, line: line)
     }
   <%# ================================================== STATIC MOCK METHODS -%><%_ -%>
     <%_ if conformsToStaticMock { -%>
 
     static public func given(_ method: StaticGiven) {
-        methodReturnValues.append(method)
+        lock.sync { methodReturnValues.append(method) }
     }
 
     static public func perform(_ method: StaticPerform) {
-        methodPerformValues.append(method)
-        methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        lock.sync {
+            methodPerformValues.append(method)
+            methodPerformValues.sort { $0.method.intValue() < $1.method.intValue() }
+        }
     }
 
     static public func verify(_ method: StaticVerify, count: Count = Count.moreOrEqual(to: 1), file: StaticString = #filePath, line: UInt = #line) {
@@ -475,7 +517,7 @@
         let feedback: String = {
             guard !success else { return "" }
             return Utils.closestCallsMessage(
-                for: self.invocations.map { invocation in
+                for: lock.sync { self.invocations }.map { invocation in
                     matcher.set(file: file, line: line)
                     defer { matcher.clearFileAndLine() }
                     return StaticMethodType.compareParameters(lhs: invocation, rhs: method.method, matcher: matcher)
@@ -487,22 +529,28 @@
     }
 
     static private func addInvocation(_ call: StaticMethodType) {
-        self.queue.sync { invocations.append(call) }
+        lock.sync { invocations.append(call) }
     }
     static private func methodReturnValue(_ method: StaticMethodType) throws -> StubProduct {
-        let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
-        let matched = candidates.first(where: { $0.isValid && StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
-        guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
-        return product
+        try lock.sync {
+            let candidates = sequencingPolicy.sorted(methodReturnValues, by: { $0.method.intValue() > $1.method.intValue() })
+            let matched = candidates.first(where: { $0.isValid && StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch })
+            guard let product = matched?.getProduct(policy: self.stubbingPolicy) else { throw MockError.notStubed }
+            return product
+        }
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
-        let matched = methodPerformValues.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
-        return matched?.performs
+        lock.sync {
+            let matched = methodPerformValues.reversed().first { StaticMethodType.compareParameters(lhs: $0.method, rhs: method, matcher: matcher).isFullMatch }
+            return matched?.performs
+        }
     }
     static private func matchingCalls(_ method: StaticMethodType, file: StaticString?, line: UInt?) -> [StaticMethodType] {
-        matcher.set(file: file, line: line)
-        defer { matcher.clearFileAndLine() }
-        return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
+        lock.sync {
+            matcher.set(file: file, line: line)
+            defer { matcher.clearFileAndLine() }
+            return invocations.filter { StaticMethodType.compareParameters(lhs: $0, rhs: method, matcher: matcher).isFullMatch }
+        }
     }
     static private func matchingCalls(_ method: StaticVerify, file: StaticString?, line: UInt?) -> Int {
         return matchingCalls(method.method, file: file, line: line).count

@@ -1,7 +1,9 @@
 import Foundation
 
 /// Matcher is container class, responsible for storing and resolving comparators for given types.
-public class Matcher {
+///
+/// Matcher is thread-safe: registered comparators and the failure location are lock-protected.
+public class Matcher: @unchecked Sendable {
     /// Shared **Matcher** instance
     public static var `default`: Matcher {
         get { _default.value }
@@ -9,11 +11,10 @@ public class Matcher {
     }
     private static let _default = LockedValue(Matcher())
     /// [Internal] Matchers storage
-    private var matchers: [(Mirror,Any)] = []
-    /// [Internal] file where comparison faiure should be recorded
-    private var file: StaticString?
-    /// [Internal] line where comparison faiure should be recorded
-    private var line: UInt?
+    private let _matchers = LockedValue<[(Mirror,Any)]>([])
+    private var matchers: [(Mirror,Any)] { _matchers.value }
+    /// [Internal] file and line where comparison faiure should be recorded
+    private let _location = LockedValue<(file: StaticString?, line: UInt?)>((nil, nil))
     /// [Internal] matcher fatal error handler
     public static var fatalErrorHandler: (String, StaticString, UInt) -> Void {
         get { _fatalErrorHandler.value }
@@ -33,7 +34,7 @@ public class Matcher {
     ///
     /// - Parameter matcher: other matcher instance
     public init(matcher: Matcher) {
-        self.matchers = matcher.matchers
+        _matchers.value = matcher.matchers
     }
 
     /// Registers array comparators for all basic types, their optional versions
@@ -201,8 +202,7 @@ public class Matcher {
     }
 
     public func set(file: StaticString?, line: UInt?) {
-        self.file = file
-        self.line = line
+        _location.value = (file, line)
     }
 
     public func setupCorrentFileAndLine(file: StaticString = #filePath, line: UInt = #line) {
@@ -214,7 +214,7 @@ public class Matcher {
     }
 
     public func onFatalFailure(_ message: String) {
-        guard let file = self.file, let line = self.line else { return }
+        guard case let (file?, line?) = _location.value else { return }
         Matcher.fatalErrorHandler(message, file, line)
     }
 
@@ -230,7 +230,7 @@ public class Matcher {
     ///   - match: comparator closure
     public func register<T>(_ valueType: T.Type, match: @escaping (T,T) -> Bool) {
         let mirror = Mirror(reflecting: valueType)
-        matchers.append((mirror, match as Any))
+        _matchers.withValue { $0.append((mirror, match as Any)) }
     }
 
     /// Registers comparator for type, like comparing Int.self to Int.self. These types of comparators always returns true. Register like: `Matcher.default.register(CustomType.Type.self)`
@@ -245,7 +245,8 @@ public class Matcher {
     /// - Parameter valueType: Equatable type
     public func register<T>(_ valueType: T.Type) where T: Equatable {
         let mirror = Mirror(reflecting: valueType)
-        matchers.append((mirror, comparator(for: T.self) as Any))
+        let equatableComparator = comparator(for: T.self) as Any
+        _matchers.withValue { $0.append((mirror, equatableComparator)) }
     }
 
     /// Returns comparator closure for given type (if any).

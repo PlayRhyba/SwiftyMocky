@@ -11,6 +11,9 @@ All supported ways of generating mocks. Handling mockable types:
 - [x] support protocol inheritance
 - [x] support objc protocols (with special protocol/annotation)
 - [x] support generic protocols - see **Generics** section for more information **!!!**
+- [x] support `Sendable` protocols (also inherited indirectly) - their mocks are generated as `public final` classes conforming to `@unchecked Sendable`
+- [x] thread-safe mocks - invocations, stubs, performs and stubbed property values are lock-protected, so mocks can be used from multiple threads and tasks
+- [x] `async` requirements - mocked as synchronous methods (a synchronous witness satisfies an `async` requirement); call them through the protocol with `await`
 
 ## Stubbing:
 
