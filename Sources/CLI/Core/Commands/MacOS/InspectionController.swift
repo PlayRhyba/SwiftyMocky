@@ -1,5 +1,4 @@
 import Foundation
-import ShellOut
 import PathKit
 import XcodeProj
 
@@ -315,7 +314,7 @@ public class InspectionController {
 
 func verify(command: String) -> Bool {
     do {
-        try shellOut(to: command)
+        try Shell.capture(command)
         return true
     } catch {
         return false
@@ -324,7 +323,7 @@ func verify(command: String) -> Bool {
 
 func verifyMintHasMatchingSourceryVersion() -> Bool {
     do {
-        let list = try shellOut(to: "mint list")
+        let list = try Shell.capture("mint list")
             .replacingOccurrences(of: " ", with: "")
             .replacingOccurrences(of: "\n", with: "")
             .replacingOccurrences(of: "-", with: "@")

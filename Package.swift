@@ -16,7 +16,6 @@ let package = Package(
         .executable(name: "swiftymocky", targets: ["SwiftyMockyCLI"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/JohnSundell/ShellOut", from: "2.3.0"),
         .package(url: "https://github.com/tuist/XcodeProj", from: "9.17.8"),
         .package(url: "https://github.com/luoxiu/Chalk", exact: "0.2.1"),
         .package(url: "https://github.com/kylef/Commander", from: "0.9.2"),
@@ -66,7 +65,6 @@ let package = Package(
             name: "SwiftyMockyCLICore",
             dependencies: [
                 .product(name: "Commander", package: "Commander"),
-                .product(name: "ShellOut", package: "ShellOut"),
                 .product(name: "Chalk", package: "Chalk"),
                 .product(name: "XcodeProj", package: "XcodeProj"),
                 .product(name: "PathKit", package: "PathKit"),

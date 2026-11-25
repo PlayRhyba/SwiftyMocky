@@ -1,5 +1,4 @@
 import Foundation
-import ShellOut
 import PathKit
 import Commander
 import Yams
@@ -22,7 +21,6 @@ final class GenerationController: GenerationCommand {
     private let temp: WorkingDirectory
     private var mockfile: Mockfile
     private let mockfilePath: Path
-    private let outputHandle = ProxyFileHandle()
 
     private var templatePath: String?
     private lazy var sourceryCommand: String = { kDefaultSourceryCommand(sourceryVersion) }()
@@ -118,21 +116,7 @@ final class GenerationController: GenerationCommand {
 
         Message.info("Using sourcery command: \(sourceryCommand)")
 
-        #if os(macOS)
-        try shellOut(
-            to: sourceryCommand,
-            arguments: arguments,
-            at: root.string,
-            outputHandle: outputHandle
-        )
-        #else
-        let resultString = try shellOut(
-            to: sourceryCommand,
-            arguments: arguments,
-            at: root.string
-        )
-        print(resultString)
-        #endif
+        try Shell.run(sourceryCommand, arguments: arguments, at: root.string)
 
         if missingAutoMockable(for: mock) {
             Message.warning("No mocks generated, haven't found any \'AutoMockable\' protocols.")
@@ -169,21 +153,7 @@ final class GenerationController: GenerationCommand {
                 arguments += ["--watch"]
             }
 
-            #if os(macOS)
-            try shellOut(
-                to: sourceryCommand,
-                arguments: arguments,
-                at: root.string,
-                outputHandle: outputHandle
-            )
-            #else
-            let resultString = try shellOut(
-                to: sourceryCommand,
-                arguments: arguments,
-                at: root.string
-            )
-            print(resultString)
-            #endif
+            try Shell.run(sourceryCommand, arguments: arguments, at: root.string)
         }
 
         let total = mock.sourcery.count
@@ -261,21 +231,7 @@ final class GenerationController: GenerationCommand {
 
         arguments += ["--config", "\"\(temp.config.string)\""]
 
-        #if os(macOS)
-        try shellOut(
-            to: sourceryCommand,
-            arguments: arguments,
-            at: root.string,
-            outputHandle: outputHandle
-        )
-        #else
-        let resultString = try shellOut(
-            to: sourceryCommand,
-            arguments: arguments,
-            at: root.string
-        )
-        print(resultString)
-        #endif
+        try Shell.run(sourceryCommand, arguments: arguments, at: root.string)
 
 
         let resultsYaml: String = try typesFilePath.read().replacingOccurrences(of: "//", with: "#")
