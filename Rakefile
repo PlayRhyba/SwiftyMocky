@@ -1,3 +1,5 @@
+require 'json'
+
 ## [ Mocks Generation ] ########################################################
 
 task :mock do
@@ -123,6 +125,13 @@ task :docs do
     # Build through the package workspace: `--spm` can't read SwiftPM 6.4+ build layout, and the
     # root SwiftyMocky.xcodeproj would shadow the package for a plain `xcodebuild -scheme`.
     sh "sourcekitten doc --module-name SwiftyMocky -- -workspace .swiftpm/xcode/package.xcworkspace -scheme SwiftyMocky -destination 'generic/platform=macOS' > docs.json && jazzy --clean && rm docs.json"
+    # jazzy writes absolute local paths into the coverage report; keep them repo-relative.
+    report_path = "docs/undocumented.json"
+    report = JSON.parse(File.read(report_path))
+    root = report["source_directory"]
+    report["source_directory"] = "."
+    report["warnings"].each { |w| w["file"] = w["file"].delete_prefix("#{root}/") }
+    File.write(report_path, JSON.pretty_generate(report))
 end
 
 ## [ Helpers ] #################################################################
