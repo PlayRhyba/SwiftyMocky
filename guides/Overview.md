@@ -17,6 +17,7 @@ Check out [guides][link-guides-contents], or full [documentation][link-docs]
     1. [Stubbing return values for mock methods - Given](#given)
     1. [Check invocations of methods, subscripts and properties - Verify](#verify)
     1. [Take action when a stubbed method is called - Perform](#perform)
+    1. [Using with Swift Testing](#swift-testing)
 1. [Documentation](#guides)
     1. [All supported Features](#features)
     1. [Examples of usage](#examples)
@@ -269,6 +270,30 @@ Perform(mock, .methodThatTakesCompletionBlock(completion: .any, perform: { compl
     completion(true,nil)
 }))
 ```
+
+<a name="swift-testing"></a>
+
+### 5. Using with Swift Testing
+
+SwiftyMocky works in Swift Testing `@Test` functions without extra setup. Inside a running test, failures are reported with `Issue.record`, at the line of the call that failed; otherwise they go to XCTest as before.
+
+```swift
+import Testing
+import SwiftyMocky
+
+@Test func savesUser() {
+    let storage = UserStorageTypeMock()
+    let sut = UserService(storage: storage)
+
+    sut.save(name: "Joanna", surname: "Doe")
+
+    Verify(storage, 1, .storeUser(name: .value("Joanna"), surname: .any))
+}
+```
+
+- Use `withKnownIssue { ... }` to assert that a `Verify` is expected to fail.
+- Calling a method with no stubbed return value records an issue and then **traps**, ending the test process, because the mock cannot produce a value. On macOS this can be asserted with an exit test: `await #expect(processExitsWith: .failure) { ... }`.
+- Failures are attributed to the current test through Swift Testing's task-local `Test.current`. Mocks called from a detached task or another thread fall back to XCTest reporting.
 
 <a name="guides"></a>
 

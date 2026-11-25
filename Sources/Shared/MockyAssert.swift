@@ -53,7 +53,10 @@ private func XCTMockyAssert(
     line: UInt = #line
 ) {
     #if canImport(XCTest) && !SWIFTY_PROTOTYPE
-    XCTAssert(expression(), message(), file: file, line: line)
+    guard !expression() else { return }
+    let message = message()
+    if SwiftTestingSupport.recordIssueIfTestRunning(message, file: file, line: line) { return }
+    XCTAssert(false, message, file: file, line: line)
     #else
     // `assert` defaults to `#file`; passing our `#filePath` on is intended (parentheses silence the mismatch warning).
     assert(expression(), message(), file: (file), line: line)

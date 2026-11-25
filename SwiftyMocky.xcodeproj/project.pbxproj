@@ -16,6 +16,8 @@
 		320401AEB1C6E90F94208F6D /* SwiftyMocky in Frameworks */ = {isa = PBXBuildFile; productRef = A0313E1B47CD8C795356BD26 /* SwiftyMocky */; };
 		3A0748033C6B44A449024926 /* SwiftyMocky in Frameworks */ = {isa = PBXBuildFile; productRef = F2B5AE4542A8D0BE8C1C150F /* SwiftyMocky */; };
 		4B4C36F399C640BFCD0DB2EA /* SendableProtocolsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D35E7D431AE79FAAD8B46D /* SendableProtocolsTests.swift */; };
+		87DC6CF35895F14C6B1AB6AC /* SwiftTestingGivenVerifyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A69207B13F2CF79555AC1C /* SwiftTestingGivenVerifyTests.swift */; };
+		18D7EED4B3AD1F6E49C09E6D /* SwiftTestingFailureReportingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55866320CEDCA806F22191B2 /* SwiftTestingFailureReportingTests.swift */; };
 		5028D5ADA72A1F99C75CF6D1 /* ThrowingVarProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0BA3F3271375910087C9B4 /* ThrowingVarProtocol.swift */; };
 		66087FEBDA538F4C138743F2 /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
 		6C3186ED22DF613C00746DCC /* ProtocolWithGenericConstraints.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C3186EC22DF613C00746DCC /* ProtocolWithGenericConstraints.swift */; };
@@ -29,6 +31,8 @@
 		882F723ED86E0A53AA5DAD5F /* ThrowingVarProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0BA3F7271375CA0087C9B4 /* ThrowingVarProtocolTests.swift */; };
 		88EE79BB0C8C368FBAB6B560 /* AsyncMethodsProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC66EF0B270DD2CA00D9B424 /* AsyncMethodsProtocolTests.swift */; };
 		8F19DB26C6427069D0677FA3 /* SendableProtocolsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D35E7D431AE79FAAD8B46D /* SendableProtocolsTests.swift */; };
+		37B5BFBF0AD522434F2BBEEC /* SwiftTestingGivenVerifyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A69207B13F2CF79555AC1C /* SwiftTestingGivenVerifyTests.swift */; };
+		914D2CC36EDD5ED89A4E419D /* SwiftTestingFailureReportingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55866320CEDCA806F22191B2 /* SwiftTestingFailureReportingTests.swift */; };
 		9B04DA61A43CFB3177F69BA5 /* AsyncMethodsProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC66EF0B270DD2CA00D9B424 /* AsyncMethodsProtocolTests.swift */; };
 		B151EC76FA0AE1CFF93E3985 /* AsyncMethodsProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC66EF06270DD0E800D9B424 /* AsyncMethodsProtocol.swift */; };
 		B2176EDBD8413A3CE30D3490 /* ThrowingVarProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0BA3F7271375CA0087C9B4 /* ThrowingVarProtocolTests.swift */; };
@@ -235,6 +239,8 @@
 		CCE351671FCC0B9700A76C4C /* ItemsRepositoryMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCE351631FCC0B9700A76C4C /* ItemsRepositoryMock.swift */; };
 		CCE351681FCC0B9700A76C4C /* Mocky_tvOS_Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCE351641FCC0B9700A76C4C /* Mocky_tvOS_Tests.swift */; };
 		EDF2A9A24F67115486D7962D /* SendableProtocolsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D35E7D431AE79FAAD8B46D /* SendableProtocolsTests.swift */; };
+		E53AA320DD09047EAB3EBFB6 /* SwiftTestingGivenVerifyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A69207B13F2CF79555AC1C /* SwiftTestingGivenVerifyTests.swift */; };
+		0BF34119C0579C2942AB3DEB /* SwiftTestingFailureReportingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55866320CEDCA806F22191B2 /* SwiftTestingFailureReportingTests.swift */; };
 		EE61431775DC056CA3451D51 /* SwiftyMocky in Frameworks */ = {isa = PBXBuildFile; productRef = 2C51740179FE903F2AD3BCF5 /* SwiftyMocky */; };
 		F032C6F4176227F9E08AC357 /* AsyncMethodsProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC66EF0B270DD2CA00D9B424 /* AsyncMethodsProtocolTests.swift */; };
 /* End PBXBuildFile section */
@@ -272,6 +278,8 @@
 		6C3186EC22DF613C00746DCC /* ProtocolWithGenericConstraints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolWithGenericConstraints.swift; sourceTree = "<group>"; };
 		6C3186F122DF67D800746DCC /* ProtocolWithGenericConstraintsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolWithGenericConstraintsTests.swift; sourceTree = "<group>"; };
 		A6D35E7D431AE79FAAD8B46D /* SendableProtocolsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SendableProtocolsTests.swift; sourceTree = "<group>"; };
+		52A69207B13F2CF79555AC1C /* SwiftTestingGivenVerifyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SwiftTestingGivenVerifyTests.swift; sourceTree = "<group>"; };
+		55866320CEDCA806F22191B2 /* SwiftTestingFailureReportingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SwiftTestingFailureReportingTests.swift; sourceTree = "<group>"; };
 		C81D094C22C0C59800A0427F /* CustomAssertionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomAssertionsTests.swift; sourceTree = "<group>"; };
 		C83B2421215BDA870032BCF3 /* ProtocolWithSubscripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolWithSubscripts.swift; sourceTree = "<group>"; };
 		C870665A215E5ACB00EC852B /* SubscriptsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptsTests.swift; sourceTree = "<group>"; };
@@ -613,6 +621,15 @@
 			path = Concurrency;
 			sourceTree = "<group>";
 		};
+		1DCEFED438728FBB2A6159FB /* SwiftTesting */ = {
+			isa = PBXGroup;
+			children = (
+				52A69207B13F2CF79555AC1C /* SwiftTestingGivenVerifyTests.swift */,
+				55866320CEDCA806F22191B2 /* SwiftTestingFailureReportingTests.swift */,
+			);
+			path = SwiftTesting;
+			sourceTree = "<group>";
+		};
 		CC66EF0A270DD2A700D9B424 /* Concurrency */ = {
 			isa = PBXGroup;
 			children = (
@@ -774,6 +791,7 @@
 				CC0955642379BE1D00891A47 /* AssociatedTypes */,
 				CCE3512F1FCC0B8200A76C4C /* Other */,
 				CC66EF0A270DD2A700D9B424 /* Concurrency */,
+				1DCEFED438728FBB2A6159FB /* SwiftTesting */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -1225,6 +1243,8 @@
 				F032C6F4176227F9E08AC357 /* AsyncMethodsProtocolTests.swift in Sources */,
 				B2176EDBD8413A3CE30D3490 /* ThrowingVarProtocolTests.swift in Sources */,
 				EDF2A9A24F67115486D7962D /* SendableProtocolsTests.swift in Sources */,
+				E53AA320DD09047EAB3EBFB6 /* SwiftTestingGivenVerifyTests.swift in Sources */,
+				0BF34119C0579C2942AB3DEB /* SwiftTestingFailureReportingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1311,6 +1331,8 @@
 				88EE79BB0C8C368FBAB6B560 /* AsyncMethodsProtocolTests.swift in Sources */,
 				882F723ED86E0A53AA5DAD5F /* ThrowingVarProtocolTests.swift in Sources */,
 				8F19DB26C6427069D0677FA3 /* SendableProtocolsTests.swift in Sources */,
+				37B5BFBF0AD522434F2BBEEC /* SwiftTestingGivenVerifyTests.swift in Sources */,
+				914D2CC36EDD5ED89A4E419D /* SwiftTestingFailureReportingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1398,6 +1420,8 @@
 				9B04DA61A43CFB3177F69BA5 /* AsyncMethodsProtocolTests.swift in Sources */,
 				163FF841B91F8C097CC96A5B /* ThrowingVarProtocolTests.swift in Sources */,
 				4B4C36F399C640BFCD0DB2EA /* SendableProtocolsTests.swift in Sources */,
+				87DC6CF35895F14C6B1AB6AC /* SwiftTestingGivenVerifyTests.swift in Sources */,
+				18D7EED4B3AD1F6E49C09E6D /* SwiftTestingFailureReportingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
