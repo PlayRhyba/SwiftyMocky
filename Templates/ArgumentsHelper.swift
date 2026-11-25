@@ -23,7 +23,7 @@ func testableImports(_ arguments: [String: Any]) -> [String] {
 ///   - fromArguments: dictionary
 ///   - forKey: dictionary key
 /// - Returns: array of strings, if key not found, returns empty array.
-/// - Note: If sourcery arguments containts only one element, then single value is stored, otherwise array of elements. This method always gets array of elements.
+/// - Note: If sourcery arguments contains only one element, then single value is stored, otherwise array of elements. This method always gets array of elements.
 func stringArray(fromArguments arguments: [String: Any], forKey key: String) -> [String] {
 
     if let argument = arguments[key] as? String {

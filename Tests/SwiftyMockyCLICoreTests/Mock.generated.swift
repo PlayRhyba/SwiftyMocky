@@ -84,7 +84,7 @@ open class GenerationCommandMock: GenerationCommand, Mock {
 		perform?(`disableCache`, `verbose`)
 		do {
 		    _ = try methodReturnValue(.m_generate__disableCache_disableCacheverbose_verbose(Parameter<Bool>.value(`disableCache`), Parameter<Bool>.value(`verbose`))).casted() as Void
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			// do nothing
 		} catch {
 		    throw error
@@ -97,7 +97,7 @@ open class GenerationCommandMock: GenerationCommand, Mock {
 		perform?(`mockName`, `disableCache`, `verbose`, `watch`)
 		do {
 		    _ = try methodReturnValue(.m_generate__mockName_mockNamedisableCache_disableCacheverbose_verbosewatch_watch(Parameter<String>.value(`mockName`), Parameter<Bool>.value(`disableCache`), Parameter<Bool>.value(`verbose`), Parameter<Bool>.value(`watch`))).casted() as Void
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			// do nothing
 		} catch {
 		    throw error
@@ -110,7 +110,7 @@ open class GenerationCommandMock: GenerationCommand, Mock {
 		perform?()
 		do {
 		    _ = try methodReturnValue(.m_updateAllImports).casted() as Void
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			// do nothing
 		} catch {
 		    throw error
@@ -123,7 +123,7 @@ open class GenerationCommandMock: GenerationCommand, Mock {
 		perform?(`name`)
 		do {
 		    _ = try methodReturnValue(.m_updateImports__forMockNamed_name(Parameter<String>.value(`name`))).casted() as Void
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			// do nothing
 		} catch {
 		    throw error
@@ -304,7 +304,7 @@ open class GenerationCommandMock: GenerationCommand, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -415,7 +415,7 @@ open class InstanceFactoryMock: InstanceFactory, Mock {
 		var __value: any GenerationCommand
 		do {
 		    __value = try methodReturnValue(.m_resolveGenerationCommand__root_root(Parameter<Path>.value(`root`))).casted()
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			onFatalFailure("Stub return value not specified for resolveGenerationCommand(root: Path). Use given")
 			Failure("Stub return value not specified for resolveGenerationCommand(root: Path). Use given")
 		} catch {
@@ -571,7 +571,7 @@ open class InstanceFactoryMock: InstanceFactory, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }

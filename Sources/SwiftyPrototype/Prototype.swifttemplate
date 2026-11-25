@@ -25,7 +25,7 @@ func testableImports(_ arguments: [String: Any]) -> [String] {
 ///   - fromArguments: dictionary
 ///   - forKey: dictionary key
 /// - Returns: array of strings, if key not found, returns empty array.
-/// - Note: If sourcery arguments containts only one element, then single value is stored, otherwise array of elements. This method always gets array of elements.
+/// - Note: If sourcery arguments contains only one element, then single value is stored, otherwise array of elements. This method always gets array of elements.
 func stringArray(fromArguments arguments: [String: Any], forKey key: String) -> [String] {
 
     if let argument = arguments[key] as? String {
@@ -69,7 +69,7 @@ func areThereCollisions(between methods: [MethodWrapper]) -> Bool {
     return false
 }
 
-// herlpers
+// helpers
 func uniques(methods: [SourceryRuntime.Method]) -> [SourceryRuntime.Method] {
     func returnTypeStripped(_ method: SourceryRuntime.Method) -> String {
         let returnTypeRaw = "\(method.returnTypeName)"
@@ -726,7 +726,7 @@ class MethodWrapper {
         }
 
         return """
-        catch MockError.notStubed {
+        catch MockError.notStubbed {
         \(noStubHandling)
         \t\t} catch {
         \t\t    throw error
@@ -1163,7 +1163,7 @@ class MethodWrapper {
         return parts.map { stripGenPart(part: $0) }
     }
 
-    /// Returns list of generic constraintes from method signature. Does only contain stuff between '<' and '>'
+    /// Returns list of generic constraints from method signature. Does only contain stuff between '<' and '>'
     ///
     /// - Returns: Array of strings, like ["T: Codable", "U: Whatever"]
     private func getGenericsConstraints(_ generics: [String], filterSingle: Bool = true) -> [String] {
@@ -2093,7 +2093,7 @@ _%>
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -2176,7 +2176,7 @@ _%>
             let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
         let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }

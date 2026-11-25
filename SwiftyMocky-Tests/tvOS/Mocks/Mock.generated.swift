@@ -141,7 +141,7 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
 		perform?()
 		do {
 		    _ = try methodReturnValue(.sm_methodThatThrows).casted() as Void
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			// do nothing
 		} catch {
 		    throw error
@@ -155,7 +155,7 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
 		var __value: Int
 		do {
 		    __value = try methodReturnValue(.sm_methodThatReturnsAndThrows__param_param(Parameter<String>.value(`param`))).casted()
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			Failure("Stub return value not specified for methodThatReturnsAndThrows(param: String). Use given")
 		} catch {
 		    throw error
@@ -186,7 +186,7 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
 		perform?()
 		do {
 		    _ = try methodReturnValue(.m_methodThatThrows).casted() as Void
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			// do nothing
 		} catch {
 		    throw error
@@ -200,7 +200,7 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
 		var __value: Int
 		do {
 		    __value = try methodReturnValue(.m_methodThatReturnsAndThrows__param_param(Parameter<String>.value(`param`))).casted()
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			onFatalFailure("Stub return value not specified for methodThatReturnsAndThrows(param: String). Use given")
 			Failure("Stub return value not specified for methodThatReturnsAndThrows(param: String). Use given")
 		} catch {
@@ -538,7 +538,7 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -619,7 +619,7 @@ open class AMassiveTestProtocolMock: AMassiveTestProtocol, Mock, StaticMock {
             let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
         let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
@@ -835,7 +835,7 @@ open class AVeryAssociatedProtocolMock<T1,T2>: AVeryAssociatedProtocol, Mock whe
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -1208,7 +1208,7 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -1289,7 +1289,7 @@ open class AVeryGenericProtocolMock: AVeryGenericProtocol, Mock, StaticMock {
             let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
         let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
@@ -1974,7 +1974,7 @@ open class AllLiteralsContainerMock: AllLiteralsContainer, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -2217,7 +2217,7 @@ open class AnotherProtocolMock: AnotherProtocol, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -2438,7 +2438,7 @@ open class AsyncMethodsProtocolMock: AsyncMethodsProtocol, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -2922,7 +2922,7 @@ open class ComplicatedServiceTypeMock: ComplicatedServiceType, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -3033,7 +3033,7 @@ public final class DataProvidingMock: DataProviding, Mock, @unchecked Sendable {
 		var __value: T
 		do {
 		    __value = try methodReturnValue(.m_getData__from_url(Parameter<String>.value(`url`))).casted()
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			onFatalFailure("Stub return value not specified for getData<T: Decodable>(from url: String). Use given")
 			Failure("Stub return value not specified for getData<T: Decodable>(from url: String). Use given")
 		} catch {
@@ -3151,7 +3151,7 @@ public final class DataProvidingMock: DataProviding, Mock, @unchecked Sendable {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -3352,7 +3352,7 @@ open class DateSortableMock: DateSortable, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -3595,7 +3595,7 @@ open class EdgeCasesGenericsProtocolMock: EdgeCasesGenericsProtocol, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -3773,7 +3773,7 @@ open class EmptyProtocolMock: EmptyProtocol, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -4044,7 +4044,7 @@ open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock 
 		var __value: any ExistentialService
 		do {
 		    __value = try methodReturnValue(.m_makeThrowing).casted()
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			onFatalFailure("Stub return value not specified for makeThrowing(). Use given")
 			Failure("Stub return value not specified for makeThrowing(). Use given")
 		} catch {
@@ -4060,7 +4060,7 @@ open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock 
 		var __value: any ExistentialService
 		do {
 		    __value = try methodReturnValue(.m_makeAsync).casted()
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			onFatalFailure("Stub return value not specified for makeAsync(). Use given")
 			Failure("Stub return value not specified for makeAsync(). Use given")
 		} catch {
@@ -4587,7 +4587,7 @@ open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock 
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -4668,7 +4668,7 @@ open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock 
             let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
         let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
@@ -4884,7 +4884,7 @@ open class FailsWithAutoClosureOnSwift5Mock: FailsWithAutoClosureOnSwift5, Mock 
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -5216,7 +5216,7 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -5585,7 +5585,7 @@ public final class FailsWithReturnedTypeBeingGenericOfSelfMock: FailsWithReturne
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -5793,7 +5793,7 @@ open class FailsWithUntaggedMock: FailsWithUntagged, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -6017,7 +6017,7 @@ open class FetcherMock: Fetcher, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -6241,7 +6241,7 @@ open class GenericProtocolReturningIntMock: GenericProtocolReturningInt, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -6503,7 +6503,7 @@ open class GenericProtocolWithTypeConstraintMock: GenericProtocolWithTypeConstra
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -6727,7 +6727,7 @@ open class HistorySectionMapperTypeMock: HistorySectionMapperType, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -6988,7 +6988,7 @@ open class InoutProtocolMock: InoutProtocol, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -7209,7 +7209,7 @@ open class NonSwiftProtocolMock: NSObject, NonSwiftProtocol, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -7678,7 +7678,7 @@ open class ProtocolMethodsGenericThatDifferOnlyInReturnTypeMock: ProtocolMethods
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -7939,7 +7939,7 @@ open class ProtocolMethodsThatDifferOnlyInReturnTypeMock: ProtocolMethodsThatDif
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -8177,7 +8177,7 @@ open class ProtocolWithAssociatedTypeMock<T>: ProtocolWithAssociatedType, Mock w
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -8378,7 +8378,7 @@ open class ProtocolWithAssociatedType2Mock<ValueType>: ProtocolWithAssociatedTyp
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -8582,7 +8582,7 @@ open class ProtocolWithAttributesMock: NSObject, ProtocolWithAttributes, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -8950,7 +8950,7 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -9193,7 +9193,7 @@ open class ProtocolWithClosuresMock: ProtocolWithClosures, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -9490,7 +9490,7 @@ open class ProtocolWithConflictingMembersMock: ProtocolWithConflictingMembers, M
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -9600,7 +9600,7 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
 		perform?(`user`)
 		do {
 		    _ = try methodReturnValue(.m_methodThatTakesUser__user_user(Parameter<UserObject>.value(`user`))).casted() as Void
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			// do nothing
 		} catch {
 		    throw error
@@ -9750,7 +9750,7 @@ open class ProtocolWithCustomAttributesMock: ProtocolWithCustomAttributes, Mock 
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -9974,7 +9974,7 @@ open class ProtocolWithDeprecatedMembersMock: ProtocolWithDeprecatedMembers, Moc
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -10208,7 +10208,7 @@ open class ProtocolWithGenericConstraintsMock<ContainedType>: ProtocolWithGeneri
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -10470,7 +10470,7 @@ open class ProtocolWithGenericMethodsMock: ProtocolWithGenericMethods, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -10694,7 +10694,7 @@ open class ProtocolWithGenericMethodsNestedMock: ProtocolWithGenericMethodsNeste
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -10913,7 +10913,7 @@ open class ProtocolWithInitializersMock: ProtocolWithInitializers, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -11123,7 +11123,7 @@ open class ProtocolWithMethodWithManyParametersMock: ProtocolWithMethodWithManyP
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -11234,7 +11234,7 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
 		var __value: [(date: String?, value: Type)]
 		do {
 		    __value = try methodReturnValue(.m_max__for_attributeover_samplesper_aggregationUnit(Parameter<Int>.value(`attribute`), Parameter<[Int]>.value(`samples`), Parameter<String?>.value(`aggregationUnit`))).casted()
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			onFatalFailure("Stub return value not specified for max<Type: Comparable>(for attribute: Int, over samples: [Int], per aggregationUnit: String?). Use given")
 			Failure("Stub return value not specified for max<Type: Comparable>(for attribute: Int, over samples: [Int], per aggregationUnit: String?). Use given")
 		} catch {
@@ -11354,7 +11354,7 @@ open class ProtocolWithMethodsWithGenericReturnTypeThatThrowsMock: ProtocolWithM
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -11657,7 +11657,7 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -11738,7 +11738,7 @@ open class ProtocolWithObjcMock: NSObject, ProtocolWithObjc, Mock, StaticMock {
             let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
         let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
@@ -12143,7 +12143,7 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -12224,7 +12224,7 @@ open class ProtocolWithPropertiesMock: ProtocolWithProperties, Mock, StaticMock 
             let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
         let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
@@ -12367,7 +12367,7 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
 		var __value: Int
 		do {
 		    __value = try methodReturnValue(.sm_staticMethod__param_param(Parameter<Int>.value(`param`))).casted()
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			Failure("Stub return value not specified for staticMethod(param: Int). Use given")
 		} catch {
 		    throw error
@@ -12522,7 +12522,7 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -12603,7 +12603,7 @@ open class ProtocolWithStaticMembersMock: ProtocolWithStaticMembers, Mock, Stati
             let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
         let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
@@ -13205,7 +13205,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -13315,7 +13315,7 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
 		perform?()
 		do {
 		    _ = try methodReturnValue(.m_methodThatThrows).casted() as Void
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			// do nothing
 		} catch {
 		    throw error
@@ -13329,7 +13329,7 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
 		var __value: Bool
 		do {
 		    __value = try methodReturnValue(.m_methodThatReturnsAndThrows__param_param(Parameter<Int>.value(`param`))).casted()
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			onFatalFailure("Stub return value not specified for methodThatReturnsAndThrows(param: Int). Use given")
 			Failure("Stub return value not specified for methodThatReturnsAndThrows(param: Int). Use given")
 		} catch {
@@ -13467,7 +13467,7 @@ open class ProtocolWithThrowingMethodsMock: ProtocolWithThrowingMethods, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -13691,7 +13691,7 @@ open class ProtocolWithTuplesMock: ProtocolWithTuples, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -13929,7 +13929,7 @@ open class ProtocolWithWhereAfterDefinitionMock<T>: ProtocolWithWhereAfterDefini
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -14111,7 +14111,7 @@ public final class RefinedSendableServiceMock: RefinedSendableService, Mock, Sta
 		perform?(`value`)
 		do {
 		    _ = try methodReturnValue(.m_store__value(Parameter<String>.value(`value`))).casted() as Void
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			// do nothing
 		} catch {
 		    throw error
@@ -14330,7 +14330,7 @@ public final class RefinedSendableServiceMock: RefinedSendableService, Mock, Sta
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -14411,7 +14411,7 @@ public final class RefinedSendableServiceMock: RefinedSendableService, Mock, Sta
             let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
         let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
@@ -14859,7 +14859,7 @@ open class SampleServiceTypeMock: SampleServiceType, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -15070,7 +15070,7 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
 		var __value: __Self__
 		do {
 		    __value = try methodReturnValue(.m_configure__with_secret(Parameter<String>.value(`secret`))).casted()
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			onFatalFailure("Stub return value not specified for configure(with secret: String). Use given")
 			Failure("Stub return value not specified for configure(with secret: String). Use given")
 		} catch {
@@ -15317,7 +15317,7 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -15398,7 +15398,7 @@ public final class SelfConstrainedProtocolMock: SelfConstrainedProtocol, Mock, S
             let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
         let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
@@ -15566,7 +15566,7 @@ public final class SendableServiceMock: SendableService, Mock, StaticMock, @unch
 		perform?(`value`)
 		do {
 		    _ = try methodReturnValue(.m_store__value(Parameter<String>.value(`value`))).casted() as Void
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			// do nothing
 		} catch {
 		    throw error
@@ -15776,7 +15776,7 @@ public final class SendableServiceMock: SendableService, Mock, StaticMock, @unch
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -15857,7 +15857,7 @@ public final class SendableServiceMock: SendableService, Mock, StaticMock, @unch
             let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
         let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
@@ -16010,7 +16010,7 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
 		perform?(`key`)
 		do {
 		    _ = try methodReturnValue(.sm_throwingVoidMethod__key(Parameter<String>.value(`key`))).casted() as Void
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			// do nothing
 		} catch {
 		    throw error
@@ -16055,7 +16055,7 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
 		perform?(`key`)
 		do {
 		    _ = try methodReturnValue(.m_throwingVoidMethod__key(Parameter<String>.value(`key`))).casted() as Void
-		} catch MockError.notStubed {
+		} catch MockError.notStubbed {
 			// do nothing
 		} catch {
 		    throw error
@@ -16407,7 +16407,7 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -16488,7 +16488,7 @@ open class ShouldAllowNoStubDefinedMock: ShouldAllowNoStubDefined, Mock, StaticM
             let product = staticState.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     static private func methodPerformValue(_ method: StaticMethodType) -> Any? {
         let (performs, matcher) = staticState.withValue { ($0.methodPerformValues, $0.matcher) }
@@ -16877,7 +16877,7 @@ open class SimpleProtocolThatInheritsOtherProtocolsMock: SimpleProtocolThatInher
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -17208,7 +17208,7 @@ open class SimpleProtocolUsingCollectionsMock: SimpleProtocolUsingCollections, M
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -17443,7 +17443,7 @@ open class SimpleProtocolWithBothMethodsAndPropertiesMock: SimpleProtocolWithBot
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -17751,7 +17751,7 @@ open class SimpleProtocolWithMethodsMock: SimpleProtocolWithMethods, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -18029,7 +18029,7 @@ open class SimpleProtocolWithPropertiesMock: SimpleProtocolWithProperties, Mock 
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -18207,7 +18207,7 @@ open class SuggestionProtocolMock: SuggestionProtocol, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -18614,7 +18614,7 @@ open class SuggestionRepositoryMock: SuggestionRepository, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -19020,7 +19020,7 @@ open class SuggestionRepositoryConstrainedToProtocolMock<Entity>: SuggestionRepo
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -19221,7 +19221,7 @@ open class ThrowingVarProtocolMock: ThrowingVarProtocol, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -19479,7 +19479,7 @@ open class UnnamedAttributesProtocolMock: UnnamedAttributesProtocol, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -19746,7 +19746,7 @@ open class UserNetworkTypeMock: UserNetworkType, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -19990,7 +19990,7 @@ open class UserStorageTypeMock: UserStorageType, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -20251,7 +20251,7 @@ open class VariadicParametersProtocolMock: VariadicParametersProtocol, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -20476,7 +20476,7 @@ open class WithConflictingNameMock: WithConflictingName, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }
@@ -20945,7 +20945,7 @@ open class ComposedServiceMock: ComposedService, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }

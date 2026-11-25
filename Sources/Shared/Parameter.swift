@@ -29,7 +29,7 @@ public enum Parameter<ValueType> {
     /// Represents and matches any parameter value - syntactic sugar for `._` case.
     public static var any: Parameter<ValueType> { return Parameter<ValueType>._ }
 
-    /// Represents and matches any parameter value - syntactic sugar for `._` case. Used, when needs to explicitely specify
+    /// Represents and matches any parameter value - syntactic sugar for `._` case. Used, when needs to explicitly specify
     /// wrapped *ValueType* type, to resolve ambiguity between methods with same signatures, but different attribute types.
     ///
     /// - Parameter type: Explicitly specify ValueType type

@@ -4,7 +4,7 @@ import Foundation
 public protocol TypeErasedValue {
     /// [internal] Returned value
     var value: Any { get }
-    /// [internal] Used to describe attribute generocity (0 is general, 1 is specific)
+    /// [internal] Used to describe attribute genericity (0 is general, 1 is specific)
     var intValue: Int { get }
     /// [internal] Used to compare with other generic attributes values
     var compare: (Any,Any,Matcher) -> Bool { get }
@@ -16,7 +16,7 @@ public protocol TypeErasedValue {
 public struct GenericAttribute: TypeErasedValue {
     /// [internal] Returned value
     public let value: Any
-    /// [internal] Used to describe attribute generocity (0 is general, 1 is specific)
+    /// [internal] Used to describe attribute genericity (0 is general, 1 is specific)
     public var intValue: Int
     /// [internal] Used to compare with other generic attributes
     public let compare: (Any,Any,Matcher) -> Bool
@@ -41,12 +41,12 @@ public struct GenericAttribute: TypeErasedValue {
     }
 }
 
-/// [Internal] Used to wrap availability constrained attributes, since enum cases used ubternally to
+/// [Internal] Used to wrap availability constrained attributes, since enum cases used internally to
 /// represent method/variable/subscript invocation/stub cannot have availability clauses.
 public struct TypeErasedAttribute: TypeErasedValue {
     /// [internal] Returned value
     public let value: Any
-    /// [internal] Used to describe attribute generocity (0 is general, 1 is specific)
+    /// [internal] Used to describe attribute genericity (0 is general, 1 is specific)
     public var intValue: Int
     /// [internal] Used to compare with other attribute
     public let compare: (Any,Any,Matcher) -> Bool

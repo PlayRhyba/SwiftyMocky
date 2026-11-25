@@ -28,7 +28,7 @@ class ProtocolsWithCollectionsTests: XCTestCase {
 
         // First always handle most explicit given
         Given(mock, .map(array: .value(["a","b","c"]), param: .value(1), willReturn: [1:"1abc"]))
-        // If two have same level of explicity, order of setup matters (LIFO)
+        // If two have same level of explicitness, order of setup matters (LIFO)
         Given(mock, .map(array: .value(["a","b","c"]), param: .any, willReturn: [1:"abc"]))
         Given(mock, .map(array: .any, param: .value(1), willReturn: [1:"1"]))
 

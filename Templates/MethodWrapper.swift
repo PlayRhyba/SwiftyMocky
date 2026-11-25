@@ -208,7 +208,7 @@ class MethodWrapper {
         }
 
         return """
-        catch MockError.notStubed {
+        catch MockError.notStubbed {
         \(noStubHandling)
         \t\t} catch {
         \t\t    throw error
@@ -645,7 +645,7 @@ class MethodWrapper {
         return parts.map { stripGenPart(part: $0) }
     }
 
-    /// Returns list of generic constraintes from method signature. Does only contain stuff between '<' and '>'
+    /// Returns list of generic constraints from method signature. Does only contain stuff between '<' and '>'
     ///
     /// - Returns: Array of strings, like ["T: Codable", "U: Whatever"]
     private func getGenericsConstraints(_ generics: [String], filterSingle: Bool = true) -> [String] {

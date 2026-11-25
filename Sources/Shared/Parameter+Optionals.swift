@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Optionality checks
 
-/// Protocol around Optional, allowing additional checks and features on `Paramater` where value is optional.
+/// Protocol around Optional, allowing additional checks and features on `Parameter` where value is optional.
 public protocol OptionalType: ExpressibleByNilLiteral {
     var isNotNil: Bool { get }
 }

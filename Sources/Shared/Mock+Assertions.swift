@@ -60,7 +60,7 @@ public func Verify<T: StaticMock>(_ type: T.Type, _ count: Count, _ method: T.St
 /// will check for first matching given, with following rules:
 /// 1. First check most specific givens (with explicit parameters - .value), then for wildcard parameters (.any)
 /// 2. More recent givens have higher priority than older ones
-/// 3. When two given's have same level of explicity, like:
+/// 3. When two given's have same level of explicitness, like:
 ///     ```
 ///     Given(mock, .do(with: .value(1), and: .any)
 ///     Given(mock, .do(with: .any, and: .value(1))
@@ -79,7 +79,7 @@ public func Given<T: Mock>(_ object: T, _ method: T.Given, _ policy: StubbingPol
 /// will check for first matching given, with following rules:
 /// 1. First check most specific givens (with explicit parameters - .value), then for wildcard parameters (.any)
 /// 2. More recent givens have higher priority than older ones
-/// 3. When two given's have same level of explicity, like:
+/// 3. When two given's have same level of explicitness, like:
 ///     ```
 ///     Given(T.self, .do(with: .value(1), and: .any)
 ///     Given(T.self, .do(with: .any, and: .value(1))
@@ -100,7 +100,7 @@ public func Given<T: StaticMock>(_ type: T.Type, _ method: T.StaticGiven, _ poli
 /// will check for first matching closure and execute it with parameters passed. Have in mind following rules:
 /// 1. First check most specific performs (with explicit parameters - .value), then for wildcard parameters (.any)
 /// 2. More recent performs have higher priority than older ones
-/// 3. When two performs have same level of explicity, like:
+/// 3. When two performs have same level of explicitness, like:
 ///     ```
 ///     Perform(mock, .do(with: .value(1), and: .any, perform: { ... }))
 ///     Perform(mock, .do(with: .any, and: .value(1), perform: { ... }))
@@ -118,7 +118,7 @@ public func Perform<T: Mock>(_ object: T, _ method: T.Perform) {
 /// will check for first matching closure and execute it with parameters passed. Have in mind following rules:
 /// 1. First check most specific performs (with explicit parameters - .value), then for wildcard parameters (.any)
 /// 2. More recent performs have higher priority than older ones
-/// 3. When two performs have same level of explicity, like:
+/// 3. When two performs have same level of explicitness, like:
 ///     ```
 ///     Perform(T.self, .do(with: .value(1), and: .any, perform: { ... }))
 ///     Perform(T.self, .do(with: .any, and: .value(1), perform: { ... }))
@@ -146,9 +146,9 @@ public func Failure(_ message: String) -> Swift.Never {
 /// [Internal] Used for handling fatal errors inside library.
 public struct FatalErrorUtil {
     /// [Internal] Handler
-    private static let handler = LockedValue<(String) -> Never>(defalutHandler)
+    private static let handler = LockedValue<(String) -> Never>(defaultHandler)
     /// [Internal] Default handler
-    private static let defalutHandler: @Sendable (String) -> Never = {
+    private static let defaultHandler: @Sendable (String) -> Never = {
         print($0)
         exit(0)
     }
@@ -162,7 +162,7 @@ public struct FatalErrorUtil {
 
     /// [Internal] Restores default handler
     public static func restore() {
-        handler.value = defalutHandler
+        handler.value = defaultHandler
     }
 
     /// [Internal] Perform fatal error handler

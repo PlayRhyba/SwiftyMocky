@@ -13,7 +13,7 @@ public class Matcher: @unchecked Sendable {
     /// [Internal] Matchers storage
     private let _matchers = LockedValue<[(Mirror,Any)]>([])
     private var matchers: [(Mirror,Any)] { _matchers.value }
-    /// [Internal] file and line where comparison faiure should be recorded
+    /// [Internal] file and line where comparison failure should be recorded
     private let _location = LockedValue<(file: StaticString?, line: UInt?)>((nil, nil))
     /// [Internal] matcher fatal error handler
     public static var fatalErrorHandler: (String, StaticString, UInt) -> Void {
@@ -30,7 +30,7 @@ public class Matcher: @unchecked Sendable {
         }
     }
 
-    /// Creante new matcher instance, copying existing comparator from another instance.
+    /// Create new matcher instance, copying existing comparator from another instance.
     ///
     /// - Parameter matcher: other matcher instance
     public init(matcher: Matcher) {
@@ -223,7 +223,7 @@ public class Matcher: @unchecked Sendable {
     /// Comparator is a closure of `(T,T) -> Bool`.
     ///
     /// When several comparators for same type  are registered to common
-    /// **Matcher** instance - it will resolve the most receont one.
+    /// **Matcher** instance - it will resolve the most recent one.
     ///
     /// - Parameters:
     ///   - valueType: compared type
@@ -240,7 +240,7 @@ public class Matcher: @unchecked Sendable {
         self.register(valueType, match: { _, _ in return true })
     }
 
-    /// Register default comparatot for Equatable types. Required for generic mocks to work.
+    /// Register default comparator for Equatable types. Required for generic mocks to work.
     ///
     /// - Parameter valueType: Equatable type
     public func register<T>(_ valueType: T.Type) where T: Equatable {
@@ -254,7 +254,7 @@ public class Matcher: @unchecked Sendable {
     /// Comparator is a closure of `(T,T) -> Bool`.
     ///
     /// When several comparators for same type  are registered to common
-    /// **Matcher** instance - it will resolve the most receont one.
+    /// **Matcher** instance - it will resolve the most recent one.
     ///
     /// - Parameter valueType: compared type
     /// - Returns: comparator closure

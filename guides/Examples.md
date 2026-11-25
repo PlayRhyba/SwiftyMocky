@@ -96,7 +96,7 @@ mock.matcher.register((Optional<String>).self) { $0 == $1 } // Could use Matcher
 
 Verify(mock, 0, .simpleMehtodThatReturns(optionalParam: .any)) // Should be 0
 
-// When same level of explicity - last given is matched first
+// When same level of explicitness - last given is matched first
 Given(mock, .simpleMehtodThatReturns(optionalParam: .value(nil), willReturn: nil))
 XCTAssertEqual(mock.simpleMehtodThatReturns(optionalParam: nil), nil)
 Given(mock, .simpleMehtodThatReturns(optionalParam: .value("some"), willReturn: "not nil"))

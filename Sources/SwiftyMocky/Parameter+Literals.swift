@@ -92,7 +92,7 @@ extension Parameter: ExpressibleByArrayLiteral where ValueType: ExpressibleByArr
 private extension ExpressibleByDictionaryLiteral where Key: Hashable {
     init(_ elements: [(Key, Value)]) {
         let value: [Key: Value] = Dictionary.init(uniqueKeysWithValues: elements)
-        self = value as! Self  // TODO: Check if can be fixed. For some reason could not use init(arayLiteral elements: ...)
+        self = value as! Self  // TODO: Check if can be fixed. For some reason could not use init(arrayLiteral elements: ...)
     }
 }
 

@@ -255,7 +255,7 @@ class ItemsRepositoryMock: ItemsRepository, Mock {
             let product = state.withValue { _ in candidate.isValid ? candidate.getProduct(policy: stubbingPolicy) : nil }
             if let product { return product }
         }
-        throw MockError.notStubed
+        throw MockError.notStubbed
     }
     private func methodPerformValue(_ method: MethodType) -> Any? {
         let (performs, matcher, file, line) = state.withValue { ($0.methodPerformValues, $0.matcher, $0.file, $0.line) }

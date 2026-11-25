@@ -2,9 +2,12 @@ import Foundation
 
 /// [Internal] Generic Mock library errors
 ///
-/// - notStubed: Calling method on mock, for which return value was not yet stubbed. DO NOT USE it as stub throw value!
+/// - notStubbed: Calling method on mock, for which return value was not yet stubbed. DO NOT USE it as stub throw value!
 public enum MockError: Error {
-    case notStubed
+    case notStubbed
+
+    @available(*, deprecated, renamed: "notStubbed")
+    public static var notStubed: MockError { .notStubbed }
 }
 
 /// [Internal] Possible Given products. Method can either return or throw an error (in general)
@@ -35,7 +38,7 @@ open class StubbedMethod: WithStubbingPolicy {
     public var policy: StubbingPolicy = .default
     /// [Internal] Array of stub return values
     private var products: [StubProduct]
-    /// [Internal] Index of next retutn value. Can be out of bounds.
+    /// [Internal] Index of next return value. Can be out of bounds.
     private var index: Int = 0
 
     /// [Internal] Creates new method init with given products.

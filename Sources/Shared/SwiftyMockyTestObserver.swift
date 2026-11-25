@@ -60,8 +60,8 @@ public class SwiftyMockyTestObserver: NSObject, XCTestObservation {
         let continueAfterFailure = testCase.continueAfterFailure
         defer { testCase.continueAfterFailure = continueAfterFailure }
         testCase.continueAfterFailure = false
-        let methodName = getNameOfExtecutedTestCase(testCase)
-        if let name = methodName, let failingLine = FilesExlorer().findTestCaseLine(for: name, file: file) {
+        let methodName = getNameOfExecutedTestCase(testCase)
+        if let name = methodName, let failingLine = FilesExplorer().findTestCaseLine(for: name, file: file) {
             testCase.record(XCTIssue(
                 type: .system,
                 compactDescription: message,
@@ -77,17 +77,17 @@ public class SwiftyMockyTestObserver: NSObject, XCTestObservation {
         }
     }
 
-    /// [Internal] Geting name of current test
+    /// [Internal] Getting name of current test
     ///
     /// - Parameter testCase: Test case
     /// - Returns: Name
-    private static func getNameOfExtecutedTestCase(_ testCase: XCTestCase) -> String? {
+    private static func getNameOfExecutedTestCase(_ testCase: XCTestCase) -> String? {
         return testCase.name.components(separatedBy: " ")[1].components(separatedBy: "]").first
     }
 }
 
 /// [Internal] Internal dependency that looks for line of test case, that caused test failure.
-private class FilesExlorer {
+private class FilesExplorer {
     /// Parses test case file to get line number assigned with test
     ///
     /// - Parameter testCase: Test case

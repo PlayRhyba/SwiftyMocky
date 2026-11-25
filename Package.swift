@@ -39,10 +39,6 @@ let package = Package(
                 .define("SWIFTY_PROTOTYPE"),
             ]
         ),
-        .target(
-            name: "Shared",
-            path: "./Sources/Shared"
-        ),
         // Example and tests
         .target(
             name: "Mocky_Example_macOS",

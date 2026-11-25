@@ -66,15 +66,15 @@ public extension WithStubbingPolicy {
 }
 
 // MARK: - Sequencing policy
-/// Sequencing policy - in which order Given would be resolved. Pleas ehve in mind that this policy is applied ONLY after
+/// Sequencing policy - in which order Given would be resolved. Please have in mind that this policy is applied ONLY after
 /// first ordering (based on how explicit is stub) is done.
 ///
-/// - `lastWrittenResolvedFirst`: Default policy. Last given overrides previous, if they are both with same generocity level
-/// - `inWritingOrder`: Givens would be recalled in order of generocity, respecting writing order (first line resolved first)
+/// - `lastWrittenResolvedFirst`: Default policy. Last given overrides previous, if they are both with same genericity level
+/// - `inWritingOrder`: Givens would be recalled in order of genericity, respecting writing order (first line resolved first)
 public enum SequencingPolicy {
-    /// Default policy. Last given overrides previous, if they are both with same generocity level
+    /// Default policy. Last given overrides previous, if they are both with same genericity level
     case lastWrittenResolvedFirst
-    /// Givens would be recalled in order of generocity, respecting writing order (first line resolved first)
+    /// Givens would be recalled in order of genericity, respecting writing order (first line resolved first)
     case inWritingOrder
 
     /// [Internal] Sorts stub return values / errors throw with respect to ordering rule and policy
@@ -82,7 +82,7 @@ public enum SequencingPolicy {
     /// - Parameters:
     ///   - array: Array to sort
     ///   - order: Default ordering closure
-    /// - Returns: Sorted with respoect to ordering and policy
+    /// - Returns: Sorted with respect to ordering and policy
     public func sorted<T>(_ array: [T], by order: (T, T) -> Bool) -> [T] {
         switch self {
         case .lastWrittenResolvedFirst: return array.reversed().sorted(by: order)
@@ -93,12 +93,12 @@ public enum SequencingPolicy {
 
 /// Has sequencing policy for stubbing methods
 public protocol WithSequencingPolicy {
-    /// Used sequencibg policy
+    /// Used sequencing policy
     var sequencingPolicy: SequencingPolicy { get set }
 }
 
 /// Has sequencing policy for stubbing static methods
 public protocol WithStaticSequencingPolicy {
-    /// Used sequencibg policy
+    /// Used sequencing policy
     static var sequencingPolicy: SequencingPolicy { get set }
 }

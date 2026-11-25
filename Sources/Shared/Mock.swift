@@ -21,7 +21,7 @@ public protocol Mock: AnyObject {
     /// When this method will be called on mock, it will check for first matching given, with following rules:
     /// 1. First check most specific givens (with explicit parameters - .value), then for wildcard parameters (.any)
     /// 2. More recent givens have higher priority than older ones
-    /// 3. When two given's have same level of explicity, like:
+    /// 3. When two given's have same level of explicitness, like:
     ///     ```
     ///     Given(mock, .do(with: .value(1), and: .any)
     ///     Given(mock, .do(with: .any, and: .value(1))
@@ -32,13 +32,13 @@ public protocol Mock: AnyObject {
     /// - Parameter method: signature, with attributes (any or explicit value). Type `.` for all available
     func given(_ method: Given)
 
-    /// Registers perform closure, which will be executed upon calling stubbed method, for specified attribtes.
+    /// Registers perform closure, which will be executed upon calling stubbed method, for specified attributes.
     ///
     /// When this method will be called on mock, it
     /// will check for first matching closure and execute it with parameters passed. Have in mind following rules:
     /// 1. First check most specific performs (with explicit parameters - .value), then for wildcard parameters (.any)
     /// 2. More recent performs have higher priority than older ones
-    /// 3. When two performs have same level of explicity, like:
+    /// 3. When two performs have same level of explicitness, like:
     ///     ```
     ///     Perform(mock, .do(with: .value(1), and: .any, perform: { ... }))
     ///     Perform(mock, .do(with: .any, and: .value(1), perform: { ... }))
@@ -84,7 +84,7 @@ public protocol StaticMock: AnyObject {
     /// When this method will be called on mock, it will check for first matching given, with following rules:
     /// 1. First check most specific givens (with explicit parameters - .value), then for wildcard parameters (.any)
     /// 2. More recent givens have higher priority than older ones
-    /// 3. When two given's have same level of explicity, like:
+    /// 3. When two given's have same level of explicitness, like:
     ///     ```
     ///     Given(mock, .do(with: .value(1), and: .any)
     ///     Given(mock, .do(with: .any, and: .value(1))
@@ -95,13 +95,13 @@ public protocol StaticMock: AnyObject {
     /// - Parameter method: signature, with attributes (any or explicit value). Type `.` for all available
     static func given(_ method: StaticGiven)
 
-    /// Registers perform closure, which will be executed upon calling stubbed method, for specified attribtes.
+    /// Registers perform closure, which will be executed upon calling stubbed method, for specified attributes.
     ///
     /// When this method will be called on mock, it
     /// will check for first matching closure and execute it with parameters passed. Have in mind following rules:
     /// 1. First check most specific performs (with explicit parameters - .value), then for wildcard parameters (.any)
     /// 2. More recent performs have higher priority than older ones
-    /// 3. When two performs have same level of explicity, like:
+    /// 3. When two performs have same level of explicitness, like:
     ///     ```
     ///     Perform(mock, .do(with: .value(1), and: .any, perform: { ... }))
     ///     Perform(mock, .do(with: .any, and: .value(1), perform: { ... }))

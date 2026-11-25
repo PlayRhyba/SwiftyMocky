@@ -12,6 +12,8 @@ All changes to SwiftyMocky project will be documented in this file.
 * `Matcher` is thread-safe (`@unchecked Sendable`): registered comparators and the failure location are lock-protected
 
 #### Changed:
+* `MockError.notStubed` renamed to `MockError.notStubbed`; the old name is kept as a deprecated alias, so existing code and previously generated mocks still compile
+* Removed the unused standalone `Shared` SwiftPM target (its sources are compiled into `SwiftyMocky` and `SwiftyPrototype`)
 * SwiftyPrototype: `MockyAssert` default `file:` argument is now `#filePath` (was `#file`), matching SwiftyMocky
 * `MockyAssert`/`MockyAssertion` and `SwiftyMockyTestObserver` live once in shared sources; SwiftyPrototype keeps its no-XCTest behaviour via the `SWIFTY_PROTOTYPE` compilation condition
 * SwiftPM test suite now includes async method and throwing getter examples (stale macOS 12 excludes removed)
