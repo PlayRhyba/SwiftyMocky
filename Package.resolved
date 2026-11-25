@@ -1,5 +1,5 @@
 {
-  "originHash" : "6ae0ff5e060c459a45b734b5eb889291ec767b6e832c5d7785123e6762e879e4",
+  "originHash" : "d2d0858ec71a29149da1c95d7b4da158c17a2bcee0231b9fc26ab683fc1b2450",
   "pins" : [
     {
       "identity" : "aexml",
@@ -8,15 +8,6 @@
       "state" : {
         "revision" : "d2083adcf4d1383c858f5d3d0f24256459d3f59a",
         "version" : "4.7.4"
-      }
-    },
-    {
-      "identity" : "commander",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/kylef/Commander",
-      "state" : {
-        "revision" : "4a1f2fb82fb6cef613c4a25d2e38f702e4d812c2",
-        "version" : "0.9.2"
       }
     },
     {
@@ -35,6 +26,15 @@
       "state" : {
         "revision" : "26cc5e9ae0947092c7139ef7ba612e34646086c7",
         "version" : "0.10.1"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser",
+      "state" : {
+        "revision" : "6a52f3251125d74daf04fcbd5e6f08a75d074382",
+        "version" : "1.8.2"
       }
     },
     {

@@ -1,7 +1,6 @@
 import Foundation
 import Yams
 import PathKit
-import Commander
 import XcodeProj
 
 // MARK: - Migration

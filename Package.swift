@@ -17,7 +17,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/tuist/XcodeProj", from: "9.17.8"),
-        .package(url: "https://github.com/kylef/Commander", from: "0.9.2"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.8.2"),
         .package(url: "https://github.com/kylef/PathKit", from: "1.0.1"),
         .package(url: "https://github.com/jpsim/Yams", from: "6.2.2"),
     ],
@@ -55,7 +55,7 @@ let package = Package(
         .executableTarget(
             name: "SwiftyMockyCLI",
             dependencies: [
-                .product(name: "Commander", package: "Commander"),
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 "SwiftyMockyCLICore",
             ],
             path: "./Sources/CLI/App"
@@ -63,7 +63,6 @@ let package = Package(
         .target(
             name: "SwiftyMockyCLICore",
             dependencies: [
-                .product(name: "Commander", package: "Commander"),
                 .product(name: "XcodeProj", package: "XcodeProj"),
                 .product(name: "PathKit", package: "PathKit"),
                 .product(name: "Yams", package: "Yams"),

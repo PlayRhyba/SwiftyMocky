@@ -1,6 +1,5 @@
 import Foundation
 import PathKit
-import Commander
 import Yams
 
 // MARK: - GenerationCommand protocol definition

@@ -9,6 +9,7 @@ All changes to SwiftyMocky project will be documented in this file.
 #### Changed:
 * CLI: dropped the unmaintained [ShellOut](https://github.com/JohnSundell/ShellOut) dependency; Sourcery and Mint commands run through a small `Foundation.Process` helper (still via `/bin/bash -c`, so Mockfile `sourceryCommand` values work as before)
 * CLI: dropped the unmaintained [Chalk](https://github.com/luoxiu/Chalk) dependency (and its Rainbow dependency); output is styled by a small built-in ANSI helper. Colors are off when output is not a terminal, for `TERM=dumb`, and when `NO_COLOR` is set
+* CLI: argument parsing moved from the unmaintained [Commander](https://github.com/kylef/Commander) to Apple's [swift-argument-parser](https://github.com/apple/swift-argument-parser). Commands and flags are unchanged (including `--disableCache`); every command now has `--help`, there is `--version`, and usage errors (unknown flag, missing mock name for `watch` / `generate --watch`) exit with code 64. Previously `generate --help` was treated as a mock name
 * `rake docs` makes the paths in `docs/undocumented.json` repo-relative
 
 ## __4.3.1__ / 2026

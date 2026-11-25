@@ -21,13 +21,14 @@ $ mint run PlayRhyba/SwiftyMocky <command>
 ## Commands:
 
 + `init` - Creates template of Mockfile to fill
-+ `generate` - generate mocks. Usage 'swiftymocky options optional-mock-name'. Allowed flags:
-    + `--disableCache`: disables using cahche
++ `generate [<mock-name>]` - generate mocks (all of them, or the one named). Flags:
+    + `--disableCache`: disables using cache
     + `--verbose`, `-v`: additional sourcery debug info
-    + `--watch`, `-w`: run in watcher mode, allowed only if mock name specified
-+ `watch` - run in watcher mode, allowed only if mock name specified
-+ `setup` - if more than one xcodeproj in directory, add a selected project path:  `mocky setup <project>.xcodeproj`
-+ `migrate` - migrate existing SwiftyMocky yml configurations into Mockfile™
-+ `autoimport` - scans sources and automatically resolves imports for the mocks
-+ `doctor` - run to inspect status of SwiftyMocky setup
+    + `--watch`, `-w`: run in watcher mode, requires a mock name
++ `watch <mock-name>` - run in watcher mode (accepts `--disableCache` and `--verbose`)
++ `setup [<project>.xcodeproj]` - creates a Mockfile; pass a project path if there is more than one xcodeproj in the directory
++ `migrate [<project>.xcodeproj]` - migrate existing SwiftyMocky yml configurations into Mockfile™
++ `autoimport [<mock-name>]` - scans sources and automatically resolves imports for the mocks
++ `doctor [<project>.xcodeproj]` - run to inspect status of SwiftyMocky setup
 
+Every command accepts `--help` (`-h`), and `swiftymocky --version` prints the CLI version. `swiftymocky help <command>` shows detailed help for a command.
