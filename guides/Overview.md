@@ -1,4 +1,4 @@
-# SwiftyMocky 4.3.0
+# SwiftyMocky 4.3.1
 
 # ![logo][logo]
 
@@ -45,21 +45,26 @@ The idea of **SwiftyMocky** is to automatically mock Swift protocols and protoco
 
 <a name="current-version"></a>
 
-## Version 4.3.0
+## Version 4.3.1
 
-This release modernizes **SwiftyMocky** for current Swift toolchains. See the [changelog][link-changelog] for details.
+**New in 4.3.1:**
+- **Swift Testing support.** Inside a `@Test`, `Verify` failures and missing stubs are reported with `Issue.record` at the failing line, and expected failures can be asserted with `withKnownIssue`. See [Using with Swift Testing](#swift-testing).
+- A missing stub (or another fatal mock error) now traps with `fatalError`, instead of calling `exit(0)` and ending the test run with a success status.
+- Mocks for protocols that inherit `Sendable` are generated as `final` and `@unchecked Sendable`, and all mock state is kept behind a lock (`LockedValue`).
+- `MockError.notStubed` is renamed to `MockError.notStubbed`; the old name is deprecated.
 
-**Requirements:**
+**4.3.0** modernized **SwiftyMocky** for current Swift toolchains. See the [changelog][link-changelog] for details.
+
+**Requirements (since 4.3.0):**
 - Swift 6 toolchain (Xcode 16 or newer). The package builds in Swift 6 language mode.
 - [Sourcery](https://github.com/krzysztofzablocki/Sourcery) **2.4.1** - the CLI runs it through [Mint](https://github.com/yonaskolb/Mint) by default, or set `sourceryCommand` in your [Mockfile][link-guides-mockfile].
 - macOS 14 or newer to build and run the CLI.
 
-**Breaking changes:**
+**Breaking changes in 4.3.0:**
 - **Swift Package Manager only.** CocoaPods and Carthage are no longer supported.
 - `file:` default arguments of `Verify`, `setupMock` and the mocks' `init` use `#filePath`, so failures are reported at the right location in Swift 6 language mode.
-- Generated mocks require a Swift 5.10+ compiler (they use `nonisolated(unsafe)` for static stubbing state).
 
-**Also new:** generated mocks compile cleanly in Swift 6 language mode and with the `ExistentialAny` upcoming feature, and the shared runtime state (`Matcher.default`, `MockyAssertion.handler`, ...) is thread-safe.
+**Also in 4.3.0:** generated mocks compile cleanly in Swift 6 language mode and with the `ExistentialAny` upcoming feature, and the shared runtime state (`Matcher.default`, `MockyAssertion.handler`, ...) is thread-safe.
 
 **SwiftyPrototype** is a separate library that does not depend on XCTest - mark a mock in the Mockfile with `prototype: true` to generate prototypes instead of test mocks.
 
@@ -87,7 +92,7 @@ Add **SwiftyMocky** to you **Package.swift** dependencies:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/PlayRhyba/SwiftyMocky", from: "4.3.0"),
+    .package(url: "https://github.com/PlayRhyba/SwiftyMocky", from: "4.3.1"),
 ]
 ```
 
@@ -353,27 +358,27 @@ SwiftyMocky is available under the MIT license. See the [LICENSE][link-license] 
 
 <!-- Links -->
 
-[link-guides-installation]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/setup-in-project.html
-[link-guides-contents]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/contents.html
-[link-guides-examples]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/examples.html
-[link-changelog]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/changelog.html
+[link-guides-installation]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/setup-in-project.html
+[link-guides-contents]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/contents.html
+[link-guides-examples]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/examples.html
+[link-changelog]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/changelog.html
 
-[link-guides-cli]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/command-line-interface.html
-[link-guides-cli-migration]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/command-line-interface.html#migration
-[link-guides-cli-legacy]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/legacy.html
-[link-guides-cli-generate]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/command-line-interface.html#generate
-[link-guides-mockfile]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/mockfile.html
+[link-guides-cli]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/command-line-interface.html
+[link-guides-cli-migration]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/command-line-interface.html#migration
+[link-guides-cli-legacy]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/legacy.html
+[link-guides-cli-generate]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/command-line-interface.html#generate
+[link-guides-mockfile]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/mockfile.html
 
 <!-- Links based on tag -->
 
-[link-docs]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/index.html
-[link-docs-features]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/supported-features.html
-[link-docs-installation]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/installation.html
-[link-docs-setup]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/setup-in-project.html
+[link-docs]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/index.html
+[link-docs-features]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/supported-features.html
+[link-docs-installation]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/installation.html
+[link-docs-setup]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/setup-in-project.html
 
 <!-- Assets -->
 
-[logo]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/4.3.0/icon.png
+[logo]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/4.3.1/icon.png
 [example-watcher]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/3.2.0/guides/assets/example-watcher.gif "Example - generation"
 [example-given]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/3.2.0/guides/assets/example-given.gif "Example - given"
 [example-verify]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/3.2.0/guides/assets/example-verify.gif "Example - verify"

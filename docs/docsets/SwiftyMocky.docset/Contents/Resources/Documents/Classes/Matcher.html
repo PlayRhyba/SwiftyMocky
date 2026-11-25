@@ -17,7 +17,7 @@
     <a title="Matcher Class Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="../index.html">SwiftyMocky 4.3.0 Docs</a> (85% documented)</p>
+        <p><a href="../index.html">SwiftyMocky 4.3.1 Docs</a> (85% documented)</p>
         <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="../img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="../search.json">
@@ -237,6 +237,9 @@
                 <a href="../Classes/ArgumentCaptor.html">ArgumentCaptor</a>
               </li>
               <li class="nav-group-task">
+                <a href="../Classes/LockedValue.html">LockedValue</a>
+              </li>
+              <li class="nav-group-task">
                 <a href="../Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
               </li>
             </ul>
@@ -294,11 +297,13 @@
               <div class="declaration">
                 <div class="language">
                   
-                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">class</span> <span class="kt">Matcher</span></code></pre>
+                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">class</span> <span class="kt">Matcher</span> <span class="p">:</span> <span class="kd">@unchecked</span> <span class="kt">Sendable</span></code></pre>
 
                 </div>
               </div>
             <p>Matcher is container class, responsible for storing and resolving comparators for given types.</p>
+
+<p>Matcher is thread-safe: registered comparators and the failure location are lock-protected.</p>
 
           </section>
           <section class="section task-group-section">
@@ -398,7 +403,7 @@
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>Creante new matcher instance, copying existing comparator from another instance.</p>
+                        <p>Create new matcher instance, copying existing comparator from another instance.</p>
 
                       </div>
                       <div class="declaration">
@@ -557,7 +562,7 @@
 <p>Comparator is a closure of <code>(T,T) -&gt; Bool</code>.</p>
 
 <p>When several comparators for same type  are registered to common
-<strong>Matcher</strong> instance - it will resolve the most receont one.</p>
+<strong>Matcher</strong> instance - it will resolve the most recent one.</p>
 
                       </div>
                       <div class="declaration">
@@ -661,7 +666,7 @@
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>Register default comparatot for Equatable types. Required for generic mocks to work.</p>
+                        <p>Register default comparator for Equatable types. Required for generic mocks to work.</p>
 
                       </div>
                       <div class="declaration">
@@ -712,7 +717,7 @@
 <p>Comparator is a closure of <code>(T,T) -&gt; Bool</code>.</p>
 
 <p>When several comparators for same type  are registered to common
-<strong>Matcher</strong> instance - it will resolve the most receont one.</p>
+<strong>Matcher</strong> instance - it will resolve the most recent one.</p>
 
                       </div>
                       <div class="declaration">

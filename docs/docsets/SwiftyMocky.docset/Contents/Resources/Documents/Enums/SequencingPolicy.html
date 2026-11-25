@@ -17,7 +17,7 @@
     <a title="SequencingPolicy Enumeration Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="../index.html">SwiftyMocky 4.3.0 Docs</a> (85% documented)</p>
+        <p><a href="../index.html">SwiftyMocky 4.3.1 Docs</a> (85% documented)</p>
         <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="../img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="../search.json">
@@ -237,6 +237,9 @@
                 <a href="../Classes/ArgumentCaptor.html">ArgumentCaptor</a>
               </li>
               <li class="nav-group-task">
+                <a href="../Classes/LockedValue.html">LockedValue</a>
+              </li>
+              <li class="nav-group-task">
                 <a href="../Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
               </li>
             </ul>
@@ -298,12 +301,12 @@
 
                 </div>
               </div>
-            <p>Sequencing policy - in which order Given would be resolved. Pleas ehve in mind that this policy is applied ONLY after
+            <p>Sequencing policy - in which order Given would be resolved. Please have in mind that this policy is applied ONLY after
 first ordering (based on how explicit is stub) is done.</p>
 
 <ul>
-<li><code>lastWrittenResolvedFirst</code>: Default policy. Last given overrides previous, if they are both with same generocity level</li>
-<li><code>inWritingOrder</code>: Givens would be recalled in order of generocity, respecting writing order (first line resolved first)</li>
+<li><code>lastWrittenResolvedFirst</code>: Default policy. Last given overrides previous, if they are both with same genericity level</li>
+<li><code>inWritingOrder</code>: Givens would be recalled in order of genericity, respecting writing order (first line resolved first)</li>
 </ul>
 
           </section>
@@ -323,7 +326,7 @@ first ordering (based on how explicit is stub) is done.</p>
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>Default policy. Last given overrides previous, if they are both with same generocity level</p>
+                        <p>Default policy. Last given overrides previous, if they are both with same genericity level</p>
 
                       </div>
                       <div class="declaration">
@@ -350,7 +353,7 @@ first ordering (based on how explicit is stub) is done.</p>
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>Givens would be recalled in order of generocity, respecting writing order (first line resolved first)</p>
+                        <p>Givens would be recalled in order of genericity, respecting writing order (first line resolved first)</p>
 
                       </div>
                       <div class="declaration">
@@ -421,7 +424,7 @@ first ordering (based on how explicit is stub) is done.</p>
                       </div>
                       <div>
                         <h4>Return Value</h4>
-                        <p>Sorted with respoect to ordering and policy</p>
+                        <p>Sorted with respect to ordering and policy</p>
                       </div>
                     </section>
                   </div>

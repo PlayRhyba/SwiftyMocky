@@ -16,7 +16,7 @@
     <a title="Supported features  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">SwiftyMocky 4.3.0 Docs</a> (85% documented)</p>
+        <p><a href="index.html">SwiftyMocky 4.3.1 Docs</a> (85% documented)</p>
         <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="search.json">
@@ -236,6 +236,9 @@
                 <a href="Classes/ArgumentCaptor.html">ArgumentCaptor</a>
               </li>
               <li class="nav-group-task">
+                <a href="Classes/LockedValue.html">LockedValue</a>
+              </li>
+              <li class="nav-group-task">
                 <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
               </li>
             </ul>
@@ -303,6 +306,9 @@
 <li>[x] support protocol inheritance</li>
 <li>[x] support objc protocols (with special protocol/annotation)</li>
 <li>[x] support generic protocols - see <strong>Generics</strong> section for more information <strong>!!!</strong></li>
+<li>[x] support <code>Sendable</code> protocols (also inherited indirectly) - their mocks are generated as <code>public final</code> classes conforming to <code>@unchecked Sendable</code></li>
+<li>[x] thread-safe mocks - invocations, stubs, performs and stubbed property values are lock-protected, so mocks can be used from multiple threads and tasks</li>
+<li>[x] <code>async</code> requirements - mocked as synchronous methods (a synchronous witness satisfies an <code>async</code> requirement); call them through the protocol with <code>await</code></li>
 </ul>
 <h2 id='stubbing' class='heading'>Stubbing:</h2>
 

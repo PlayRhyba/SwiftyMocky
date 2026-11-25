@@ -4,7 +4,7 @@ All changes to SwiftyMocky project will be documented in this file.
 
 -----
 
-## __Unreleased__
+## __4.3.1__ / 2026
 
 #### Added:
 * Swift Testing support: inside a `@Test`, `Verify` failures and missing stubs are reported with `Issue.record` at the failing line (no XCTest interop needed); outside Swift Testing they go to XCTest as before

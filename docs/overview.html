@@ -16,7 +16,7 @@
     <a title="Overview  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">SwiftyMocky 4.3.0 Docs</a> (85% documented)</p>
+        <p><a href="index.html">SwiftyMocky 4.3.1 Docs</a> (85% documented)</p>
         <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="search.json">
@@ -236,6 +236,9 @@
                 <a href="Classes/ArgumentCaptor.html">ArgumentCaptor</a>
               </li>
               <li class="nav-group-task">
+                <a href="Classes/LockedValue.html">LockedValue</a>
+              </li>
+              <li class="nav-group-task">
                 <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
               </li>
             </ul>
@@ -290,10 +293,10 @@
         <section>
           <section class="section">
             
-            <h1 id='swiftymocky-4-3-0' class='heading'>SwiftyMocky 4.3.0</h1>
-<h1 id='img-src-https-raw-githubusercontent-com-playrhyba-swiftymocky-4-3-0-icon-png-alt-logo' class='heading'><img src="https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/4.3.0/icon.png" alt="logo"></h1>
+            <h1 id='swiftymocky-4-3-1' class='heading'>SwiftyMocky 4.3.1</h1>
+<h1 id='img-src-https-raw-githubusercontent-com-playrhyba-swiftymocky-4-3-1-icon-png-alt-logo' class='heading'><img src="https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/4.3.1/icon.png" alt="logo"></h1>
 
-<p>Check out <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/contents.html">guides</a>, or full <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/index.html">documentation</a></p>
+<p>Check out <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/contents.html">guides</a>, or full <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/index.html">documentation</a></p>
 <h2 id='table-of-contents' class='heading'>Table of contents</h2>
 
 <ol>
@@ -313,6 +316,7 @@
 <li><a href="#given">Stubbing return values for mock methods - Given</a></li>
 <li><a href="#verify">Check invocations of methods, subscripts and properties - Verify</a></li>
 <li><a href="#perform">Take action when a stubbed method is called - Perform</a></li>
+<li><a href="#swift-testing">Using with Swift Testing</a></li>
 </ol></li>
 <li><a href="#guides">Documentation</a>
 
@@ -345,27 +349,35 @@
 </ul>
 
 <p><a name="current-version"></a></p>
-<h2 id='version-4-3-0' class='heading'>Version 4.3.0</h2>
+<h2 id='version-4-3-1' class='heading'>Version 4.3.1</h2>
 
-<p>This release modernizes <strong>SwiftyMocky</strong> for current Swift toolchains. See the <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/changelog.html">changelog</a> for details.</p>
+<p><strong>New in 4.3.1:</strong></p>
 
-<p><strong>Requirements:</strong></p>
+<ul>
+<li><strong>Swift Testing support.</strong> Inside a <code>@Test</code>, <code>Verify</code> failures and missing stubs are reported with <code>Issue.record</code> at the failing line, and expected failures can be asserted with <code>withKnownIssue</code>. See <a href="#swift-testing">Using with Swift Testing</a>.</li>
+<li>A missing stub (or another fatal mock error) now traps with <code>fatalError</code>, instead of calling <code>exit(0)</code> and ending the test run with a success status.</li>
+<li>Mocks for protocols that inherit <code>Sendable</code> are generated as <code>final</code> and <code>@unchecked Sendable</code>, and all mock state is kept behind a lock (<code><a href="Classes/LockedValue.html">LockedValue</a></code>).</li>
+<li><code><a href="Enums/MockError.html#/s:11SwiftyMocky9MockErrorO9notStubedACvpZ">MockError.notStubed</a></code> is renamed to <code><a href="Enums/MockError.html#/s:11SwiftyMocky9MockErrorO10notStubbedyA2CmF">MockError.notStubbed</a></code>; the old name is deprecated.</li>
+</ul>
+
+<p><strong>4.3.0</strong> modernized <strong>SwiftyMocky</strong> for current Swift toolchains. See the <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/changelog.html">changelog</a> for details.</p>
+
+<p><strong>Requirements (since 4.3.0):</strong></p>
 
 <ul>
 <li>Swift 6 toolchain (Xcode 16 or newer). The package builds in Swift 6 language mode.</li>
-<li><a href="https://github.com/krzysztofzablocki/Sourcery">Sourcery</a> <strong>2.4.1</strong> - the CLI runs it through <a href="https://github.com/yonaskolb/Mint">Mint</a> by default, or set <code>sourceryCommand</code> in your <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/mockfile.html">Mockfile</a>.</li>
+<li><a href="https://github.com/krzysztofzablocki/Sourcery">Sourcery</a> <strong>2.4.1</strong> - the CLI runs it through <a href="https://github.com/yonaskolb/Mint">Mint</a> by default, or set <code>sourceryCommand</code> in your <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/mockfile.html">Mockfile</a>.</li>
 <li>macOS 14 or newer to build and run the CLI.</li>
 </ul>
 
-<p><strong>Breaking changes:</strong></p>
+<p><strong>Breaking changes in 4.3.0:</strong></p>
 
 <ul>
 <li><strong>Swift Package Manager only.</strong> CocoaPods and Carthage are no longer supported.</li>
 <li><code>file:</code> default arguments of <code>Verify</code>, <code>setupMock</code> and the mocks&rsquo; <code>init</code> use <code>#filePath</code>, so failures are reported at the right location in Swift 6 language mode.</li>
-<li>Generated mocks require a Swift 5.10+ compiler (they use <code>nonisolated(unsafe)</code> for static stubbing state).</li>
 </ul>
 
-<p><strong>Also new:</strong> generated mocks compile cleanly in Swift 6 language mode and with the <code>ExistentialAny</code> upcoming feature, and the shared runtime state (<code><a href="Classes/Matcher.html#/s:11SwiftyMocky7MatcherC7defaultACvpZ">Matcher.default</a></code>, <code><a href="Classes/MockyAssertion.html#/s:11SwiftyMocky0B9AssertionC7handlerySb_SSs12StaticStringVSutcSgvpZ">MockyAssertion.handler</a></code>, &hellip;) is thread-safe.</p>
+<p><strong>Also in 4.3.0:</strong> generated mocks compile cleanly in Swift 6 language mode and with the <code>ExistentialAny</code> upcoming feature, and the shared runtime state (<code><a href="Classes/Matcher.html#/s:11SwiftyMocky7MatcherC7defaultACvpZ">Matcher.default</a></code>, <code><a href="Classes/MockyAssertion.html#/s:11SwiftyMocky0B9AssertionC7handlerySb_SSs12StaticStringVSutcSgvpZ">MockyAssertion.handler</a></code>, &hellip;) is thread-safe.</p>
 
 <p><strong>SwiftyPrototype</strong> is a separate library that does not depend on XCTest - mark a mock in the Mockfile with <code>prototype: true</code> to generate prototypes instead of test mocks.</p>
 <h2 id='migration-from-3-2-0-and-below' class='heading'>Migration from 3.2.0 and below</h2>
@@ -386,7 +398,7 @@
 
 <p>Add <strong>SwiftyMocky</strong> to you <strong>Package.swift</strong> dependencies:</p>
 <pre class="highlight swift"><code><span class="nv">dependencies</span><span class="p">:</span> <span class="p">[</span>
-    <span class="o">.</span><span class="nf">package</span><span class="p">(</span><span class="nv">url</span><span class="p">:</span> <span class="s">"https://github.com/PlayRhyba/SwiftyMocky"</span><span class="p">,</span> <span class="nv">from</span><span class="p">:</span> <span class="s">"4.3.0"</span><span class="p">),</span>
+    <span class="o">.</span><span class="nf">package</span><span class="p">(</span><span class="nv">url</span><span class="p">:</span> <span class="s">"https://github.com/PlayRhyba/SwiftyMocky"</span><span class="p">,</span> <span class="nv">from</span><span class="p">:</span> <span class="s">"4.3.1"</span><span class="p">),</span>
 <span class="p">]</span>
 </code></pre>
 
@@ -418,15 +430,15 @@
 
 <p><a href="#mock-annotate">Annotate your protocols</a> that are going to be mocked, making them adopt <code>AutoMockable</code> protocol, or adding annotation comment above their definition in the source code.</p>
 
-<p>Mocks are generated from your project root directory, based on configuration inside <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/mockfile.html">Mockfile</a>.</p>
+<p>Mocks are generated from your project root directory, based on configuration inside <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/mockfile.html">Mockfile</a>.</p>
 <pre class="highlight shell"><code><span class="o">&gt;</span> swiftymocky setup     <span class="c"># if you don't have a Mockfile yet</span>
 <span class="o">&gt;</span> swiftymocky doctor    <span class="c"># validate your setup</span>
 <span class="o">&gt;</span> swiftymocky generate  <span class="c"># generate mocks</span>
 </code></pre>
 
-<p>More informations about <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/command-line-interface.html">CLI</a> and <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/command-line-interface.html#generate">mock generation</a></p>
+<p>More informations about <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/command-line-interface.html">CLI</a> and <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/command-line-interface.html#generate">mock generation</a></p>
 
-<p>If you don&rsquo;t want to migrate to our <strong>CLI</strong> and prefer to use &ldquo;raw&rdquo; Sourcery, please refer <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/legacy.html">to this section in documentation</a>.</p>
+<p>If you don&rsquo;t want to migrate to our <strong>CLI</strong> and prefer to use &ldquo;raw&rdquo; Sourcery, please refer <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/legacy.html">to this section in documentation</a>.</p>
 
 <p><a name="usage"></a></p>
 <h1 id='usage' class='heading'>Usage</h1>
@@ -483,7 +495,7 @@
 <span class="c1">// ...</span>
 </code></pre>
 
-<p>For more details please see full <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/index.html">documentation</a>.</p>
+<p>For more details please see full <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/index.html">documentation</a>.</p>
 
 <p><a name="verify"></a></p>
 <h2 id='3-check-invocations-of-methods-subscripts-and-properties-strong-verify-strong' class='heading'>3. Check invocations of methods, subscripts and properties - <strong>Verify</strong></h2>
@@ -543,24 +555,47 @@
 <span class="p">}))</span>
 </code></pre>
 
+<p><a name="swift-testing"></a></p>
+<h3 id='5-using-with-swift-testing' class='heading'>5. Using with Swift Testing</h3>
+
+<p>SwiftyMocky works in Swift Testing <code>@Test</code> functions without extra setup. Inside a running test, failures are reported with <code>Issue.record</code>, at the line of the call that failed; otherwise they go to XCTest as before.</p>
+<pre class="highlight swift"><code><span class="kd">import</span> <span class="kt">Testing</span>
+<span class="kd">import</span> <span class="kt">SwiftyMocky</span>
+
+<span class="kd">@Test</span> <span class="kd">func</span> <span class="nf">savesUser</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="nv">storage</span> <span class="o">=</span> <span class="kt">UserStorageTypeMock</span><span class="p">()</span>
+    <span class="k">let</span> <span class="nv">sut</span> <span class="o">=</span> <span class="kt">UserService</span><span class="p">(</span><span class="nv">storage</span><span class="p">:</span> <span class="n">storage</span><span class="p">)</span>
+
+    <span class="n">sut</span><span class="o">.</span><span class="nf">save</span><span class="p">(</span><span class="nv">name</span><span class="p">:</span> <span class="s">"Joanna"</span><span class="p">,</span> <span class="nv">surname</span><span class="p">:</span> <span class="s">"Doe"</span><span class="p">)</span>
+
+    <span class="kt">Verify</span><span class="p">(</span><span class="n">storage</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">.</span><span class="nf">storeUser</span><span class="p">(</span><span class="nv">name</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="s">"Joanna"</span><span class="p">),</span> <span class="nv">surname</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">))</span>
+<span class="p">}</span>
+</code></pre>
+
+<ul>
+<li>Use <code>withKnownIssue { ... }</code> to assert that a <code>Verify</code> is expected to fail.</li>
+<li>Calling a method with no stubbed return value records an issue and then <strong>traps</strong>, ending the test process, because the mock cannot produce a value. On macOS this can be asserted with an exit test: <code>await #expect(processExitsWith: .failure) { ... }</code>.</li>
+<li>Failures are attributed to the current test through Swift Testing&rsquo;s task-local <code>Test.current</code>. Mocks called from a detached task or another thread fall back to XCTest reporting.</li>
+</ul>
+
 <p><a name="guides"></a></p>
 <h1 id='documentation' class='heading'>Documentation</h1>
 
-<p>Full documentation is available <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/index.html">here</a>, as well as through <em>docs</em> directory.</p>
+<p>Full documentation is available <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/index.html">here</a>, as well as through <em>docs</em> directory.</p>
 
-<p>Guides - <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/contents.html">Table of contents</a></p>
+<p>Guides - <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/contents.html">Table of contents</a></p>
 
-<p>Changelog is available <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/changelog.html">here</a></p>
+<p>Changelog is available <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/changelog.html">here</a></p>
 
 <p><a name="features"></a></p>
 <h2 id='all-supported-features' class='heading'>All supported features</h2>
 
-<p>For list all supported features, check documentation <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/supported-features.html">here</a> or [guides][link-guides-features]</p>
+<p>For list all supported features, check documentation <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/supported-features.html">here</a> or [guides][link-guides-features]</p>
 
 <p><a name="examples"></a></p>
 <h2 id='examples-of-usage' class='heading'>Examples of usage</h2>
 
-<p>For more examples, check out our example project, or examples section in <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.0/docs/examples.html">guides</a>.</p>
+<p>For more examples, check out our example project, or examples section in <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/examples.html">guides</a>.</p>
 
 <p>To run the example project, clone the repo and open <code>SwiftyMocky.xcodeproj</code> - Xcode resolves SwiftyMocky as a local Swift package.</p>
 

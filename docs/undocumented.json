@@ -1,8 +1,15 @@
 {
   "warnings": [
     {
+      "file": "/Users/oleksandr/Projects/Personal/SwiftyMocky/Sources/Shared/LockedValue.swift",
+      "line": 17,
+      "symbol": "LockedValue.init(_:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
       "file": "/Users/oleksandr/Projects/Personal/SwiftyMocky/Sources/Shared/Matcher.swift",
-      "line": 203,
+      "line": 204,
       "symbol": "Matcher.set(file:line:)",
       "symbol_kind": "source.lang.swift.decl.function.method.instance",
       "warning": "undocumented"
@@ -87,20 +94,27 @@
     {
       "file": "/Users/oleksandr/Projects/Personal/SwiftyMocky/Sources/Shared/Stubbing.swift",
       "line": 7,
-      "symbol": "MockError.notStubed",
+      "symbol": "MockError.notStubbed",
       "symbol_kind": "source.lang.swift.decl.enumelement",
       "warning": "undocumented"
     },
     {
       "file": "/Users/oleksandr/Projects/Personal/SwiftyMocky/Sources/Shared/Stubbing.swift",
-      "line": 15,
+      "line": 10,
+      "symbol": "MockError.notStubed",
+      "symbol_kind": "source.lang.swift.decl.var.static",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/oleksandr/Projects/Personal/SwiftyMocky/Sources/Shared/Stubbing.swift",
+      "line": 18,
       "symbol": "StubProduct.return(_:)",
       "symbol_kind": "source.lang.swift.decl.enumelement",
       "warning": "undocumented"
     },
     {
       "file": "/Users/oleksandr/Projects/Personal/SwiftyMocky/Sources/Shared/Stubbing.swift",
-      "line": 16,
+      "line": 19,
       "symbol": "StubProduct.throw(_:)",
       "symbol_kind": "source.lang.swift.decl.enumelement",
       "warning": "undocumented"

@@ -16,7 +16,7 @@
     <a title="CHANGELOG  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">SwiftyMocky 4.3.0 Docs</a> (85% documented)</p>
+        <p><a href="index.html">SwiftyMocky 4.3.1 Docs</a> (85% documented)</p>
         <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="search.json">
@@ -236,6 +236,9 @@
                 <a href="Classes/ArgumentCaptor.html">ArgumentCaptor</a>
               </li>
               <li class="nav-group-task">
+                <a href="Classes/LockedValue.html">LockedValue</a>
+              </li>
+              <li class="nav-group-task">
                 <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
               </li>
             </ul>
@@ -295,6 +298,33 @@
 <p>All changes to SwiftyMocky project will be documented in this file.</p>
 
 <hr>
+<h2 id='strong-4-3-1-strong-2026' class='heading'><strong>4.3.1</strong> / 2026</h2>
+<h4 id='added' class='heading'>Added:</h4>
+
+<ul>
+<li>Swift Testing support: inside a <code>@Test</code>, <code>Verify</code> failures and missing stubs are reported with <code>Issue.record</code> at the failing line (no XCTest interop needed); outside Swift Testing they go to XCTest as before</li>
+<li>Mocks for protocols that inherit <code>Sendable</code> (directly or through another protocol) are generated as <code>public final class …: Mock, @unchecked Sendable</code>, so protocols like <code>protocol DataProviding: Sendable { func getData&lt;T: Decodable&gt;(from url: String) async throws -&gt; T }</code> can be mocked in Swift 6 mode</li>
+<li>All generated mocks keep their mutable state (invocations, givens, performs, stubbed property values, matcher, policies, file/line) in a private <code>MockState</code> struct inside a <code><a href="Classes/LockedValue.html">LockedValue</a></code> (now public), so it can only be reached under the lock. Parameter matching and perform closures run outside the lock. Previously only method invocations were synchronized</li>
+<li><code><a href="Classes/Matcher.html">Matcher</a></code> is thread-safe (<code>@unchecked Sendable</code>): registered comparators and the failure location are lock-protected</li>
+</ul>
+<h4 id='changed' class='heading'>Changed:</h4>
+
+<ul>
+<li>A missing stub (or another fatal mock error: no comparator registered, failed return-value cast) now traps with <code>fatalError</code> instead of calling <code>exit(0)</code>, so a test run can no longer stop midway with a success exit status. <code>FatalErrorUtil.set</code> still allows a custom handler</li>
+<li><code>rake test</code> regenerates templates, CLI assets and mocks, then runs <code>swift test</code> (was <code>ice test</code>)</li>
+<li><code><a href="Enums/MockError.html#/s:11SwiftyMocky9MockErrorO9notStubedACvpZ">MockError.notStubed</a></code> renamed to <code><a href="Enums/MockError.html#/s:11SwiftyMocky9MockErrorO10notStubbedyA2CmF">MockError.notStubbed</a></code>; the old name is kept as a deprecated alias, so existing code and previously generated mocks still compile</li>
+<li>Removed the unused standalone <code>Shared</code> SwiftPM target (its sources are compiled into <code>SwiftyMocky</code> and <code>SwiftyPrototype</code>)</li>
+<li>SwiftyPrototype: <code>MockyAssert</code> default <code>file:</code> argument is now <code>#filePath</code> (was <code>#file</code>), matching SwiftyMocky</li>
+<li><code>MockyAssert</code>/<code>MockyAssertion</code> and <code><a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a></code> live once in shared sources; SwiftyPrototype keeps its no-XCTest behaviour via the <code>SWIFTY_PROTOTYPE</code> compilation condition</li>
+<li>SwiftPM test suite now includes async method and throwing getter examples (stale macOS 12 excludes removed)</li>
+<li>Renamed test target <code>RuntimeLibaryTests</code> to <code>RuntimeLibraryTests</code></li>
+<li>Example project: async method and throwing getter examples moved from <code>Swift5.5</code> to <code>Concurrency</code> (no longer <code>@available</code>-gated) and are part of the iOS, macOS and tvOS targets; removed the separate <code>Mocky_Example_iOS_15</code> / <code>Mocky_Tests_iOS_15</code> targets, their schemes and the <code>IOS15</code> flag</li>
+</ul>
+<h4 id='fixed' class='heading'>Fixed:</h4>
+
+<ul>
+<li>Missing subscript stub failure printed the literal text <code>noStubDefinedMessage</code> instead of the actual message</li>
+</ul>
 <h2 id='strong-4-3-0-strong-2026' class='heading'><strong>4.3.0</strong> / 2026</h2>
 <h4 id='breaking' class='heading'>Breaking:</h4>
 

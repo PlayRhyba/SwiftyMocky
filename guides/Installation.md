@@ -44,7 +44,7 @@ Add **SwiftyMocky** to you **Package.swift** dependencies:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/PlayRhyba/SwiftyMocky", from: "4.3.0"),
+    .package(url: "https://github.com/PlayRhyba/SwiftyMocky", from: "4.3.1"),
 ]
 ```
 

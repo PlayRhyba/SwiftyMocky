@@ -16,7 +16,7 @@
     <a title="Examples  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">SwiftyMocky 4.3.0 Docs</a> (85% documented)</p>
+        <p><a href="index.html">SwiftyMocky 4.3.1 Docs</a> (85% documented)</p>
         <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="search.json">
@@ -236,6 +236,9 @@
                 <a href="Classes/ArgumentCaptor.html">ArgumentCaptor</a>
               </li>
               <li class="nav-group-task">
+                <a href="Classes/LockedValue.html">LockedValue</a>
+              </li>
+              <li class="nav-group-task">
                 <a href="Classes/SwiftyMockyTestObserver.html">SwiftyMockyTestObserver</a>
               </li>
             </ul>
@@ -396,7 +399,7 @@
 
 <span class="kt">Verify</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">optionalParam</span><span class="p">:</span> <span class="o">.</span><span class="kd">any</span><span class="p">))</span> <span class="c1">// Should be 0</span>
 
-<span class="c1">// When same level of explicity - last given is matched first</span>
+<span class="c1">// When same level of explicitness - last given is matched first</span>
 <span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">optionalParam</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="kc">nil</span><span class="p">),</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="kc">nil</span><span class="p">))</span>
 <span class="kt">XCTAssertEqual</span><span class="p">(</span><span class="n">mock</span><span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">optionalParam</span><span class="p">:</span> <span class="kc">nil</span><span class="p">),</span> <span class="kc">nil</span><span class="p">)</span>
 <span class="kt">Given</span><span class="p">(</span><span class="n">mock</span><span class="p">,</span> <span class="o">.</span><span class="nf">simpleMehtodThatReturns</span><span class="p">(</span><span class="nv">optionalParam</span><span class="p">:</span> <span class="o">.</span><span class="nf">value</span><span class="p">(</span><span class="s">"some"</span><span class="p">),</span> <span class="nv">willReturn</span><span class="p">:</span> <span class="s">"not nil"</span><span class="p">))</span>
