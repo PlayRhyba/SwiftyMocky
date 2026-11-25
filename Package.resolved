@@ -1,5 +1,5 @@
 {
-  "originHash" : "fa80d14eae1f25df46917a2fd64d60277bc951016533fb313dd79111c0644af6",
+  "originHash" : "6ae0ff5e060c459a45b734b5eb889291ec767b6e832c5d7785123e6762e879e4",
   "pins" : [
     {
       "identity" : "aexml",
@@ -8,15 +8,6 @@
       "state" : {
         "revision" : "d2083adcf4d1383c858f5d3d0f24256459d3f59a",
         "version" : "4.7.4"
-      }
-    },
-    {
-      "identity" : "chalk",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/luoxiu/Chalk",
-      "state" : {
-        "revision" : "8a9d3373bd754fb62f7881d9f639d376f5e4d5a5",
-        "version" : "0.2.1"
       }
     },
     {
@@ -35,15 +26,6 @@
       "state" : {
         "revision" : "3bfd2737b700b9a36565a8c94f4ad2b050a5e574",
         "version" : "1.0.1"
-      }
-    },
-    {
-      "identity" : "rainbow",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/luoxiu/Rainbow",
-      "state" : {
-        "revision" : "9d8fcb4c64e816a135c31162a0c319e9f1f09c35",
-        "version" : "0.1.1"
       }
     },
     {

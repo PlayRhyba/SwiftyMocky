@@ -1,5 +1,4 @@
 import Foundation
-import Chalk
 
 public enum Message {
     // The CLI prints from a single thread.
@@ -41,45 +40,45 @@ public enum Message {
     public static func header(_ message: String) {
         empty()
         count += 1
-        let styled = ck.bold.on("\(count). \(message)")
+        let styled = TerminalStyle.bold.on("\(count). \(message)")
         just("\(styled)")
     }
 
     public static func subheader(_ message: String) {
-        let styled = ck.bold.on(message)
+        let styled = TerminalStyle.bold.on(message)
         just("\(styled)")
     }
 
     public static func actionHeader(_ message: String) {
-        let styled = ck.bold.bg(RainbowColor.Material.green900).whiteBright.on(message)
+        let styled = TerminalStyle.bold.background(hex: 0x1B5E20, fallback256: 22).whiteBright.on(message)
         just("\(styled)")
     }
 
     public static func infoPoint(_ message: String) {
-        let styled = ck.bold.on(" -> \(message)")
+        let styled = TerminalStyle.bold.on(" -> \(message)")
         just("\(styled)")
     }
 
     public static func success(_ message: String) {
-        just("✅  \(ck.greenBright.on(message))")
+        just("✅  \(TerminalStyle.greenBright.on(message))")
     }
 
     public static func ok(_ message: String) {
-        let styled = ck.greenBright.on(" +  \(message)")
+        let styled = TerminalStyle.greenBright.on(" +  \(message)")
         just("\(styled)")
     }
 
     public static func nok(_ message: String) {
-        let styled = ck.red.on(" -  \(message)")
+        let styled = TerminalStyle.red.on(" -  \(message)")
         just("\(styled)")
     }
 
     public static func failure(_ message: String) {
-        just("❌  \(ck.bold.red.on(message))")
+        just("❌  \(TerminalStyle.bold.red.on(message))")
     }
 
     public static func warning(_ message: String) {
-        just("⚠️  \(ck.bold.yellow.on(message))")
+        just("⚠️  \(TerminalStyle.bold.yellow.on(message))")
     }
 
     public static func resolutions(_ messages: String..., title: String = "Possible solutions:") {
@@ -88,25 +87,25 @@ public enum Message {
 
     public static func resolutions(array messages: [String], title: String = "Possible solutions:") {
         indent()
-        just("\(ck.underline.gray.on(title))")
+        just("\(TerminalStyle.underline.gray.on(title))")
         messages.forEach {
-            let styled = ck.gray.on(" - \($0)")
+            let styled = TerminalStyle.gray.on(" - \($0)")
             just("\(styled)")
         }
         unindent()
     }
 
     public static func hint(_ message: String) {
-        just("\(ck.underline.gray.on(message))")
+        just("\(TerminalStyle.underline.gray.on(message))")
     }
 
     // MARK: - Misc
 
     public static func swiftyMockyLabel(_ message: String) {
         let bar = String(repeating: "═", count: message.count + 2)
-        print(ck.bold.on("╔\(bar)╗"))
-        print(ck.bold.on("║ \(message) ║"))
-        print(ck.bold.on("╚\(bar)╝"))
+        print(TerminalStyle.bold.on("╔\(bar)╗"))
+        print(TerminalStyle.bold.on("║ \(message) ║"))
+        print(TerminalStyle.bold.on("╚\(bar)╝"))
         print("")
     }
 }

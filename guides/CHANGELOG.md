@@ -8,6 +8,7 @@ All changes to SwiftyMocky project will be documented in this file.
 
 #### Changed:
 * CLI: dropped the unmaintained [ShellOut](https://github.com/JohnSundell/ShellOut) dependency; Sourcery and Mint commands run through a small `Foundation.Process` helper (still via `/bin/bash -c`, so Mockfile `sourceryCommand` values work as before)
+* CLI: dropped the unmaintained [Chalk](https://github.com/luoxiu/Chalk) dependency (and its Rainbow dependency); output is styled by a small built-in ANSI helper. Colors are off when output is not a terminal, for `TERM=dumb`, and when `NO_COLOR` is set
 * `rake docs` makes the paths in `docs/undocumented.json` repo-relative
 
 ## __4.3.1__ / 2026
