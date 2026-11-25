@@ -134,7 +134,7 @@ public func Perform<T: StaticMock>(_ object: T.Type, _ method: T.StaticPerform) 
 
 // MARK: - Helpers
 
-/// [Internal] Fails flow with given message
+/// [Internal] Fails flow with given message. By default it traps (see `FatalErrorUtil`).
 ///
 /// - Parameter message: Failure message
 /// - Returns: Never
@@ -147,10 +147,10 @@ public func Failure(_ message: String) -> Swift.Never {
 public struct FatalErrorUtil {
     /// [Internal] Handler
     private static let handler = LockedValue<(String) -> Never>(defaultHandler)
-    /// [Internal] Default handler
-    private static let defaultHandler: @Sendable (String) -> Never = {
-        print($0)
-        exit(0)
+    /// [Internal] Default handler. Traps, so the test run ends with a failure
+    /// instead of silently stopping with a success exit status.
+    private static let defaultHandler: @Sendable (String) -> Never = { message in
+        Swift.fatalError(message)
     }
 
     /// [Internal] Override handling error handler

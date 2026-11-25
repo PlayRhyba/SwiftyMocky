@@ -4103,7 +4103,7 @@ open class ExistentialAnyProtocolMock: ExistentialAnyProtocol, Mock, StaticMock 
 			do {
 				return try methodReturnValue(.subscript_get_index(Parameter<Int>.value(`index`))).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 		set {
@@ -5034,7 +5034,7 @@ open class FailsWithKeywordArgumentsMock: FailsWithKeywordArguments, Mock {
 			do {
 				return try methodReturnValue(.subscript_get_return(Parameter<Int>.value(`return`))).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 		set {
@@ -8744,7 +8744,7 @@ open class ProtocolWithAttributesBMock: ProtocolWithAttributesB, Mock {
 			do {
 				return try methodReturnValue(.subscript_get_x_y(Parameter<Int>.value(`x`).typeErasedAttribute(), Parameter<Int>.value(`y`).typeErasedAttribute())).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 		set {
@@ -12725,7 +12725,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 			do {
 				return try methodReturnValue(.subscript_get_index_1(Parameter<Int>.value(`index`))).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 		set {
@@ -12739,7 +12739,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 			do {
 				return try methodReturnValue(.subscript_get_labeled_index(Parameter<Int>.value(`index`))).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 		set {
@@ -12753,7 +12753,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 			do {
 				return try methodReturnValue(.subscript_get_x_y(Parameter<Int>.value(`x`), Parameter<Int>.value(`y`))).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 		set {
@@ -12767,7 +12767,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 			do {
 				return try methodReturnValue(.subscript_get_index_2(Parameter<String>.value(`index`))).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 		set {
@@ -12781,7 +12781,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 			do {
 				return try methodReturnValue(.subscript_get_label_name(Parameter<String>.value(`name`))).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 	}
@@ -12792,7 +12792,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 			do {
 				return try methodReturnValue(.subscript_get_with_generic_1(Parameter<T>.value(`generic`).wrapAsGeneric())).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 		set {
@@ -12806,7 +12806,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 			do {
 				return try methodReturnValue(.subscript_get_with_generic_2(Parameter<T>.value(`generic`).wrapAsGeneric())).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 		set {
@@ -12820,7 +12820,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 			do {
 				return try methodReturnValue(.subscript_get_i_type(Parameter<Int>.value(`i`), Parameter<T.Type>.value(`type`).wrapAsGeneric())).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 		set {
@@ -12834,7 +12834,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 			do {
 				return try methodReturnValue(.subscript_get_closure_c(Parameter<(Int) -> Void>.value(`c`))).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 		set {
@@ -12848,7 +12848,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 			do {
 				return try methodReturnValue(.subscript_get_same_1(Parameter<Int>.value(`same`))).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 		set {
@@ -12862,7 +12862,7 @@ open class ProtocolWithSubscriptsMock: ProtocolWithSubscripts, Mock {
 			do {
 				return try methodReturnValue(.subscript_get_same_2(Parameter<Int>.value(`same`))).casted()
 			} catch {
-				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("noStubDefinedMessage")
+				onFatalFailure("Stub return value not specified for subscript. Use given first."); Failure("Stub return value not specified for subscript. Use given first.")
 			}
 		}
 		set {

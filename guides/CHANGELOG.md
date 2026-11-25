@@ -12,6 +12,8 @@ All changes to SwiftyMocky project will be documented in this file.
 * `Matcher` is thread-safe (`@unchecked Sendable`): registered comparators and the failure location are lock-protected
 
 #### Changed:
+* A missing stub (or another fatal mock error: no comparator registered, failed return-value cast) now traps with `fatalError` instead of calling `exit(0)`, so a test run can no longer stop midway with a success exit status. `FatalErrorUtil.set` still allows a custom handler
+* `rake test` regenerates templates, CLI assets and mocks, then runs `swift test` (was `ice test`)
 * `MockError.notStubed` renamed to `MockError.notStubbed`; the old name is kept as a deprecated alias, so existing code and previously generated mocks still compile
 * Removed the unused standalone `Shared` SwiftPM target (its sources are compiled into `SwiftyMocky` and `SwiftyPrototype`)
 * SwiftyPrototype: `MockyAssert` default `file:` argument is now `#filePath` (was `#file`), matching SwiftyMocky
@@ -19,6 +21,9 @@ All changes to SwiftyMocky project will be documented in this file.
 * SwiftPM test suite now includes async method and throwing getter examples (stale macOS 12 excludes removed)
 * Renamed test target `RuntimeLibaryTests` to `RuntimeLibraryTests`
 * Example project: async method and throwing getter examples moved from `Swift5.5` to `Concurrency` (no longer `@available`-gated) and are part of the iOS, macOS and tvOS targets; removed the separate `Mocky_Example_iOS_15` / `Mocky_Tests_iOS_15` targets, their schemes and the `IOS15` flag
+
+#### Fixed:
+* Missing subscript stub failure printed the literal text `noStubDefinedMessage` instead of the actual message
 
 ## __4.3.0__ / 2026
 
