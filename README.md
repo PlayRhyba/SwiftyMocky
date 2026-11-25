@@ -52,7 +52,13 @@ The idea of **SwiftyMocky** is to automatically mock Swift protocols and protoco
 
 <a name="current-version"></a>
 
-## Version 4.3.1
+## Version 4.4.0
+
+**New in 4.4.0** (CLI only; the mocking library and generated mocks are unchanged):
+- The CLI no longer depends on unmaintained packages: ShellOut, Chalk and Commander are replaced by a small `Foundation.Process` helper, built-in terminal styling and Apple's [swift-argument-parser](https://github.com/apple/swift-argument-parser).
+- Every command has `--help`, `swiftymocky --version` prints the version, and usage errors (unknown flag, missing mock name for `watch`) exit with code 64.
+- Colored output is turned off when it is not a terminal, for `TERM=dumb`, and when `NO_COLOR` is set.
+- Existing commands, flags (including `--disableCache`) and Mockfiles work unchanged.
 
 **New in 4.3.1:**
 - **Swift Testing support.** Inside a `@Test`, `Verify` failures and missing stubs are reported with `Issue.record` at the failing line, and expected failures can be asserted with `withKnownIssue`. See [Using with Swift Testing](#swift-testing).
@@ -99,7 +105,7 @@ Add **SwiftyMocky** to you **Package.swift** dependencies:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/PlayRhyba/SwiftyMocky", from: "4.3.1"),
+    .package(url: "https://github.com/PlayRhyba/SwiftyMocky", from: "4.4.0"),
 ]
 ```
 
@@ -383,14 +389,14 @@ SwiftyMocky is available under the MIT license. See the [LICENSE][link-license] 
 
 <!-- Links based on tag -->
 
-[link-docs]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/index.html
-[link-docs-features]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/supported-features.html
-[link-docs-installation]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/installation.html
-[link-docs-setup]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/setup-in-project.html
+[link-docs]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/index.html
+[link-docs-features]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/supported-features.html
+[link-docs-installation]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/installation.html
+[link-docs-setup]: https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/setup-in-project.html
 
 <!-- Assets -->
 
-[logo]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/4.3.1/icon.png
+[logo]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/4.4.0/icon.png
 [example-watcher]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/1.0.0/guides/assets/example-watcher.gif "Example - generation"
 [example-given]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/1.0.0/guides/assets/example-given.gif "Example - given"
 [example-verify]: https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/1.0.0/guides/assets/example-verify.gif "Example - verify"

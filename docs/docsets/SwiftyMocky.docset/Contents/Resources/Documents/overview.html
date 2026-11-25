@@ -16,7 +16,7 @@
     <a title="Overview  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">SwiftyMocky 4.3.1 Docs</a> (85% documented)</p>
+        <p><a href="index.html">SwiftyMocky 4.4.0 Docs</a> (85% documented)</p>
         <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="search.json">
@@ -293,10 +293,10 @@
         <section>
           <section class="section">
             
-            <h1 id='swiftymocky-4-3-1' class='heading'>SwiftyMocky 4.3.1</h1>
-<h1 id='img-src-https-raw-githubusercontent-com-playrhyba-swiftymocky-4-3-1-icon-png-alt-logo' class='heading'><img src="https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/4.3.1/icon.png" alt="logo"></h1>
+            <h1 id='swiftymocky-4-4-0' class='heading'>SwiftyMocky 4.4.0</h1>
+<h1 id='img-src-https-raw-githubusercontent-com-playrhyba-swiftymocky-4-4-0-icon-png-alt-logo' class='heading'><img src="https://raw.githubusercontent.com/PlayRhyba/SwiftyMocky/4.4.0/icon.png" alt="logo"></h1>
 
-<p>Check out <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/contents.html">guides</a>, or full <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/index.html">documentation</a></p>
+<p>Check out <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/contents.html">guides</a>, or full <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/index.html">documentation</a></p>
 <h2 id='table-of-contents' class='heading'>Table of contents</h2>
 
 <ol>
@@ -349,7 +349,16 @@
 </ul>
 
 <p><a name="current-version"></a></p>
-<h2 id='version-4-3-1' class='heading'>Version 4.3.1</h2>
+<h2 id='version-4-4-0' class='heading'>Version 4.4.0</h2>
+
+<p><strong>New in 4.4.0</strong> (CLI only; the mocking library and generated mocks are unchanged):</p>
+
+<ul>
+<li>The CLI no longer depends on unmaintained packages: ShellOut, Chalk and Commander are replaced by a small <code>Foundation.Process</code> helper, built-in terminal styling and Apple&rsquo;s <a href="https://github.com/apple/swift-argument-parser">swift-argument-parser</a>.</li>
+<li>Every command has <code>--help</code>, <code>swiftymocky --version</code> prints the version, and usage errors (unknown flag, missing mock name for <code>watch</code>) exit with code 64.</li>
+<li>Colored output is turned off when it is not a terminal, for <code>TERM=dumb</code>, and when <code>NO_COLOR</code> is set.</li>
+<li>Existing commands, flags (including <code>--disableCache</code>) and Mockfiles work unchanged.</li>
+</ul>
 
 <p><strong>New in 4.3.1:</strong></p>
 
@@ -360,13 +369,13 @@
 <li><code><a href="Enums/MockError.html#/s:11SwiftyMocky9MockErrorO9notStubedACvpZ">MockError.notStubed</a></code> is renamed to <code><a href="Enums/MockError.html#/s:11SwiftyMocky9MockErrorO10notStubbedyA2CmF">MockError.notStubbed</a></code>; the old name is deprecated.</li>
 </ul>
 
-<p><strong>4.3.0</strong> modernized <strong>SwiftyMocky</strong> for current Swift toolchains. See the <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/changelog.html">changelog</a> for details.</p>
+<p><strong>4.3.0</strong> modernized <strong>SwiftyMocky</strong> for current Swift toolchains. See the <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/changelog.html">changelog</a> for details.</p>
 
 <p><strong>Requirements (since 4.3.0):</strong></p>
 
 <ul>
 <li>Swift 6 toolchain (Xcode 16 or newer). The package builds in Swift 6 language mode.</li>
-<li><a href="https://github.com/krzysztofzablocki/Sourcery">Sourcery</a> <strong>2.4.1</strong> - the CLI runs it through <a href="https://github.com/yonaskolb/Mint">Mint</a> by default, or set <code>sourceryCommand</code> in your <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/mockfile.html">Mockfile</a>.</li>
+<li><a href="https://github.com/krzysztofzablocki/Sourcery">Sourcery</a> <strong>2.4.1</strong> - the CLI runs it through <a href="https://github.com/yonaskolb/Mint">Mint</a> by default, or set <code>sourceryCommand</code> in your <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/mockfile.html">Mockfile</a>.</li>
 <li>macOS 14 or newer to build and run the CLI.</li>
 </ul>
 
@@ -398,7 +407,7 @@
 
 <p>Add <strong>SwiftyMocky</strong> to you <strong>Package.swift</strong> dependencies:</p>
 <pre class="highlight swift"><code><span class="nv">dependencies</span><span class="p">:</span> <span class="p">[</span>
-    <span class="o">.</span><span class="nf">package</span><span class="p">(</span><span class="nv">url</span><span class="p">:</span> <span class="s">"https://github.com/PlayRhyba/SwiftyMocky"</span><span class="p">,</span> <span class="nv">from</span><span class="p">:</span> <span class="s">"4.3.1"</span><span class="p">),</span>
+    <span class="o">.</span><span class="nf">package</span><span class="p">(</span><span class="nv">url</span><span class="p">:</span> <span class="s">"https://github.com/PlayRhyba/SwiftyMocky"</span><span class="p">,</span> <span class="nv">from</span><span class="p">:</span> <span class="s">"4.4.0"</span><span class="p">),</span>
 <span class="p">]</span>
 </code></pre>
 
@@ -430,15 +439,15 @@
 
 <p><a href="#mock-annotate">Annotate your protocols</a> that are going to be mocked, making them adopt <code>AutoMockable</code> protocol, or adding annotation comment above their definition in the source code.</p>
 
-<p>Mocks are generated from your project root directory, based on configuration inside <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/mockfile.html">Mockfile</a>.</p>
+<p>Mocks are generated from your project root directory, based on configuration inside <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/mockfile.html">Mockfile</a>.</p>
 <pre class="highlight shell"><code><span class="o">&gt;</span> swiftymocky setup     <span class="c"># if you don't have a Mockfile yet</span>
 <span class="o">&gt;</span> swiftymocky doctor    <span class="c"># validate your setup</span>
 <span class="o">&gt;</span> swiftymocky generate  <span class="c"># generate mocks</span>
 </code></pre>
 
-<p>More informations about <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/command-line-interface.html">CLI</a> and <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/command-line-interface.html#generate">mock generation</a></p>
+<p>More informations about <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/command-line-interface.html">CLI</a> and <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/command-line-interface.html#generate">mock generation</a></p>
 
-<p>If you don&rsquo;t want to migrate to our <strong>CLI</strong> and prefer to use &ldquo;raw&rdquo; Sourcery, please refer <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/legacy.html">to this section in documentation</a>.</p>
+<p>If you don&rsquo;t want to migrate to our <strong>CLI</strong> and prefer to use &ldquo;raw&rdquo; Sourcery, please refer <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/legacy.html">to this section in documentation</a>.</p>
 
 <p><a name="usage"></a></p>
 <h1 id='usage' class='heading'>Usage</h1>
@@ -495,7 +504,7 @@
 <span class="c1">// ...</span>
 </code></pre>
 
-<p>For more details please see full <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/index.html">documentation</a>.</p>
+<p>For more details please see full <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/index.html">documentation</a>.</p>
 
 <p><a name="verify"></a></p>
 <h2 id='3-check-invocations-of-methods-subscripts-and-properties-strong-verify-strong' class='heading'>3. Check invocations of methods, subscripts and properties - <strong>Verify</strong></h2>
@@ -581,21 +590,21 @@
 <p><a name="guides"></a></p>
 <h1 id='documentation' class='heading'>Documentation</h1>
 
-<p>Full documentation is available <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/index.html">here</a>, as well as through <em>docs</em> directory.</p>
+<p>Full documentation is available <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/index.html">here</a>, as well as through <em>docs</em> directory.</p>
 
-<p>Guides - <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/contents.html">Table of contents</a></p>
+<p>Guides - <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/contents.html">Table of contents</a></p>
 
-<p>Changelog is available <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/changelog.html">here</a></p>
+<p>Changelog is available <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/changelog.html">here</a></p>
 
 <p><a name="features"></a></p>
 <h2 id='all-supported-features' class='heading'>All supported features</h2>
 
-<p>For list all supported features, check documentation <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/supported-features.html">here</a> or [guides][link-guides-features]</p>
+<p>For list all supported features, check documentation <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/supported-features.html">here</a> or [guides][link-guides-features]</p>
 
 <p><a name="examples"></a></p>
 <h2 id='examples-of-usage' class='heading'>Examples of usage</h2>
 
-<p>For more examples, check out our example project, or examples section in <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.3.1/docs/examples.html">guides</a>.</p>
+<p>For more examples, check out our example project, or examples section in <a href="https://rawcdn.githack.com/PlayRhyba/SwiftyMocky/4.4.0/docs/examples.html">guides</a>.</p>
 
 <p>To run the example project, clone the repo and open <code>SwiftyMocky.xcodeproj</code> - Xcode resolves SwiftyMocky as a local Swift package.</p>
 

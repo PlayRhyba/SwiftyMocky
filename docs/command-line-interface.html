@@ -16,7 +16,7 @@
     <a title="Command Line Interface  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">SwiftyMocky 4.3.1 Docs</a> (85% documented)</p>
+        <p><a href="index.html">SwiftyMocky 4.4.0 Docs</a> (85% documented)</p>
         <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="search.json">
@@ -312,19 +312,21 @@
 
 <ul>
 <li><code>init</code> - Creates template of Mockfile to fill</li>
-<li><code>generate</code> - generate mocks. Usage &lsquo;swiftymocky options optional-mock-name&rsquo;. Allowed flags:
+<li><code>generate [&lt;mock-name&gt;]</code> - generate mocks (all of them, or the one named). Flags:
 
 <ul>
-<li><code>--disableCache</code>: disables using cahche</li>
+<li><code>--disableCache</code>: disables using cache</li>
 <li><code>--verbose</code>, <code>-v</code>: additional sourcery debug info</li>
-<li><code>--watch</code>, <code>-w</code>: run in watcher mode, allowed only if mock name specified</li>
+<li><code>--watch</code>, <code>-w</code>: run in watcher mode, requires a mock name</li>
 </ul></li>
-<li><code>watch</code> - run in watcher mode, allowed only if mock name specified</li>
-<li><code>setup</code> - if more than one xcodeproj in directory, add a selected project path:  <code>mocky setup &lt;project&gt;.xcodeproj</code></li>
-<li><code>migrate</code> - migrate existing SwiftyMocky yml configurations into Mockfile™</li>
-<li><code>autoimport</code> - scans sources and automatically resolves imports for the mocks</li>
-<li><code>doctor</code> - run to inspect status of SwiftyMocky setup</li>
+<li><code>watch &lt;mock-name&gt;</code> - run in watcher mode (accepts <code>--disableCache</code> and <code>--verbose</code>)</li>
+<li><code>setup [&lt;project&gt;.xcodeproj]</code> - creates a Mockfile; pass a project path if there is more than one xcodeproj in the directory</li>
+<li><code>migrate [&lt;project&gt;.xcodeproj]</code> - migrate existing SwiftyMocky yml configurations into Mockfile™</li>
+<li><code>autoimport [&lt;mock-name&gt;]</code> - scans sources and automatically resolves imports for the mocks</li>
+<li><code>doctor [&lt;project&gt;.xcodeproj]</code> - run to inspect status of SwiftyMocky setup</li>
 </ul>
+
+<p>Every command accepts <code>--help</code> (<code>-h</code>), and <code>swiftymocky --version</code> prints the CLI version. <code>swiftymocky help &lt;command&gt;</code> shows detailed help for a command.</p>
 
           </section>
         </section>

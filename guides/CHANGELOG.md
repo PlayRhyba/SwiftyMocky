@@ -4,7 +4,7 @@ All changes to SwiftyMocky project will be documented in this file.
 
 -----
 
-## __Unreleased__
+## __4.4.0__ / 2026
 
 #### Changed:
 * CLI: dropped the unmaintained [ShellOut](https://github.com/JohnSundell/ShellOut) dependency; Sourcery and Mint commands run through a small `Foundation.Process` helper (still via `/bin/bash -c`, so Mockfile `sourceryCommand` values work as before)

@@ -5,7 +5,7 @@ public class Application {
 
     // MARK: - Properties
 
-    public let version = "4.3.1"
+    public let version = "4.4.0"
     public var pwd = Path(ProcessInfo.processInfo.environment["PWD"] ?? "")
     public var handle: (any Error) -> Void = { error in
         switch error {

@@ -16,7 +16,7 @@
     <a title="CHANGELOG  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">SwiftyMocky 4.3.1 Docs</a> (85% documented)</p>
+        <p><a href="index.html">SwiftyMocky 4.4.0 Docs</a> (85% documented)</p>
         <p class="header-right"><a href="https://github.com/PlayRhyba/SwiftyMocky"><img src="img/gh.png" alt="GitHub"/>View on GitHub</a></p>
         <div class="header-right">
           <form role="search" action="search.json">
@@ -298,6 +298,15 @@
 <p>All changes to SwiftyMocky project will be documented in this file.</p>
 
 <hr>
+<h2 id='strong-4-4-0-strong-2026' class='heading'><strong>4.4.0</strong> / 2026</h2>
+<h4 id='changed' class='heading'>Changed:</h4>
+
+<ul>
+<li>CLI: dropped the unmaintained <a href="https://github.com/JohnSundell/ShellOut">ShellOut</a> dependency; Sourcery and Mint commands run through a small <code>Foundation.Process</code> helper (still via <code>/bin/bash -c</code>, so Mockfile <code>sourceryCommand</code> values work as before)</li>
+<li>CLI: dropped the unmaintained <a href="https://github.com/luoxiu/Chalk">Chalk</a> dependency (and its Rainbow dependency); output is styled by a small built-in ANSI helper. Colors are off when output is not a terminal, for <code>TERM=dumb</code>, and when <code>NO_COLOR</code> is set</li>
+<li>CLI: argument parsing moved from the unmaintained <a href="https://github.com/kylef/Commander">Commander</a> to Apple&rsquo;s <a href="https://github.com/apple/swift-argument-parser">swift-argument-parser</a>. Commands and flags are unchanged (including <code>--disableCache</code>); every command now has <code>--help</code>, there is <code>--version</code>, and usage errors (unknown flag, missing mock name for <code>watch</code> / <code>generate --watch</code>) exit with code 64. Previously <code>generate --help</code> was treated as a mock name</li>
+<li><code>rake docs</code> makes the paths in <code>docs/undocumented.json</code> repo-relative</li>
+</ul>
 <h2 id='strong-4-3-1-strong-2026' class='heading'><strong>4.3.1</strong> / 2026</h2>
 <h4 id='added' class='heading'>Added:</h4>
 
